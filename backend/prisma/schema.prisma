@@ -1,0 +1,226 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enum para el estado del usuario
+enum EstadoUsuario {
+  activo
+  inactivo
+  suspendido
+}
+
+// Modelo Usuario - Core del login
+model Usuario {
+  id             Int      @id @default(autoincrement())
+  email          String   @unique
+  password_hash  String
+  dni            String?  @unique  // DNI común para todos los usuarios
+  nombres        String?
+  apellidos      String?
+  telefono       String?
+  estado         EstadoUsuario @default(activo)
+  creado_en      DateTime @default(now())
+  actualizado_en DateTime @updatedAt
+
+  // Relaciones
+  roles_usuario  UsuarioRol[] @relation("UsuarioRoles")
+  aprobaciones   UsuarioRol[] @relation("AprobadoPor")
+
+  @@map("usuario")
+}
+
+// Modelo Rol - Catálogo de roles del sistema
+model Rol {
+  id     Int    @id @default(autoincrement())
+  nombre String @unique
+
+  // Relaciones
+  usuarios_rol UsuarioRol[]
+
+  @@map("rol")
+}
+
+// Modelo UsuarioRol - Vincula un usuario con un rol y un colegio (scope)
+model UsuarioRol {
+  id           Int      @id @default(autoincrement())
+  usuario_id   Int
+  rol_id       Int
+  colegio_id   Int?     // nullable para roles globales como OWNER
+  aprobado_por Int?
+  aprobado_en  DateTime?
+
+  // Relaciones
+  usuario      Usuario @relation("UsuarioRoles", fields: [usuario_id], references: [id], onDelete: Cascade)
+  rol          Rol     @relation(fields: [rol_id], references: [id], onDelete: Cascade)
+  colegio      Colegio? @relation(fields: [colegio_id], references: [id], onDelete: Cascade)
+  aprobadoPor  Usuario? @relation("AprobadoPor", fields: [aprobado_por], references: [id])
+
+  // Relación con perfiles específicos
+  director     Director?
+  profesor     Profesor?
+  apoderado    Apoderado?
+  administrativo Administrativo?
+
+  @@unique([usuario_id, rol_id, colegio_id])
+  @@index([usuario_id])
+  @@index([colegio_id])
+  @@map("usuario_rol")
+}
+
+// Modelo Colegio - Instituciones educativas
+model Colegio {
+  id              Int           @id @default(autoincrement())
+  ugelId          Int?          // si manejas jerarquía de UGEL/DRE
+  nombre          String
+  codigoModular   String?       @unique
+  distrito        String?
+  direccion       String?
+  nivel           String?       // inicial, primaria, secundaria
+  provisional     Boolean       @default(true) // cuando Owner lo crea, luego se aprueba
+  creadoEn        DateTime      @default(now())
+  actualizadoEn   DateTime      @updatedAt
+
+  // Relaciones
+  usuariosRol     UsuarioRol[]
+
+  @@map("colegio")
+}
+
+// Modelo Profesor - Perfil específico para profesores
+model Profesor {
+  id              Int        @id @default(autoincrement())
+  usuarioRol      UsuarioRol @relation(fields: [usuarioRolId], references: [id], onDelete: Cascade)
+  usuarioRolId    Int        @unique
+
+  // Datos personales adicionales
+  fechaNacimiento DateTime?
+  sexo            String?
+  estadoCivil     String?
+  nacionalidad    String?
+
+  // Contacto
+  direccion       String?
+  celular         String?
+  correoInstitucional String?
+
+  // Formación académica
+  gradoAcademico  String?
+  especialidad    String?
+  institucionEgreso String?
+
+  // Datos laborales
+  fechaIngreso    DateTime?
+  condicionLaboral String?   // nombrado, contratado
+  cargaHoraria    Int?       // horas semanales
+  experienciaDocente Int?
+
+  creadoEn        DateTime   @default(now())
+  actualizadoEn   DateTime   @updatedAt
+
+  @@map("profesor")
+}
+
+// Modelo Apoderado - Perfil específico para padres/tutores
+model Apoderado {
+  id              Int        @id @default(autoincrement())
+  usuarioRol      UsuarioRol @relation(fields: [usuarioRolId], references: [id], onDelete: Cascade)
+  usuarioRolId    Int        @unique
+
+  // Datos personales adicionales
+  fechaNacimiento DateTime?
+  sexo            String?
+  estadoCivil     String?
+  nacionalidad    String?
+
+  // Relación con el alumno
+  parentesco      String      // padre, madre, tío, hermano, tutor legal
+
+  // Contacto
+  direccion       String?
+  celular         String?
+  correo          String?
+
+  // Datos laborales (opcional, útil para contacto en emergencias)
+  ocupacion       String?
+  centroTrabajo   String?
+  telefonoTrabajo String?
+
+  creadoEn        DateTime   @default(now())
+  actualizadoEn   DateTime   @updatedAt
+
+  @@map("apoderado")
+}
+
+// Modelo Administrativo - Perfil específico para personal administrativo
+model Administrativo {
+  id              Int        @id @default(autoincrement())
+  usuarioRol      UsuarioRol @relation(fields: [usuarioRolId], references: [id], onDelete: Cascade)
+  usuarioRolId    Int        @unique
+
+  // Datos personales adicionales
+  fechaNacimiento DateTime?
+  sexo            String?
+  estadoCivil     String?
+  nacionalidad    String?
+
+  // Contacto
+  direccion       String?
+  celular         String?
+  correo          String?
+
+  // Datos laborales
+  cargo           String      // secretaria, coordinador, auxiliar, etc.
+  fechaIngreso    DateTime?
+  condicionLaboral String?    // nombrado, contratado
+  turno           String?     // mañana, tarde, completo
+
+  creadoEn        DateTime   @default(now())
+  actualizadoEn   DateTime   @updatedAt
+
+  @@map("administrativo")
+}
+
+// Modelo Director - Perfil específico para directores (SIN duplicación de colegio)
+model Director {
+  id              Int        @id @default(autoincrement())
+  usuarioRol      UsuarioRol @relation(fields: [usuarioRolId], references: [id], onDelete: Cascade)
+  usuarioRolId    Int        @unique
+
+  // Datos personales específicos del director
+  fechaNacimiento DateTime?
+  sexo            String?
+  estadoCivil     String?
+  nacionalidad    String?
+
+  // Contacto
+  direccion       String?
+  telefono        String?
+  celular         String?
+  correoInstitucional String?
+
+  // Formación académica
+  gradoAcademico  String?
+  carrera         String?
+  especializacion String?
+  institucionEgreso String?
+
+  // Datos laborales
+  fechaInicio     DateTime?
+
+  creadoEn        DateTime   @default(now())
+  actualizadoEn   DateTime   @updatedAt
+
+  @@map("director")
+}
