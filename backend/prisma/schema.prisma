@@ -79,10 +79,36 @@ model UsuarioRol {
   @@map("usuario_rol")
 }
 
+// Modelo DRE - Dirección Regional de Educación
+model DRE {
+  id     Int    @id @default(autoincrement())
+  nombre String @unique
+  codigo String? @unique
+  
+  // Relaciones
+  ugeles UGEL[]
+  
+  @@map("dre")
+}
+
+// Modelo UGEL - Unidad de Gestión Educativa Local
+model UGEL {
+  id     Int    @id @default(autoincrement())
+  dreId  Int
+  nombre String
+  codigo String? @unique
+  
+  // Relaciones
+  dre      DRE       @relation(fields: [dreId], references: [id])
+  colegios Colegio[]
+  
+  @@map("ugel")
+}
+
 // Modelo Colegio - Instituciones educativas
 model Colegio {
   id              Int           @id @default(autoincrement())
-  ugelId          Int?          // si manejas jerarquía de UGEL/DRE
+  ugelId          Int?          // vinculado a UGEL
   nombre          String
   codigoModular   String?       @unique
   distrito        String?
@@ -93,6 +119,7 @@ model Colegio {
   actualizadoEn   DateTime      @updatedAt
 
   // Relaciones
+  ugel            UGEL?         @relation(fields: [ugelId], references: [id])
   usuariosRol     UsuarioRol[]
 
   @@map("colegio")
@@ -112,8 +139,6 @@ model Profesor {
 
   // Contacto
   direccion       String?
-  celular         String?
-  correoInstitucional String?
 
   // Formación académica
   gradoAcademico  String?
@@ -149,8 +174,6 @@ model Apoderado {
 
   // Contacto
   direccion       String?
-  celular         String?
-  correo          String?
 
   // Datos laborales (opcional, útil para contacto en emergencias)
   ocupacion       String?
@@ -177,8 +200,6 @@ model Administrativo {
 
   // Contacto
   direccion       String?
-  celular         String?
-  correo          String?
 
   // Datos laborales
   cargo           String      // secretaria, coordinador, auxiliar, etc.
@@ -206,9 +227,6 @@ model Director {
 
   // Contacto
   direccion       String?
-  telefono        String?
-  celular         String?
-  correoInstitucional String?
 
   // Formación académica
   gradoAcademico  String?

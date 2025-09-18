@@ -57,7 +57,7 @@ function OwnerDashboardContent() {
             </Link>
           </div>
 
-          {/* Card: Gestionar Directores (placeholder) */}
+          {/* Card: Gestionar Directores */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="flex items-center mb-4">
               <div className="bg-green-100 p-3 rounded-full">
@@ -68,17 +68,17 @@ function OwnerDashboardContent() {
               <h3 className="ml-3 text-lg font-semibold text-gray-900">Directores</h3>
             </div>
             <p className="text-gray-600 mb-4">
-              Gestionar directores y colegios del sistema.
+              Registrar nuevos directores para los colegios.
             </p>
-            <button 
-              className="w-full bg-gray-400 text-white font-medium py-2 px-4 rounded-md cursor-not-allowed"
-              disabled
+            <Link 
+              href="/owner/directores/nuevo"
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md transition-colors inline-block text-center"
             >
-              Próximamente
-            </button>
+              Registrar Director
+            </Link>
           </div>
 
-          {/* Card: Gestionar Colegios (placeholder) */}
+          {/* Card: Gestionar Colegios */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="flex items-center mb-4">
               <div className="bg-purple-100 p-3 rounded-full">
@@ -89,14 +89,14 @@ function OwnerDashboardContent() {
               <h3 className="ml-3 text-lg font-semibold text-gray-900">Colegios</h3>
             </div>
             <p className="text-gray-600 mb-4">
-              Administrar instituciones educativas del sistema.
+              Registrar nuevas instituciones educativas.
             </p>
-            <button 
-              className="w-full bg-gray-400 text-white font-medium py-2 px-4 rounded-md cursor-not-allowed"
-              disabled
+            <Link 
+              href="/owner/colegios/nuevo"
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-md transition-colors inline-block text-center"
             >
-              Próximamente
-            </button>
+              Registrar Colegio
+            </Link>
           </div>
 
         </div>
