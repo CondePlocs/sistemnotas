@@ -23,7 +23,6 @@ interface AdministrativoFormData {
   cargo: string;
   fechaIngreso?: string;
   condicionLaboral?: string;
-  turno?: string;
 }
 
 function NuevoAdministrativoContent() {
@@ -144,29 +143,6 @@ function NuevoAdministrativoContent() {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Cargo *
-                  </label>
-                  <select
-                    name="cargo"
-                    value={formData.cargo}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  >
-                    <option value="">Seleccionar</option>
-                    <option value="secretaria">Secretaria</option>
-                    <option value="coordinador">Coordinador</option>
-                    <option value="auxiliar">Auxiliar</option>
-                    <option value="bibliotecario">Bibliotecario</option>
-                    <option value="psicologo">Psicólogo</option>
-                    <option value="enfermero">Enfermero</option>
-                    <option value="conserje">Conserje</option>
-                    <option value="vigilante">Vigilante</option>
-                    <option value="otro">Otro</option>
-                  </select>
-                </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -295,6 +271,30 @@ function NuevoAdministrativoContent() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Cargo *
+                  </label>
+                  <select
+                    name="cargo"
+                    value={formData.cargo}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="">Seleccionar</option>
+                    <option value="secretaria">Secretaria</option>
+                    <option value="coordinador">Coordinador</option>
+                    <option value="auxiliar">Auxiliar</option>
+                    <option value="bibliotecario">Bibliotecario</option>
+                    <option value="psicologo">Psicólogo</option>
+                    <option value="enfermero">Enfermero</option>
+                    <option value="conserje">Conserje</option>
+                    <option value="vigilante">Vigilante</option>
+                    <option value="otro">Otro</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Fecha de Ingreso
                   </label>
                   <input
@@ -324,23 +324,6 @@ function NuevoAdministrativoContent() {
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Turno
-                  </label>
-                  <select
-                    name="turno"
-                    value={formData.turno || ''}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  >
-                    <option value="">Seleccionar</option>
-                    <option value="mañana">Mañana</option>
-                    <option value="tarde">Tarde</option>
-                    <option value="completo">Completo</option>
-                    <option value="nocturno">Nocturno</option>
-                  </select>
-                </div>
               </div>
             </div>
 

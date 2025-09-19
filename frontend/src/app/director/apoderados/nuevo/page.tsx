@@ -144,30 +144,6 @@ function NuevoApoderadoContent() {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Parentesco *
-                  </label>
-                  <select
-                    name="parentesco"
-                    value={formData.parentesco}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                  >
-                    <option value="">Seleccionar</option>
-                    <option value="padre">Padre</option>
-                    <option value="madre">Madre</option>
-                    <option value="abuelo">Abuelo</option>
-                    <option value="abuela">Abuela</option>
-                    <option value="tio">Tío</option>
-                    <option value="tia">Tía</option>
-                    <option value="hermano">Hermano</option>
-                    <option value="hermana">Hermana</option>
-                    <option value="tutor_legal">Tutor Legal</option>
-                    <option value="otro">Otro</option>
-                  </select>
-                </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -206,6 +182,37 @@ function NuevoApoderadoContent() {
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
+                </div>
+              </div>
+            </div>
+
+            {/* Relación con el Estudiante */}
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Relación con el Estudiante</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Parentesco *
+                  </label>
+                  <select
+                    name="parentesco"
+                    value={formData.parentesco}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  >
+                    <option value="">Seleccionar</option>
+                    <option value="padre">Padre</option>
+                    <option value="madre">Madre</option>
+                    <option value="abuelo">Abuelo</option>
+                    <option value="abuela">Abuela</option>
+                    <option value="tio">Tío</option>
+                    <option value="tia">Tía</option>
+                    <option value="hermano">Hermano</option>
+                    <option value="hermana">Hermana</option>
+                    <option value="tutor_legal">Tutor Legal</option>
+                    <option value="otro">Otro</option>
+                  </select>
                 </div>
               </div>
             </div>

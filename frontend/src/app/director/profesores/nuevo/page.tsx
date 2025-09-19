@@ -25,7 +25,6 @@ interface ProfesorFormData {
   institucionEgreso?: string;
   fechaIngreso?: string;
   condicionLaboral?: string;
-  turno?: string;
 }
 
 function NuevoProfesorContent() {
@@ -344,22 +343,6 @@ function NuevoProfesorContent() {
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Turno
-                  </label>
-                  <select
-                    name="turno"
-                    value={formData.turno || ''}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Seleccionar</option>
-                    <option value="mañana">Mañana</option>
-                    <option value="tarde">Tarde</option>
-                    <option value="completo">Completo</option>
-                  </select>
-                </div>
               </div>
             </div>
 

@@ -6,9 +6,21 @@ import { OwnerModule } from './modules/owner/owner.module';
 import { UbicacionModule } from './modules/ubicacion/ubicacion.module';
 import { ColegioModule } from './modules/colegio/colegio.module';
 import { DirectorModule } from './modules/director/director.module';
+import { ProfesorModule } from './modules/profesor/profesor.module';
+import { ApoderadoModule } from './modules/apoderado/apoderado.module';
+import { AdministrativoModule } from './modules/administrativo/administrativo.module';
 
 @Module({
-  imports: [AuthModule, OwnerModule, UbicacionModule, ColegioModule, DirectorModule],
+  imports: [
+    AuthModule, 
+    OwnerModule, 
+    UbicacionModule, 
+    ColegioModule, 
+    DirectorModule,
+    ProfesorModule,
+    ApoderadoModule,
+    AdministrativoModule
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

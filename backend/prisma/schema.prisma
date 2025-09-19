@@ -147,11 +147,10 @@ model Profesor {
   // Datos laborales
   fechaIngreso       DateTime?
   condicionLaboral   String? // nombrado, contratado
-  cargaHoraria       Int? // horas semanales
-  experienciaDocente Int?
 
   creadoEn      DateTime @default(now())
   actualizadoEn DateTime @updatedAt
+  actualizadoPor Int? // ID del usuario que hizo la última actualización
 
   @@map("profesor")
 }
@@ -181,6 +180,7 @@ model Apoderado {
 
   creadoEn      DateTime @default(now())
   actualizadoEn DateTime @updatedAt
+  actualizadoPor Int? // ID del usuario que hizo la última actualización
 
   @@map("apoderado")
 }
@@ -204,10 +204,10 @@ model Administrativo {
   cargo            String // secretaria, coordinador, auxiliar, etc.
   fechaIngreso     DateTime?
   condicionLaboral String? // nombrado, contratado
-  turno            String? // mañana, tarde, completo
 
   creadoEn      DateTime @default(now())
   actualizadoEn DateTime @updatedAt
+  actualizadoPor Int? // ID del usuario que hizo la última actualización
 
   @@map("administrativo")
 }
