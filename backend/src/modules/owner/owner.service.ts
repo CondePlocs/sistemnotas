@@ -67,8 +67,8 @@ export class OwnerService {
             usuario_id: newUser.id,
             rol_id: ownerRole.id,
             colegio_id: null, // Owner no está vinculado a un colegio específico
-            aprobado_por: null, // Se auto-aprueba
-            aprobado_en: new Date(),
+            hecho_por: null, // Se auto-aprueba (no hay quien lo cree)
+            hecho_en: new Date(), // Timestamp de creación
           },
         });
 

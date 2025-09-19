@@ -25,7 +25,6 @@ export class ColegioService {
         direccion: createColegioDto.direccion,
         nivel: createColegioDto.nivel,
         ugelId: createColegioDto.ugelId,
-        provisional: true, // Por defecto es provisional
       },
       include: {
         ugel: {

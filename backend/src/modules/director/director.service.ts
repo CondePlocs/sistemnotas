@@ -93,12 +93,14 @@ export class DirectorService {
         }
       });
 
-      // 2. Crear UsuarioRol
+      // 2. Crear UsuarioRol con auditoría
       const usuarioRol = await prisma.usuarioRol.create({
         data: {
           usuario_id: usuario.id,
           rol_id: rolDirector.id,
           colegio_id: createDirectorDto.colegioId,
+          hecho_por: null, // TODO: Obtener ID del usuario autenticado que está creando
+          hecho_en: new Date(), // Timestamp de creación
         }
       });
 

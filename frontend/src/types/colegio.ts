@@ -26,16 +26,15 @@ export interface ColegioFormData {
 
 export interface Colegio {
   id: number;
-  ugelId?: number;
   nombre: string;
   codigoModular?: string;
   distrito?: string;
   direccion?: string;
   nivel?: string;
-  provisional: boolean;
+  ugelId?: number;
+  ugel?: UGEL;
   creadoEn: Date;
   actualizadoEn: Date;
-  ugel?: UGEL;
 }
 
 // Opciones para el select de nivel
