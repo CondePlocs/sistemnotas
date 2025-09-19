@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
+import { Injectable, ForbiddenException, ConflictException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../providers/prisma.service';
 import { CreateProfesorDto } from './dto/create-profesor.dto';
 import * as bcrypt from 'bcrypt';
@@ -7,11 +7,15 @@ import * as bcrypt from 'bcrypt';
 export class ProfesorService {
   constructor(private prisma: PrismaService) {}
 
-  async crearProfesor(createProfesorDto: CreateProfesorDto, directorUserId: number) {
-    // 1. Obtener el colegio del director autenticado
+  async crearProfesor(createProfesorDto: CreateProfesorDto, userId: number) {
+    // 1. Determinar si es director o administrativo y obtener el colegio
+    let colegioId: number;
+    let createdBy = userId;
+
+    // Buscar si es director
     const directorInfo = await this.prisma.usuarioRol.findFirst({
       where: {
-        usuario_id: directorUserId,
+        usuario_id: userId,
         rol: { nombre: 'DIRECTOR' }
       },
       include: {
@@ -23,8 +27,34 @@ export class ProfesorService {
       }
     });
 
-    if (!directorInfo || !directorInfo.colegio) {
-      throw new ForbiddenException('Solo directores pueden crear profesores en su colegio');
+    if (directorInfo && directorInfo.colegio && directorInfo.colegio_id) {
+      // Es director
+      colegioId = directorInfo.colegio_id;
+    } else {
+      // Buscar si es administrativo
+      const administrativoInfo = await this.prisma.administrativo.findFirst({
+        where: {
+          usuarioRol: {
+            usuario_id: userId,
+            rol: { nombre: 'ADMINISTRATIVO' }
+          }
+        },
+        include: {
+          usuarioRol: true,
+          permisos: true
+        }
+      });
+
+      if (!administrativoInfo || !administrativoInfo.usuarioRol.colegio_id) {
+        throw new ForbiddenException('Solo directores y administrativos pueden crear profesores');
+      }
+
+      // Verificar permisos del administrativo
+      if (!administrativoInfo.permisos || !administrativoInfo.permisos.puedeRegistrarProfesores) {
+        throw new ForbiddenException('No tienes permisos para registrar profesores');
+      }
+
+      colegioId = administrativoInfo.usuarioRol.colegio_id;
     }
 
     // 2. Verificar que el email no esté en uso
@@ -78,8 +108,8 @@ export class ProfesorService {
         data: {
           usuario_id: usuario.id,
           rol_id: rolProfesor.id,
-          colegio_id: directorInfo.colegio_id, // ← Vinculación automática al colegio del director
-          hecho_por: directorUserId, // Auditoría: quién lo creó
+          colegio_id: colegioId, // ← Vinculación automática al colegio
+          hecho_por: createdBy, // Auditoría: quién lo creó
           hecho_en: new Date(), // Auditoría: cuándo se creó
         }
       });
@@ -141,6 +171,7 @@ export class ProfesorService {
       }
     });
   }
+
 
   async obtenerProfesores(directorUserId: number) {
     // Solo mostrar profesores del colegio del director

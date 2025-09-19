@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import { authAPI, User, LoginData } from '@/lib/auth';
 
 interface AuthContextType {
@@ -17,6 +18,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   // Verificar autenticación al cargar
   useEffect(() => {
@@ -38,7 +40,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (data: LoginData) => {
     try {
       const response = await authAPI.login(data);
-      setUser(response.user);
+      const userData = response.user;
+      const userRole = userData.roles?.[0]?.rol;
+      if (userRole === 'OWNER') {
+        router.push('/owner/dashboard');
+      } else if (userRole === 'DIRECTOR') {
+        router.push('/director/dashboard');
+      } else if (userRole === 'ADMINISTRATIVO') {
+        router.push('/administrativo/dashboard');
+      } else if (userRole === 'PROFESOR') {
+        router.push('/profesor/dashboard');
+      } else if (userRole === 'APODERADO') {
+        router.push('/apoderado/dashboard');
+      } else {
+        // Para otros roles, redirigir a una página por defecto
+        router.push('/dashboard');
+      }
+      setUser(userData);
     } catch (error) {
       throw error; // Re-lanzar para manejar en el componente
     }

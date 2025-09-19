@@ -7,11 +7,15 @@ import * as bcrypt from 'bcrypt';
 export class ApoderadoService {
   constructor(private prisma: PrismaService) {}
 
-  async crearApoderado(createApoderadoDto: CreateApoderadoDto, directorUserId: number) {
-    // 1. Obtener el colegio del director autenticado
+  async crearApoderado(createApoderadoDto: CreateApoderadoDto, userId: number) {
+    // 1. Determinar si es director o administrativo y obtener el colegio
+    let colegioId: number;
+    let createdBy = userId;
+
+    // Buscar si es director
     const directorInfo = await this.prisma.usuarioRol.findFirst({
       where: {
-        usuario_id: directorUserId,
+        usuario_id: userId,
         rol: { nombre: 'DIRECTOR' }
       },
       include: {
@@ -23,8 +27,34 @@ export class ApoderadoService {
       }
     });
 
-    if (!directorInfo || !directorInfo.colegio) {
-      throw new ForbiddenException('Solo directores pueden crear apoderados en su colegio');
+    if (directorInfo && directorInfo.colegio && directorInfo.colegio_id) {
+      // Es director
+      colegioId = directorInfo.colegio_id;
+    } else {
+      // Buscar si es administrativo
+      const administrativoInfo = await this.prisma.administrativo.findFirst({
+        where: {
+          usuarioRol: {
+            usuario_id: userId,
+            rol: { nombre: 'ADMINISTRATIVO' }
+          }
+        },
+        include: {
+          usuarioRol: true,
+          permisos: true
+        }
+      });
+
+      if (!administrativoInfo || !administrativoInfo.usuarioRol.colegio_id) {
+        throw new ForbiddenException('Solo directores y administrativos pueden crear apoderados');
+      }
+
+      // Verificar permisos del administrativo
+      if (!administrativoInfo.permisos || !administrativoInfo.permisos.puedeRegistrarApoderados) {
+        throw new ForbiddenException('No tienes permisos para registrar apoderados');
+      }
+
+      colegioId = administrativoInfo.usuarioRol.colegio_id;
     }
 
     // 2. Verificar que el email no esté en uso
@@ -78,8 +108,8 @@ export class ApoderadoService {
         data: {
           usuario_id: usuario.id,
           rol_id: rolApoderado.id,
-          colegio_id: directorInfo.colegio_id, // ← Vinculación automática al colegio del director
-          hecho_por: directorUserId, // Auditoría: quién lo creó
+          colegio_id: colegioId, // ← Vinculación automática al colegio
+          hecho_por: createdBy, // Auditoría: quién lo creó
           hecho_en: new Date(), // Auditoría: cuándo se creó
         }
       });

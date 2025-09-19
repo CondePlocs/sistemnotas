@@ -11,10 +11,10 @@ export class ProfesorController {
   constructor(private readonly profesorService: ProfesorService) {}
 
   @Post()
-  @Roles('DIRECTOR')
+  @Roles('DIRECTOR', 'ADMINISTRATIVO')
   async crearProfesor(@Body() createProfesorDto: CreateProfesorDto, @Req() request: any) {
-    const directorUserId = request.user.id;
-    return this.profesorService.crearProfesor(createProfesorDto, directorUserId);
+    const userId = request.user.id;
+    return this.profesorService.crearProfesor(createProfesorDto, userId);
   }
 
   @Get()

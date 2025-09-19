@@ -11,17 +11,26 @@ export class AdministrativoController {
   constructor(private readonly administrativoService: AdministrativoService) {}
 
   @Post()
-  @Roles('DIRECTOR')
+  @Roles('DIRECTOR', 'ADMINISTRATIVO')
   async crearAdministrativo(@Body() createAdministrativoDto: CreateAdministrativoDto, @Req() request: any) {
-    const directorUserId = request.user.id;
-    return this.administrativoService.crearAdministrativo(createAdministrativoDto, directorUserId);
+    const userId = request.user.id;
+    return this.administrativoService.crearAdministrativo(createAdministrativoDto, userId);
   }
 
   @Get()
-  @Roles('DIRECTOR')
+  @Roles('DIRECTOR', 'ADMINISTRATIVO')
   async obtenerAdministrativos(@Req() request: any) {
-    const directorUserId = request.user.id;
-    return this.administrativoService.obtenerAdministrativos(directorUserId);
+    const userId = request.user.id;
+    const userRoles = request.user.roles || [];
+    const isDirector = userRoles.some((role: any) => role.rol === 'DIRECTOR');
+    
+    if (isDirector) {
+      // Si es director, obtener todos los administrativos de su colegio
+      return this.administrativoService.obtenerAdministrativos(userId);
+    } else {
+      // Si es administrativo, obtener solo su propia información
+      return this.administrativoService.obtenerAdministrativoPropio(userId);
+    }
   }
 
   @Get(':id')

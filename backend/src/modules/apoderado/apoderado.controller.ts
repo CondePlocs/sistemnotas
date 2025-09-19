@@ -11,10 +11,10 @@ export class ApoderadoController {
   constructor(private readonly apoderadoService: ApoderadoService) {}
 
   @Post()
-  @Roles('DIRECTOR')
+  @Roles('DIRECTOR', 'ADMINISTRATIVO')
   async crearApoderado(@Body() createApoderadoDto: CreateApoderadoDto, @Req() request: any) {
-    const directorUserId = request.user.id;
-    return this.apoderadoService.crearApoderado(createApoderadoDto, directorUserId);
+    const userId = request.user.id;
+    return this.apoderadoService.crearApoderado(createApoderadoDto, userId);
   }
 
   @Get()

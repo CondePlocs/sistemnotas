@@ -9,6 +9,7 @@ import { DirectorModule } from './modules/director/director.module';
 import { ProfesorModule } from './modules/profesor/profesor.module';
 import { ApoderadoModule } from './modules/apoderado/apoderado.module';
 import { AdministrativoModule } from './modules/administrativo/administrativo.module';
+import { PermisosModule } from './modules/permisos/permisos.module';
 
 @Module({
   imports: [
@@ -19,7 +20,8 @@ import { AdministrativoModule } from './modules/administrativo/administrativo.mo
     DirectorModule,
     ProfesorModule,
     ApoderadoModule,
-    AdministrativoModule
+    AdministrativoModule,
+    PermisosModule
   ],
   controllers: [AppController],
   providers: [AppService],

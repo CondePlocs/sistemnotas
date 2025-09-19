@@ -24,6 +24,11 @@ interface Administrativo {
   cargo: string;
   fechaIngreso: string;
   condicionLaboral: string;
+  permisos?: {
+    puedeRegistrarApoderados: boolean;
+    puedeRegistrarProfesores: boolean;
+    puedeRegistrarAdministrativos: boolean;
+  };
 }
 
 interface Permisos {
@@ -61,13 +66,13 @@ function PermisosContent() {
       const data = await response.json();
       setAdministrativos(data);
       
-      // Inicializar permisos (por ahora todos en false, después se cargarán de la BD)
+      // Inicializar permisos con los datos existentes de la BD
       const permisosIniciales: Record<number, Permisos> = {};
       data.forEach((admin: Administrativo) => {
         permisosIniciales[admin.id] = {
-          registrarApoderados: false,
-          registrarProfesores: false,
-          registrarAdministrativos: false,
+          registrarApoderados: admin.permisos?.puedeRegistrarApoderados || false,
+          registrarProfesores: admin.permisos?.puedeRegistrarProfesores || false,
+          registrarAdministrativos: admin.permisos?.puedeRegistrarAdministrativos || false,
         };
       });
       setPermisos(permisosIniciales);
@@ -93,16 +98,43 @@ function PermisosContent() {
   const guardarCambios = async () => {
     setSaving(true);
     try {
-      // TODO: Implementar guardado en backend
       console.log('Permisos a guardar:', permisos);
       
-      // Simular guardado
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Convertir el objeto de permisos al formato que espera el backend
+      const permisosArray = Object.entries(permisos).map(([administrativoId, permisos]) => ({
+        administrativoId: parseInt(administrativoId),
+        puedeRegistrarProfesores: permisos.registrarProfesores,
+        puedeRegistrarApoderados: permisos.registrarApoderados,
+        puedeRegistrarAdministrativos: permisos.registrarAdministrativos,
+      }));
+
+      const response = await fetch('http://localhost:3001/api/permisos/batch', {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          permisos: permisosArray
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Error ${response.status}: ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log('Resultado del guardado:', result);
       
-      alert('Permisos actualizados exitosamente');
+      alert(`Permisos actualizados exitosamente. ${result.actualizados} administrativos actualizados.`);
+      
+      // Recargar los datos para mostrar los cambios
+      await cargarAdministrativos();
+      
     } catch (error) {
       console.error('Error al guardar permisos:', error);
-      alert('Error al guardar los permisos');
+      alert(`Error al guardar los permisos: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     } finally {
       setSaving(false);
     }

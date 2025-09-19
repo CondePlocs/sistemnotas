@@ -37,6 +37,10 @@ model Usuario {
   // Relaciones
   roles_usuario UsuarioRol[] @relation("UsuarioRoles")
   creaciones    UsuarioRol[] @relation("CreadoPor")
+  
+  // Relaciones de permisos
+  permisosOtorgados     PermisosAdministrativo[] @relation("PermisosOtorgados")
+  permisosActualizados  PermisosAdministrativo[] @relation("PermisosActualizados")
 
   @@map("usuario")
 }
@@ -209,6 +213,9 @@ model Administrativo {
   actualizadoEn DateTime @updatedAt
   actualizadoPor Int? // ID del usuario que hizo la última actualización
 
+  // Relación con permisos
+  permisos PermisosAdministrativo?
+
   @@map("administrativo")
 }
 
@@ -240,4 +247,30 @@ model Director {
   actualizadoEn DateTime @updatedAt
 
   @@map("director")
+}
+
+// Modelo PermisosAdministrativo - Sistema de permisos para personal administrativo
+model PermisosAdministrativo {
+  id                              Int      @id @default(autoincrement())
+  administrativoId                Int      @unique
+  
+  // Permisos específicos
+  puedeRegistrarProfesores        Boolean  @default(false)
+  puedeRegistrarApoderados        Boolean  @default(false)
+  puedeRegistrarAdministrativos   Boolean  @default(false)
+  
+  // Auditoría - Quién otorgó los permisos
+  otorgadoPor                     Int?
+  otorgadoEn                      DateTime @default(now())
+  
+  // Auditoría - Última actualización
+  actualizadoPor                  Int?
+  actualizadoEn                   DateTime @updatedAt
+  
+  // Relaciones
+  administrativo                  Administrativo @relation(fields: [administrativoId], references: [id], onDelete: Cascade)
+  usuarioOtorgador                Usuario? @relation("PermisosOtorgados", fields: [otorgadoPor], references: [id])
+  usuarioActualizador             Usuario? @relation("PermisosActualizados", fields: [actualizadoPor], references: [id])
+  
+  @@map("permisos_administrativo")
 }
