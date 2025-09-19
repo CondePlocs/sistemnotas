@@ -12,6 +12,9 @@ interface ApoderadoFormData {
   apellidos?: string;
   telefono?: string;
 
+  // Relación con el estudiante
+  parentesco: string;
+
   // Datos específicos del apoderado
   fechaNacimiento?: string;
   sexo?: string;
@@ -21,7 +24,6 @@ interface ApoderadoFormData {
   ocupacion?: string;
   centroTrabajo?: string;
   telefonoTrabajo?: string;
-  ingresosFamiliares?: string;
 }
 
 interface FormularioApoderadoProps {
@@ -34,6 +36,7 @@ export default function FormularioApoderado({ onSuccess, redirectPath = '/direct
   const [formData, setFormData] = useState<ApoderadoFormData>({
     email: '',
     password: '',
+    parentesco: '',
   });
   const router = useRouter();
 
@@ -177,6 +180,36 @@ export default function FormularioApoderado({ onSuccess, redirectPath = '/direct
           </div>
         </div>
 
+        {/* Relación con el Estudiante */}
+        <div className="border-t border-gray-200 pt-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Relación con el Estudiante</h3>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Parentesco <span className="text-red-500">*</span>
+            </label>
+            <select
+              name="parentesco"
+              value={formData.parentesco}
+              onChange={handleChange}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Seleccionar</option>
+              <option value="Padre">Padre</option>
+              <option value="Madre">Madre</option>
+              <option value="Abuelo">abuelo</option>
+              <option value="Abuela">Abuela</option>
+              <option value="Tío">Tío</option>
+              <option value="Tía">Tía</option>
+              <option value="Hermano">Hermano</option>
+              <option value="Hermana">Hermana</option>
+              <option value="Tutor Legal">Tutor Legal</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </div>
+        </div>
+
         {/* Datos específicos del apoderado */}
         <div className="border-t border-gray-200 pt-6">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Datos Personales</h3>
@@ -306,19 +339,6 @@ export default function FormularioApoderado({ onSuccess, redirectPath = '/direct
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Ingresos Familiares (S/.)
-              </label>
-              <input
-                type="number"
-                name="ingresosFamiliares"
-                value={formData.ingresosFamiliares || ''}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="2500"
-              />
-            </div>
           </div>
         </div>
 
