@@ -13,21 +13,21 @@ export class AdministrativoController {
   @Post()
   @Roles('DIRECTOR')
   async crearAdministrativo(@Body() createAdministrativoDto: CreateAdministrativoDto, @Req() request: any) {
-    const directorUserId = request.user.userId;
+    const directorUserId = request.user.id;
     return this.administrativoService.crearAdministrativo(createAdministrativoDto, directorUserId);
   }
 
   @Get()
   @Roles('DIRECTOR')
   async obtenerAdministrativos(@Req() request: any) {
-    const directorUserId = request.user.userId;
+    const directorUserId = request.user.id;
     return this.administrativoService.obtenerAdministrativos(directorUserId);
   }
 
   @Get(':id')
   @Roles('DIRECTOR')
   async obtenerAdministrativo(@Param('id', ParseIntPipe) id: number, @Req() request: any) {
-    const directorUserId = request.user.userId;
+    const directorUserId = request.user.id;
     return this.administrativoService.obtenerAdministrativo(id, directorUserId);
   }
 }

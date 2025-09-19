@@ -13,21 +13,21 @@ export class ApoderadoController {
   @Post()
   @Roles('DIRECTOR')
   async crearApoderado(@Body() createApoderadoDto: CreateApoderadoDto, @Req() request: any) {
-    const directorUserId = request.user.userId;
+    const directorUserId = request.user.id;
     return this.apoderadoService.crearApoderado(createApoderadoDto, directorUserId);
   }
 
   @Get()
   @Roles('DIRECTOR')
   async obtenerApoderados(@Req() request: any) {
-    const directorUserId = request.user.userId;
+    const directorUserId = request.user.id;
     return this.apoderadoService.obtenerApoderados(directorUserId);
   }
 
   @Get(':id')
   @Roles('DIRECTOR')
   async obtenerApoderado(@Param('id', ParseIntPipe) id: number, @Req() request: any) {
-    const directorUserId = request.user.userId;
+    const directorUserId = request.user.id;
     return this.apoderadoService.obtenerApoderado(id, directorUserId);
   }
 }

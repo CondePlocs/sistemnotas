@@ -13,21 +13,21 @@ export class ProfesorController {
   @Post()
   @Roles('DIRECTOR')
   async crearProfesor(@Body() createProfesorDto: CreateProfesorDto, @Req() request: any) {
-    const directorUserId = request.user.userId;
+    const directorUserId = request.user.id;
     return this.profesorService.crearProfesor(createProfesorDto, directorUserId);
   }
 
   @Get()
   @Roles('DIRECTOR')
   async obtenerProfesores(@Req() request: any) {
-    const directorUserId = request.user.userId;
+    const directorUserId = request.user.id;
     return this.profesorService.obtenerProfesores(directorUserId);
   }
 
   @Get(':id')
   @Roles('DIRECTOR')
   async obtenerProfesor(@Param('id', ParseIntPipe) id: number, @Req() request: any) {
-    const directorUserId = request.user.userId;
+    const directorUserId = request.user.id;
     return this.profesorService.obtenerProfesor(id, directorUserId);
   }
 }
