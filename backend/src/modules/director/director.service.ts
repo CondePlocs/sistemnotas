@@ -22,6 +22,31 @@ export class DirectorService {
       throw new NotFoundException('Colegio no encontrado');
     }
 
+    // Verificar que el colegio no tenga ya un director
+    const directorExistente = await this.prisma.usuarioRol.findFirst({
+      where: {
+        colegio_id: createDirectorDto.colegioId,
+        rol: {
+          nombre: 'DIRECTOR'
+        }
+      },
+      include: {
+        usuario: {
+          select: { nombres: true, apellidos: true, email: true }
+        }
+      }
+    });
+
+    if (directorExistente) {
+      const nombreDirector = directorExistente.usuario.nombres && directorExistente.usuario.apellidos 
+        ? `${directorExistente.usuario.nombres} ${directorExistente.usuario.apellidos}`
+        : directorExistente.usuario.email;
+      
+      throw new ConflictException(
+        `El colegio ya tiene un director asignado: ${nombreDirector}`
+      );
+    }
+
     // Verificar que el email no esté en uso
     const existingUser = await this.prisma.usuario.findUnique({
       where: { email: createDirectorDto.email }
