@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ColegioFormData, NIVELES_EDUCATIVOS, DRE, UGEL } from '@/types/colegio';
+import { ColegioFormData, OPCIONES_NIVELES_EDUCATIVOS, DRE, UGEL, NivelEducativo } from '@/types/colegio';
 
 interface RegistroColegioFormProps {
   onSubmit: (data: ColegioFormData) => void;
@@ -14,8 +14,8 @@ export default function RegistroColegioForm({ onSubmit, loading = false }: Regis
     codigoModular: '',
     distrito: '',
     direccion: '',
-    nivel: '',
-    ugelId: undefined
+    ugelId: undefined,
+    nivelesPermitidos: [] // ← Niveles educativos autorizados
   });
 
   const [dres, setDres] = useState<DRE[]>([]);
@@ -76,6 +76,16 @@ export default function RegistroColegioForm({ onSubmit, loading = false }: Regis
     setFormData(prev => ({
       ...prev,
       [name]: name === 'ugelId' ? (parseInt(value) || undefined) : value
+    }));
+  };
+
+  // Manejar checkboxes de niveles educativos
+  const handleNivelChange = (nivel: NivelEducativo, checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      nivelesPermitidos: checked 
+        ? [...prev.nivelesPermitidos, nivel]
+        : prev.nivelesPermitidos.filter(n => n !== nivel)
     }));
   };
 
@@ -171,6 +181,45 @@ export default function RegistroColegioForm({ onSubmit, loading = false }: Regis
           </div>
         </div>
 
+        {/* Niveles Educativos Permitidos */}
+        <div className="bg-green-50 p-4 rounded-lg">
+          <h3 className="text-lg font-semibold mb-4 text-gray-700">Niveles Educativos Autorizados</h3>
+          <p className="text-sm text-gray-600 mb-4">
+            Selecciona los niveles que podrá gestionar este colegio. Solo podrán crear salones de los niveles marcados.
+          </p>
+          
+          <div className="space-y-3">
+            {OPCIONES_NIVELES_EDUCATIVOS.map((opcion) => (
+              <div key={opcion.value} className="flex items-start space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-white transition-colors">
+                <input
+                  type="checkbox"
+                  id={`nivel-${opcion.value}`}
+                  checked={formData.nivelesPermitidos.includes(opcion.value)}
+                  onChange={(e) => handleNivelChange(opcion.value, e.target.checked)}
+                  className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <div className="flex-1">
+                  <label htmlFor={`nivel-${opcion.value}`} className="flex items-center cursor-pointer">
+                    <span className="text-2xl mr-2">{opcion.icon}</span>
+                    <div>
+                      <div className="font-medium text-gray-900">{opcion.label}</div>
+                      <div className="text-sm text-gray-600">{opcion.descripcion}</div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          {formData.nivelesPermitidos.length === 0 && (
+            <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+              <p className="text-sm text-yellow-800">
+                ⚠️ Debes seleccionar al menos un nivel educativo para el colegio.
+              </p>
+            </div>
+          )}
+        </div>
+
         {/* Código Modular */}
         <div>
           <label htmlFor="codigoModular" className="block text-sm font-medium text-gray-700 mb-1">
@@ -187,26 +236,6 @@ export default function RegistroColegioForm({ onSubmit, loading = false }: Regis
           />
         </div>
 
-        {/* Nivel Educativo */}
-        <div>
-          <label htmlFor="nivel" className="block text-sm font-medium text-gray-700 mb-1">
-            Nivel Educativo
-          </label>
-          <select
-            id="nivel"
-            name="nivel"
-            value={formData.nivel}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Seleccionar nivel</option>
-            {NIVELES_EDUCATIVOS.map((nivel) => (
-              <option key={nivel.value} value={nivel.value}>
-                {nivel.label}
-              </option>
-            ))}
-          </select>
-        </div>
 
         {/* Distrito */}
         <div>
@@ -244,7 +273,7 @@ export default function RegistroColegioForm({ onSubmit, loading = false }: Regis
         <div className="pt-4">
           <button
             type="submit"
-            disabled={loading || !formData.nombre.trim() || !formData.ugelId}
+            disabled={loading || !formData.nombre.trim() || !formData.ugelId || formData.nivelesPermitidos.length === 0}
             className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
             {loading ? 'Registrando...' : 'Registrar Colegio'}

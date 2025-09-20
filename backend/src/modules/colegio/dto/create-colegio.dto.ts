@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsInt, IsNotEmpty } from 'class-validator';
+import { IsString, IsOptional, IsInt, IsNotEmpty, IsArray, IsIn } from 'class-validator';
 
 export class CreateColegioDto {
   @IsString()
@@ -17,11 +17,12 @@ export class CreateColegioDto {
   @IsString()
   direccion?: string;
 
-  @IsOptional()
-  @IsString()
-  nivel?: string;
-
   @IsInt()
   @IsNotEmpty()
   ugelId: number;
+
+  @IsArray()
+  @IsIn(['INICIAL', 'PRIMARIA', 'SECUNDARIA'], { each: true })
+  @IsNotEmpty()
+  nivelesPermitidos: ('INICIAL' | 'PRIMARIA' | 'SECUNDARIA')[]; // ← NUEVO CAMPO - Siguiendo convención del proyecto
 }

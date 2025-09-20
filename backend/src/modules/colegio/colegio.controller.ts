@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, ParseIntPipe, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, ParseIntPipe, Request } from '@nestjs/common';
 import { ColegioService } from './colegio.service';
 import { CreateColegioDto } from './dto/create-colegio.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -26,5 +26,12 @@ export class ColegioController {
   @Roles('OWNER')
   async obtenerColegio(@Param('id', ParseIntPipe) id: number) {
     return this.colegioService.obtenerColegio(id);
+  }
+
+  // Endpoint para directores - Obtener niveles de SU colegio
+  @Get('mi-colegio/niveles')
+  @Roles('DIRECTOR')
+  async obtenerNivelesMiColegio(@Request() req: any) {
+    return this.colegioService.obtenerNivelesPorDirector(req.user.id);
   }
 }

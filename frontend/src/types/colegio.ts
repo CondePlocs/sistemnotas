@@ -14,14 +14,21 @@ export interface UGEL {
   dre?: DRE;
 }
 
+// Enum para niveles educativos
+export enum NivelEducativo {
+  INICIAL = 'INICIAL',
+  PRIMARIA = 'PRIMARIA',
+  SECUNDARIA = 'SECUNDARIA'
+}
+
 // Tipos para el modelo Colegio
 export interface ColegioFormData {
   nombre: string;
   codigoModular?: string;
   distrito?: string;
   direccion?: string;
-  nivel?: string; // inicial, primaria, secundaria
   ugelId?: number; // ID de la UGEL seleccionada
+  nivelesPermitidos: NivelEducativo[]; // ← Niveles educativos autorizados
 }
 
 export interface Colegio {
@@ -30,14 +37,14 @@ export interface Colegio {
   codigoModular?: string;
   distrito?: string;
   direccion?: string;
-  nivel?: string;
   ugelId?: number;
   ugel?: UGEL;
+  nivelesPermitidos?: { nivel: NivelEducativo }[]; // ← Niveles autorizados
   creadoEn: Date;
   actualizadoEn: Date;
 }
 
-// Opciones para el select de nivel
+// Opciones para el select de nivel (DEPRECATED)
 export const NIVELES_EDUCATIVOS = [
   { value: 'inicial', label: 'Inicial' },
   { value: 'primaria', label: 'Primaria' },
@@ -45,4 +52,26 @@ export const NIVELES_EDUCATIVOS = [
   { value: 'inicial-primaria', label: 'Inicial y Primaria' },
   { value: 'primaria-secundaria', label: 'Primaria y Secundaria' },
   { value: 'completo', label: 'Inicial, Primaria y Secundaria' }
+] as const;
+
+// Opciones para checkboxes de niveles permitidos
+export const OPCIONES_NIVELES_EDUCATIVOS = [
+  { 
+    value: NivelEducativo.INICIAL, 
+    label: 'Inicial', 
+    descripcion: 'Permitir crear salones de nivel inicial (3, 4, 5 años)',
+    icon: '👶'
+  },
+  { 
+    value: NivelEducativo.PRIMARIA, 
+    label: 'Primaria', 
+    descripcion: 'Permitir crear salones de 1° a 6° grado de primaria',
+    icon: '📚'
+  },
+  { 
+    value: NivelEducativo.SECUNDARIA, 
+    label: 'Secundaria', 
+    descripcion: 'Permitir crear salones de 1° a 5° año de secundaria',
+    icon: '🎓'
+  }
 ] as const;

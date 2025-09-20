@@ -41,6 +41,9 @@ model Usuario {
   // Relaciones de permisos
   permisosOtorgados     PermisosAdministrativo[] @relation("PermisosOtorgados")
   permisosActualizados  PermisosAdministrativo[] @relation("PermisosActualizados")
+  
+  // Relación con ColegioNivel
+  nivelesColegioCreados ColegioNivel[] @relation("ColegioNivelCreador")
 
   @@map("usuario")
 }
@@ -117,15 +120,42 @@ model Colegio {
   codigoModular String?  @unique
   distrito      String?
   direccion     String?
-  nivel         String? // inicial, primaria, secundaria
   creadoEn      DateTime @default(now())
   actualizadoEn DateTime @updatedAt
 
   // Relaciones
-  ugel        UGEL?        @relation(fields: [ugelId], references: [id])
-  usuariosRol UsuarioRol[]
+  ugel              UGEL?          @relation(fields: [ugelId], references: [id])
+  usuariosRol       UsuarioRol[]
+  nivelesPermitidos ColegioNivel[] // ← Niveles educativos autorizados
 
   @@map("colegio")
+}
+
+// Enum para niveles educativos
+enum NivelEducativo {
+  INICIAL
+  PRIMARIA
+  SECUNDARIA
+}
+
+// Modelo ColegioNivel - Niveles autorizados por colegio
+model ColegioNivel {
+  id                Int            @id @default(autoincrement())
+  colegioId         Int
+  nivel             NivelEducativo
+  puedeCrearSalones Boolean        @default(true)
+  activo            Boolean        @default(true)
+  creadoEn          DateTime       @default(now())
+  actualizadoEn     DateTime       @updatedAt
+  creadoPor         Int?           // Owner que configuró este nivel
+
+  // Relaciones
+  colegio           Colegio        @relation(fields: [colegioId], references: [id], onDelete: Cascade)
+  usuarioCreador    Usuario?       @relation("ColegioNivelCreador", fields: [creadoPor], references: [id])
+
+  // Un colegio no puede tener el mismo nivel duplicado
+  @@unique([colegioId, nivel])
+  @@map("colegio_nivel")
 }
 
 // Modelo Profesor - Perfil específico para profesores
