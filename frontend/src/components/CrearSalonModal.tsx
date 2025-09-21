@@ -2,17 +2,20 @@
 
 import { useState, useEffect } from 'react';
 import { NivelEducativo } from '@/types/colegio';
+import { 
+  ModoCreacion, 
+  CreacionManualForm, 
+  CreacionAutomaticaForm,
+  RANGOS_PREDEFINIDOS,
+  LETRAS_SECCIONES,
+  generarRangoSecciones,
+  validarRango
+} from '@/types/salon';
 
 interface CrearSalonModalProps {
   nivel: NivelEducativo;
   onClose: () => void;
-  onSubmit: (salonData: SalonFormData) => void;
-}
-
-interface SalonFormData {
-  nivel: NivelEducativo;
-  grado: string;
-  seccion: string;
+  onSubmit: (salonData: any) => void;
 }
 
 // Sugerencias por nivel
@@ -45,18 +48,32 @@ const SUGERENCIAS_SECCIONES = {
 };
 
 export default function CrearSalonModal({ nivel, onClose, onSubmit }: CrearSalonModalProps) {
-  const [formData, setFormData] = useState<SalonFormData>({
+  // Estado del modo de creación
+  const [modo, setModo] = useState<ModoCreacion>('manual');
+  
+  // Estados para modo manual
+  const [formDataManual, setFormDataManual] = useState<CreacionManualForm>({
     nivel,
     grado: '',
-    seccion: 'Único' // Por defecto
+    seccion: 'Único',
+    gradoPersonalizado: false,
+    seccionPersonalizada: false
   });
 
-  const [gradoPersonalizado, setGradoPersonalizado] = useState(false);
-  const [seccionPersonalizada, setSeccionPersonalizada] = useState(false);
+  // Estados para modo automático
+  const [formDataAutomatico, setFormDataAutomatico] = useState<CreacionAutomaticaForm>({
+    nivel,
+    grado: '',
+    rango: { desde: 'A', hasta: 'C' }
+  });
+
+  // Preview de salones a crear (modo automático)
+  const [previewSalones, setPreviewSalones] = useState<string[]>([]);
 
   const sugerenciasGrados = SUGERENCIAS_GRADOS[nivel];
   const sugerenciasSecciones = SUGERENCIAS_SECCIONES[nivel];
 
+  // Información del nivel
   const getNivelInfo = (nivel: NivelEducativo) => {
     switch (nivel) {
       case NivelEducativo.INICIAL:
@@ -70,30 +87,88 @@ export default function CrearSalonModal({ nivel, onClose, onSubmit }: CrearSalon
 
   const info = getNivelInfo(nivel);
 
+  // Actualizar preview cuando cambian los datos del modo automático
+  useEffect(() => {
+    if (modo === 'automatico' && formDataAutomatico.grado && validarRango(formDataAutomatico.rango.desde, formDataAutomatico.rango.hasta)) {
+      const secciones = generarRangoSecciones(formDataAutomatico.rango.desde, formDataAutomatico.rango.hasta);
+      setPreviewSalones(secciones);
+    } else {
+      setPreviewSalones([]);
+    }
+  }, [modo, formDataAutomatico.grado, formDataAutomatico.rango.desde, formDataAutomatico.rango.hasta]);
+
+  // Manejar envío del formulario
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.grado.trim()) {
-      alert('Por favor ingresa el grado/año');
-      return;
+    
+    if (modo === 'manual') {
+      // Validar modo manual
+      if (!formDataManual.grado.trim() || !formDataManual.seccion.trim()) {
+        alert('Por favor completa todos los campos');
+        return;
+      }
+      
+      // Enviar datos del modo manual
+      onSubmit({
+        tipo: 'manual',
+        nivel: formDataManual.nivel,
+        grado: formDataManual.grado,
+        seccion: formDataManual.seccion
+      });
+    } else {
+      // Validar modo automático
+      if (!formDataAutomatico.grado.trim() || previewSalones.length === 0) {
+        alert('Por favor completa la configuración automática');
+        return;
+      }
+      
+      // Enviar datos del modo automático
+      onSubmit({
+        tipo: 'automatico',
+        nivel: formDataAutomatico.nivel,
+        grado: formDataAutomatico.grado,
+        secciones: previewSalones
+      });
     }
-    if (!formData.seccion.trim()) {
-      alert('Por favor ingresa la sección');
-      return;
-    }
-    onSubmit(formData);
   };
 
-  const handleGradoChange = (valor: string) => {
-    setFormData(prev => ({ ...prev, grado: valor }));
+  // Handlers para modo manual
+  const handleGradoManualChange = (valor: string) => {
+    setFormDataManual(prev => ({ ...prev, grado: valor }));
   };
 
-  const handleSeccionChange = (valor: string) => {
-    setFormData(prev => ({ ...prev, seccion: valor }));
+  const handleSeccionManualChange = (valor: string) => {
+    setFormDataManual(prev => ({ ...prev, seccion: valor }));
+  };
+
+  // Handlers para modo automático
+  const handleGradoAutomaticoChange = (valor: string) => {
+    setFormDataAutomatico(prev => ({ ...prev, grado: valor }));
+  };
+
+  const handleRangoChange = (campo: 'desde' | 'hasta', valor: string) => {
+    setFormDataAutomatico(prev => ({
+      ...prev,
+      rango: { ...prev.rango, [campo]: valor }
+    }));
+  };
+
+  const aplicarRangoPredefinido = (rangoKey: string) => {
+    const rango = RANGOS_PREDEFINIDOS[rangoKey];
+    if (rango && rango.secciones.length > 0) {
+      setFormDataAutomatico(prev => ({
+        ...prev,
+        rango: {
+          desde: rango.secciones[0],
+          hasta: rango.secciones[rango.secciones.length - 1]
+        }
+      }));
+    }
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className={`bg-${info.color}-600 text-white p-4 rounded-t-lg`}>
           <div className="flex items-center justify-between">
@@ -114,41 +189,156 @@ export default function CrearSalonModal({ nivel, onClose, onSubmit }: CrearSalon
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Grado/Año */}
+          {/* Selector de Modo */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {nivel === NivelEducativo.INICIAL ? 'Edad/Año' : 'Grado'}
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              🔄 Modo de Creación
             </label>
-            
-            <div className="space-y-3">
-              {/* Toggle personalizado */}
-              <div className="flex items-center space-x-2">
+            <div className="flex space-x-4">
+              <label className="flex items-center">
                 <input
-                  type="checkbox"
-                  id="grado-personalizado"
-                  checked={gradoPersonalizado}
-                  onChange={(e) => setGradoPersonalizado(e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  type="radio"
+                  name="modo"
+                  value="manual"
+                  checked={modo === 'manual'}
+                  onChange={(e) => setModo(e.target.value as ModoCreacion)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                 />
-                <label htmlFor="grado-personalizado" className="text-sm text-gray-600">
-                  Escribir manualmente
+                <span className="ml-2 text-sm text-gray-700">Manual (personalizado)</span>
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="modo"
+                  value="automatico"
+                  checked={modo === 'automatico'}
+                  onChange={(e) => setModo(e.target.value as ModoCreacion)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                />
+                <span className="ml-2 text-sm text-gray-700">Automático (por rango) ✨</span>
+              </label>
+            </div>
+          </div>
+
+          {/* Formulario Manual */}
+          {modo === 'manual' && (
+            <div className="border rounded-lg p-4 bg-gray-50">
+              <h3 className="font-semibold text-gray-800 mb-4">📝 Creación Manual</h3>
+              
+              {/* Grado Manual */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {nivel === NivelEducativo.INICIAL ? 'Edad/Año' : 'Grado'}
                 </label>
+                
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="grado-manual-personalizado"
+                      checked={formDataManual.gradoPersonalizado}
+                      onChange={(e) => setFormDataManual(prev => ({ ...prev, gradoPersonalizado: e.target.checked }))}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="grado-manual-personalizado" className="text-sm text-gray-600">
+                      Escribir manualmente
+                    </label>
+                  </div>
+
+                  {formDataManual.gradoPersonalizado ? (
+                    <input
+                      type="text"
+                      value={formDataManual.grado}
+                      onChange={(e) => handleGradoManualChange(e.target.value)}
+                      placeholder={nivel === NivelEducativo.INICIAL ? 'Ej: 3 años' : 'Ej: 1° Primaria'}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  ) : (
+                    <select
+                      value={formDataManual.grado}
+                      onChange={(e) => handleGradoManualChange(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Seleccionar {nivel === NivelEducativo.INICIAL ? 'edad' : 'grado'}</option>
+                      {sugerenciasGrados.map((grado) => (
+                        <option key={grado} value={grado}>
+                          {grado}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
               </div>
 
-              {gradoPersonalizado ? (
-                // Input manual
-                <input
-                  type="text"
-                  value={formData.grado}
-                  onChange={(e) => handleGradoChange(e.target.value)}
-                  placeholder={nivel === NivelEducativo.INICIAL ? 'Ej: 3 años' : 'Ej: 1° Primaria'}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              ) : (
-                // Dropdown con sugerencias
+              {/* Sección Manual */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Sección
+                </label>
+                
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="seccion-manual-personalizada"
+                      checked={formDataManual.seccionPersonalizada}
+                      onChange={(e) => setFormDataManual(prev => ({ ...prev, seccionPersonalizada: e.target.checked }))}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="seccion-manual-personalizada" className="text-sm text-gray-600">
+                      Escribir manualmente
+                    </label>
+                  </div>
+
+                  {formDataManual.seccionPersonalizada ? (
+                    <input
+                      type="text"
+                      value={formDataManual.seccion}
+                      onChange={(e) => handleSeccionManualChange(e.target.value)}
+                      placeholder="Ej: Los Leones, Rojo, A, etc."
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  ) : (
+                    <select
+                      value={formDataManual.seccion}
+                      onChange={(e) => handleSeccionManualChange(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      {sugerenciasSecciones.map((seccion) => (
+                        <option key={seccion} value={seccion}>
+                          {seccion}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              </div>
+
+              {/* Preview Manual */}
+              {formDataManual.grado && formDataManual.seccion && (
+                <div className="bg-white p-3 rounded-lg border">
+                  <div className="text-sm text-gray-600">Vista previa:</div>
+                  <div className="font-semibold text-gray-800">
+                    {formDataManual.grado} - {formDataManual.seccion}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Formulario Automático */}
+          {modo === 'automatico' && (
+            <div className="border rounded-lg p-4 bg-blue-50">
+              <h3 className="font-semibold text-gray-800 mb-4">✨ Creación Automática</h3>
+              
+              {/* Grado Automático */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {nivel === NivelEducativo.INICIAL ? 'Edad/Año' : 'Grado'}
+                </label>
                 <select
-                  value={formData.grado}
-                  onChange={(e) => handleGradoChange(e.target.value)}
+                  value={formDataAutomatico.grado}
+                  onChange={(e) => handleGradoAutomaticoChange(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Seleccionar {nivel === NivelEducativo.INICIAL ? 'edad' : 'grado'}</option>
@@ -158,74 +348,78 @@ export default function CrearSalonModal({ nivel, onClose, onSubmit }: CrearSalon
                     </option>
                   ))}
                 </select>
-              )}
-            </div>
-          </div>
+              </div>
 
-          {/* Sección */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Sección
-            </label>
-            
-            <div className="space-y-3">
-              {/* Toggle personalizado */}
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="seccion-personalizada"
-                  checked={seccionPersonalizada}
-                  onChange={(e) => setSeccionPersonalizada(e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="seccion-personalizada" className="text-sm text-gray-600">
-                  Escribir manualmente
+              {/* Plantillas Rápidas */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  🚀 Plantillas Rápidas
                 </label>
-              </div>
-
-              {seccionPersonalizada ? (
-                // Input manual
-                <input
-                  type="text"
-                  value={formData.seccion}
-                  onChange={(e) => handleSeccionChange(e.target.value)}
-                  placeholder="Ej: Los Leones, Rojo, A, etc."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              ) : (
-                // Dropdown con sugerencias
-                <select
-                  value={formData.seccion}
-                  onChange={(e) => handleSeccionChange(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {sugerenciasSecciones.map((seccion) => (
-                    <option key={seccion} value={seccion}>
-                      {seccion}
-                    </option>
+                <div className="grid grid-cols-2 gap-2">
+                  {Object.entries(RANGOS_PREDEFINIDOS).map(([key, rango]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => aplicarRangoPredefinido(key)}
+                      className="p-2 text-xs bg-white border border-gray-300 rounded hover:bg-gray-50 text-left"
+                    >
+                      <div className="font-semibold">{rango.nombre}</div>
+                      <div className="text-gray-500">{rango.descripcion}</div>
+                    </button>
                   ))}
-                </select>
-              )}
-            </div>
-
-            {/* Ayuda contextual */}
-            <div className="mt-2 text-xs text-gray-500">
-              {nivel === NivelEducativo.INICIAL && (
-                <p>💡 En inicial puedes usar nombres creativos como "Los Leones", "Rojo", etc.</p>
-              )}
-              {nivel !== NivelEducativo.INICIAL && (
-                <p>💡 Usa "Único" si solo hay una sección por grado, o letras A, B, C, etc.</p>
-              )}
-            </div>
-          </div>
-
-          {/* Preview */}
-          {formData.grado && formData.seccion && (
-            <div className="bg-gray-50 p-3 rounded-lg">
-              <div className="text-sm text-gray-600">Vista previa:</div>
-              <div className="font-semibold text-gray-800">
-                {formData.grado} - {formData.seccion}
+                </div>
               </div>
+
+              {/* Rango Personalizado */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  🎯 Rango de Secciones
+                </label>
+                <div className="flex items-center space-x-2">
+                  <div className="flex-1">
+                    <label className="block text-xs text-gray-500 mb-1">Desde</label>
+                    <select
+                      value={formDataAutomatico.rango.desde}
+                      onChange={(e) => handleRangoChange('desde', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      {LETRAS_SECCIONES.map((letra) => (
+                        <option key={letra} value={letra}>
+                          {letra}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="text-gray-400 mt-6">→</div>
+                  <div className="flex-1">
+                    <label className="block text-xs text-gray-500 mb-1">Hasta</label>
+                    <select
+                      value={formDataAutomatico.rango.hasta}
+                      onChange={(e) => handleRangoChange('hasta', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      {LETRAS_SECCIONES.map((letra) => (
+                        <option key={letra} value={letra}>
+                          {letra}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Preview Automático */}
+              {previewSalones.length > 0 && formDataAutomatico.grado && (
+                <div className="bg-white p-3 rounded-lg border">
+                  <div className="text-sm text-gray-600 mb-2">Vista previa:</div>
+                  <div className="text-sm text-gray-700 mb-2">
+                    <strong>{formDataAutomatico.grado}</strong> - Secciones: {previewSalones.join(', ')}
+                  </div>
+                  <div className="text-lg font-bold text-blue-600">
+                    Total: {previewSalones.length} salones
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -240,10 +434,17 @@ export default function CrearSalonModal({ nivel, onClose, onSubmit }: CrearSalon
             </button>
             <button
               type="submit"
-              disabled={!formData.grado.trim() || !formData.seccion.trim()}
+              disabled={
+                modo === 'manual' 
+                  ? !formDataManual.grado.trim() || !formDataManual.seccion.trim()
+                  : !formDataAutomatico.grado.trim() || previewSalones.length === 0
+              }
               className={`flex-1 px-4 py-2 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed bg-${info.color}-600 hover:bg-${info.color}-700`}
             >
-              Crear Salón
+              {modo === 'manual' 
+                ? 'Crear Salón' 
+                : `Crear ${previewSalones.length} Salones`
+              }
             </button>
           </div>
         </form>

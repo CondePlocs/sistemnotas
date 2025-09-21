@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../../providers/prisma.service';
 import { CreateOwnerDto } from './dto/create-owner.dto';
 import * as bcrypt from 'bcrypt';
@@ -8,89 +8,92 @@ export class OwnerService {
   constructor(private prisma: PrismaService) {}
 
   async createOwner(createOwnerDto: CreateOwnerDto) {
-    const { email, password, dni, nombres, apellidos, telefono } = createOwnerDto;
+    const { email, password, nombres, apellidos, dni, telefono } = createOwnerDto;
 
-    // Validar que el email no exista
+    // Verificar si ya existe un usuario con ese email
     const existingUser = await this.prisma.usuario.findUnique({
-      where: { email },
+      where: { email }
     });
 
     if (existingUser) {
-      throw new ConflictException('El email ya está registrado');
+      throw new ConflictException('Ya existe un usuario con ese email');
     }
 
-    // Validar DNI si se proporciona
+    // Verificar si ya existe un usuario con ese DNI
     if (dni) {
       const existingDni = await this.prisma.usuario.findUnique({
-        where: { dni },
+        where: { dni }
       });
 
       if (existingDni) {
-        throw new ConflictException('El DNI ya está registrado');
+        throw new ConflictException('Ya existe un usuario con ese DNI');
       }
     }
 
-    // Buscar o crear el rol OWNER
-    let ownerRole = await this.prisma.rol.findUnique({
-      where: { nombre: 'OWNER' },
-    });
-
-    if (!ownerRole) {
-      ownerRole = await this.prisma.rol.create({
-        data: { nombre: 'OWNER' },
-      });
-    }
-
-    // Hash de la contraseña
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
-
     try {
-      // Transacción para crear usuario y asignar rol
+      // Hash de la contraseña
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+      // Buscar el rol OWNER
+      const ownerRole = await this.prisma.rol.findUnique({
+        where: { nombre: 'OWNER' }
+      });
+
+      if (!ownerRole) {
+        throw new BadRequestException('Rol OWNER no encontrado');
+      }
+
+      // Crear usuario y asignar rol en una transacción
       const result = await this.prisma.$transaction(async (prisma) => {
-        // 1. Crear el usuario
+        // Crear usuario
         const newUser = await prisma.usuario.create({
           data: {
             email,
             password_hash: hashedPassword,
-            dni: dni || null,
-            nombres: nombres || null,
-            apellidos: apellidos || null,
-            telefono: telefono || null,
+            nombres,
+            apellidos,
+            dni,
+            telefono,
             estado: 'activo',
-          },
+          }
         });
 
-        // 2. Asignar rol OWNER (sin colegio_id porque es global)
-        const usuarioRol = await prisma.usuarioRol.create({
+        // Asignar rol OWNER (sin colegio porque es global)
+        await prisma.usuarioRol.create({
           data: {
             usuario_id: newUser.id,
             rol_id: ownerRole.id,
-            colegio_id: null, // Owner no está vinculado a un colegio específico
-            hecho_por: null, // Se auto-aprueba (no hay quien lo cree)
-            hecho_en: new Date(), // Timestamp de creación
-          },
+            colegio_id: null, // OWNER no tiene colegio específico
+            hecho_por: newUser.id, // Se crea a sí mismo
+          }
         });
 
-        return {
-          usuario: newUser,
-          rol: usuarioRol,
-        };
+        return newUser;
       });
 
-      // Retornar datos sin la contraseña
-      const { password_hash, ...userWithoutPassword } = result.usuario;
+      // Retornar usuario sin contraseña
+      const { password_hash, ...userWithoutPassword } = result;
       
       return {
         success: true,
-        message: 'Owner registrado exitosamente',
-        data: {
-          usuario: userWithoutPassword,
-          rol: 'OWNER',
-        },
+        message: 'Owner creado exitosamente',
+        user: userWithoutPassword,
       };
+
     } catch (error) {
       console.error('Error al crear Owner:', error);
+      
+      // Manejar errores específicos de Prisma
+      if (error.code === 'P2002') {
+        const field = error.meta?.target?.[0];
+        if (field === 'email') {
+          throw new ConflictException('Ya existe un usuario con ese email');
+        } else if (field === 'dni') {
+          throw new ConflictException('Ya existe un usuario con ese DNI');
+        }
+      }
+      
       throw new BadRequestException('Error al registrar el Owner');
     }
   }
@@ -99,7 +102,7 @@ export class OwnerService {
   async getAllOwners() {
     const owners = await this.prisma.usuario.findMany({
       where: {
-        roles_usuario: {
+        roles: {
           some: {
             rol: {
               nombre: 'OWNER',
@@ -110,9 +113,9 @@ export class OwnerService {
       select: {
         id: true,
         email: true,
-        dni: true,
         nombres: true,
         apellidos: true,
+        dni: true,
         telefono: true,
         estado: true,
         creado_en: true,
@@ -121,8 +124,7 @@ export class OwnerService {
 
     return {
       success: true,
-      data: owners,
-      count: owners.length,
+      owners,
     };
   }
 }

@@ -18,7 +18,7 @@ export class AuthService {
     const user = await this.prisma.usuario.findUnique({
       where: { email },
       include: {
-        roles_usuario: {
+        roles: {
           include: {
             rol: true,
             colegio: true,
@@ -46,7 +46,7 @@ export class AuthService {
     const payload = {
       sub: user.id,
       email: user.email,
-      roles: user.roles_usuario.map(ur => ({
+      roles: user.roles.map(ur => ({
         rol: ur.rol.nombre,
         colegio_id: ur.colegio_id,
         colegio_nombre: ur.colegio?.nombre || null,
@@ -74,7 +74,7 @@ export class AuthService {
     const user = await this.prisma.usuario.findUnique({
       where: { id: userId },
       include: {
-        roles_usuario: {
+        roles: {
           include: {
             rol: true,
             colegio: true,
@@ -90,7 +90,7 @@ export class AuthService {
     const { password_hash, ...userWithoutPassword } = user;
     return {
       ...userWithoutPassword,
-      roles: user.roles_usuario.map(ur => ({
+      roles: user.roles.map(ur => ({
         rol: ur.rol.nombre,
         colegio_id: ur.colegio_id,
         colegio_nombre: ur.colegio?.nombre || null,

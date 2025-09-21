@@ -35,15 +35,13 @@ model Usuario {
   actualizado_en DateTime      @updatedAt
 
   // Relaciones
-  roles_usuario UsuarioRol[] @relation("UsuarioRoles")
-  creaciones    UsuarioRol[] @relation("CreadoPor")
-  
+  roles           UsuarioRol[] @relation("UsuarioRoles")
+  creados         UsuarioRol[] @relation("CreadoPor")
+  salonesCreados  Salon[]      @relation("SalonCreador") // ← Salones creados por este usuario
+
   // Relaciones de permisos
   permisosOtorgados     PermisosAdministrativo[] @relation("PermisosOtorgados")
   permisosActualizados  PermisosAdministrativo[] @relation("PermisosActualizados")
-  
-  // Relación con ColegioNivel
-  nivelesColegioCreados ColegioNivel[] @relation("ColegioNivelCreador")
 
   @@map("usuario")
 }
@@ -127,6 +125,7 @@ model Colegio {
   ugel              UGEL?          @relation(fields: [ugelId], references: [id])
   usuariosRol       UsuarioRol[]
   nivelesPermitidos ColegioNivel[] // ← Niveles educativos autorizados
+  salones           Salon[]        // ← Salones del colegio
 
   @@map("colegio")
 }
@@ -143,19 +142,39 @@ model ColegioNivel {
   id                Int            @id @default(autoincrement())
   colegioId         Int
   nivel             NivelEducativo
-  puedeCrearSalones Boolean        @default(true)
   activo            Boolean        @default(true)
+  puedeCrearSalones Boolean        @default(true)
   creadoEn          DateTime       @default(now())
   actualizadoEn     DateTime       @updatedAt
-  creadoPor         Int?           // Owner que configuró este nivel
 
   // Relaciones
-  colegio           Colegio        @relation(fields: [colegioId], references: [id], onDelete: Cascade)
-  usuarioCreador    Usuario?       @relation("ColegioNivelCreador", fields: [creadoPor], references: [id])
+  colegio Colegio @relation(fields: [colegioId], references: [id], onDelete: Cascade)
 
-  // Un colegio no puede tener el mismo nivel duplicado
   @@unique([colegioId, nivel])
   @@map("colegio_nivel")
+}
+
+// Modelo Salon - Salones/Aulas por colegio
+model Salon {
+  id            Int            @id @default(autoincrement())
+  colegioId     Int
+  nivel         NivelEducativo
+  grado         String         // "1° Primaria", "3 años", "2° Secundaria"
+  seccion       String         // "A", "Los Leones", "Rojo", "Único"
+  activo        Boolean        @default(true)
+  creadoPor     Int            // ID del director que creó el salón (auditoría)
+  creadoEn      DateTime       @default(now())
+  actualizadoEn DateTime       @updatedAt
+
+  // Relaciones
+  colegio     Colegio @relation(fields: [colegioId], references: [id], onDelete: Cascade)
+  creadorUser Usuario @relation("SalonCreador", fields: [creadoPor], references: [id])
+
+  // Evitar duplicados: Un colegio no puede tener dos salones iguales
+  @@unique([colegioId, nivel, grado, seccion])
+  @@index([colegioId])
+  @@index([creadoPor])
+  @@map("salon")
 }
 
 // Modelo Profesor - Perfil específico para profesores

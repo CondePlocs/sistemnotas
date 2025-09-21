@@ -119,10 +119,63 @@ function GestionSalonesContent() {
     setNivelSeleccionado(null);
   };
 
-  const handleSalonCreado = (salonData: any) => {
-    console.log('Salón creado:', salonData);
-    // Aquí iría la lógica para enviar al backend
-    handleCerrarModal();
+  const handleSalonCreado = async (salonData: any) => {
+    console.log('Datos del salón:', salonData);
+    
+    try {
+      if (salonData.tipo === 'manual') {
+        // Creación manual - un solo salón
+        const response = await fetch('/api/salones', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            nivel: salonData.nivel,
+            grado: salonData.grado,
+            seccion: salonData.seccion
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('Error al crear el salón');
+        }
+
+        const result = await response.json();
+        console.log('Salón creado:', result);
+        alert('¡Salón creado exitosamente!');
+        
+      } else if (salonData.tipo === 'automatico') {
+        // Creación automática - múltiples salones
+        const response = await fetch('/api/salones/lote', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            nivel: salonData.nivel,
+            grado: salonData.grado,
+            secciones: salonData.secciones
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('Error al crear los salones');
+        }
+
+        const result = await response.json();
+        console.log('Salones creados:', result);
+        alert(`¡${result.resumen?.total || salonData.secciones.length} salones creados exitosamente!`);
+      }
+      
+      handleCerrarModal();
+      
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error al crear el/los salón(es). Por favor intenta de nuevo.');
+    }
   };
 
   return (

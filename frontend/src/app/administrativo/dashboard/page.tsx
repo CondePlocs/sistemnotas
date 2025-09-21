@@ -51,25 +51,19 @@ function AdministrativoDashboardContent() {
       const responseData = await response.json();
       const userData = responseData.user; // ← Aquí estaba el problema!
       console.log('🔍 Datos del usuario:', userData);
-      console.log('🔍 Roles del usuario:', userData.roles_usuario);
-      console.log('🔍 Roles simplificados:', userData.roles);
+      console.log('🔍 Roles del usuario:', userData.roles);
       
-      // Buscar el rol de administrativo en roles_usuario
-      let rolAdministrativo = userData.roles_usuario?.find((rol: any) => 
-        rol.rol.nombre === 'ADMINISTRATIVO'
-      );
-
-      // Si no se encuentra en roles_usuario, buscar en roles
-      if (!rolAdministrativo && userData.roles) {
-        const rolSimple = userData.roles.find((rol: any) => rol.rol === 'ADMINISTRATIVO');
-        if (rolSimple) {
-          console.log('✅ Rol encontrado en estructura simplificada');
-          // Crear estructura compatible
-          rolAdministrativo = {
-            rol: { nombre: 'ADMINISTRATIVO' },
-            administrativo: { id: userData.id } // Usar el ID del usuario como fallback
-          };
-        }
+      // Buscar el rol de administrativo
+      const rolSimple = userData.roles?.find((rol: any) => rol.rol === 'ADMINISTRATIVO');
+      let rolAdministrativo = null;
+      
+      if (rolSimple) {
+        console.log('✅ Rol encontrado en estructura simplificada');
+        // Crear estructura compatible
+        rolAdministrativo = {
+          rol: { nombre: 'ADMINISTRATIVO' },
+          administrativo: { id: userData.id } // Usar el ID del usuario como fallback
+        };
       }
 
       console.log('🎯 Rol administrativo encontrado:', rolAdministrativo);

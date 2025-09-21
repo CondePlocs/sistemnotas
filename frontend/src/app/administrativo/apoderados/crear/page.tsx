@@ -33,8 +33,8 @@ function CrearApoderadoAdministrativoContent() {
       const userData = responseData.user;
       
       // Buscar el rol de administrativo
-      const rolAdministrativo = userData.roles_usuario?.find((rol: any) => 
-        rol.rol.nombre === 'ADMINISTRATIVO'
+      const rolAdministrativo = userData.roles?.find((rol: any) => 
+        rol.rol === 'ADMINISTRATIVO'
       );
 
       if (!rolAdministrativo) {
