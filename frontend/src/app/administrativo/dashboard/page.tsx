@@ -85,7 +85,7 @@ function AdministrativoDashboardContent() {
             email: userData.email,
           },
           colegio: {
-            nombre: rolAdministrativo.colegio?.nombre || userData.roles[0]?.colegio_nombre || 'Colegio'
+            nombre: userData.roles[0]?.colegio_nombre || 'Sin Colegio Asignado'
           }
         }
       };
