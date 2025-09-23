@@ -34,7 +34,7 @@ export class PermisosController {
   @Roles('DIRECTOR', 'ADMINISTRATIVO')
   async verificarPermiso(
     @Param('administrativoId', ParseIntPipe) administrativoId: number,
-    @Param('tipo') tipo: 'profesores' | 'apoderados' | 'administrativos'
+    @Param('tipo') tipo: 'profesores' | 'apoderados' | 'administrativos' | 'alumnos'
   ) {
     const tienePermiso = await this.permisosService.verificarPermiso(administrativoId, tipo);
     return { tienePermiso };

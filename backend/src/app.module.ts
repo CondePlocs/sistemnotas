@@ -11,9 +11,12 @@ import { ApoderadoModule } from './modules/apoderado/apoderado.module';
 import { AdministrativoModule } from './modules/administrativo/administrativo.module';
 import { PermisosModule } from './modules/permisos/permisos.module';
 import { SalonModule } from './modules/salon/salon.module';
+import { AlumnoModule } from './modules/alumno/alumno.module';
+import { PrismaModule } from './providers/prisma.module';
 
 @Module({
   imports: [
+    PrismaModule,
     AuthModule, 
     OwnerModule, 
     UbicacionModule, 
@@ -23,7 +26,8 @@ import { SalonModule } from './modules/salon/salon.module';
     ApoderadoModule,
     AdministrativoModule,
     PermisosModule,
-    SalonModule
+    SalonModule,
+    AlumnoModule
   ],
   controllers: [AppController],
   providers: [AppService],

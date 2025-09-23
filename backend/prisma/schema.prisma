@@ -43,6 +43,9 @@ model Usuario {
   permisosOtorgados     PermisosAdministrativo[] @relation("PermisosOtorgados")
   permisosActualizados  PermisosAdministrativo[] @relation("PermisosActualizados")
 
+  // Relaciones de alumnos
+  alumnosCreados        Alumno[] @relation("AlumnoCreador")
+
   @@map("usuario")
 }
 
@@ -126,6 +129,7 @@ model Colegio {
   usuariosRol       UsuarioRol[]
   nivelesPermitidos ColegioNivel[] // ← Niveles educativos autorizados
   salones           Salon[]        // ← Salones del colegio
+  alumnos           Alumno[]       // ← Alumnos del colegio
 
   @@map("colegio")
 }
@@ -307,6 +311,7 @@ model PermisosAdministrativo {
   puedeRegistrarProfesores        Boolean  @default(false)
   puedeRegistrarApoderados        Boolean  @default(false)
   puedeRegistrarAdministrativos   Boolean  @default(false)
+  puedeRegistrarAlumnos           Boolean  @default(false)
   
   // Auditoría - Quién otorgó los permisos
   otorgadoPor                     Int?
@@ -322,4 +327,48 @@ model PermisosAdministrativo {
   usuarioActualizador             Usuario? @relation("PermisosActualizados", fields: [actualizadoPor], references: [id])
   
   @@map("permisos_administrativo")
+}
+
+// Enum para el sexo del alumno
+enum SexoAlumno {
+  masculino
+  femenino
+}
+
+// Modelo Alumno - Estudiantes del colegio
+model Alumno {
+  id                Int        @id @default(autoincrement())
+  colegioId         Int        // Scope por colegio
+  
+  // Identificación personal
+  dni               String?    @unique
+  nombres           String
+  apellidos         String
+  fechaNacimiento   DateTime?
+  sexo              SexoAlumno?
+  nacionalidad      String?    @default("Peruana")
+  
+  // Contacto y residencia
+  direccion         String?
+  distrito          String?
+  numeroContacto    String?
+  
+  // Información académica básica
+  activo            Boolean    @default(true)
+  
+  // Auditoría
+  creadoPor         Int        // Usuario que registró al alumno
+  creadoEn          DateTime   @default(now())
+  actualizadoEn     DateTime   @updatedAt
+  
+  // Relaciones
+  colegio           Colegio    @relation(fields: [colegioId], references: [id], onDelete: Cascade)
+  creadorUser       Usuario    @relation("AlumnoCreador", fields: [creadoPor], references: [id])
+  
+  // Índices para optimización
+  @@index([colegioId])
+  @@index([dni])
+  @@index([activo])
+  
+  @@map("alumno")
 }

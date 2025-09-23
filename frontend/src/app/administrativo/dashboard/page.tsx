@@ -9,6 +9,7 @@ interface PermisosAdministrativo {
   puedeRegistrarProfesores: boolean;
   puedeRegistrarApoderados: boolean;
   puedeRegistrarAdministrativos: boolean;
+  puedeRegistrarAlumnos: boolean;
 }
 
 interface AdministrativoInfo {
@@ -133,6 +134,7 @@ function AdministrativoDashboardContent() {
             puedeRegistrarProfesores: false,
             puedeRegistrarApoderados: false,
             puedeRegistrarAdministrativos: false,
+            puedeRegistrarAlumnos: false,
           });
         }
       } else {
@@ -141,6 +143,7 @@ function AdministrativoDashboardContent() {
           puedeRegistrarProfesores: false,
           puedeRegistrarApoderados: false,
           puedeRegistrarAdministrativos: false,
+          puedeRegistrarAlumnos: false,
         });
       }
 
@@ -323,10 +326,47 @@ function AdministrativoDashboardContent() {
               )}
             </div>
           </div>
+          {/* Card Registrar Alumnos */}
+          <div className={`bg-white rounded-lg shadow-md border-2 transition-all duration-200 ${
+            permisos?.puedeRegistrarAlumnos 
+              ? 'border-orange-200 hover:border-orange-300 hover:shadow-lg cursor-pointer' 
+              : 'border-gray-200 opacity-50 cursor-not-allowed'
+          }`}>
+            <div className="p-6">
+              <div className="flex items-center mb-4">
+                <div className={`p-3 rounded-full ${
+                  permisos?.puedeRegistrarAlumnos ? 'bg-orange-100' : 'bg-gray-100'
+                }`}>
+                  <svg className={`w-6 h-6 ${
+                    permisos?.puedeRegistrarAlumnos ? 'text-orange-600' : 'text-gray-400'
+                  }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                  </svg>
+                </div>
+                <div className="ml-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Registrar Alumnos</h3>
+                  <p className="text-sm text-gray-600">Agregar nuevos estudiantes al sistema</p>
+                </div>
+              </div>
+              
+              {permisos?.puedeRegistrarAlumnos ? (
+                <button
+                  onClick={() => navegarA('/administrativo/alumnos/crear')}
+                  className="w-full bg-orange-600 hover:bg-orange-700 text-white py-2 px-4 rounded-md text-sm font-medium transition-colors"
+                >
+                  Acceder
+                </button>
+              ) : (
+                <div className="w-full bg-gray-100 text-gray-500 py-2 px-4 rounded-md text-sm font-medium text-center">
+                  Sin Permisos
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Mensaje si no tiene permisos */}
-        {permisos && !permisos.puedeRegistrarProfesores && !permisos.puedeRegistrarApoderados && !permisos.puedeRegistrarAdministrativos && (
+        {permisos && !permisos.puedeRegistrarProfesores && !permisos.puedeRegistrarApoderados && !permisos.puedeRegistrarAdministrativos && !permisos.puedeRegistrarAlumnos && (
           <div className="mt-8 bg-yellow-50 border border-yellow-200 rounded-lg p-6">
             <div className="flex items-center">
               <svg className="w-6 h-6 text-yellow-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
