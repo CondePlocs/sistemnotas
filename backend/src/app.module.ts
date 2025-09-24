@@ -12,6 +12,7 @@ import { AdministrativoModule } from './modules/administrativo/administrativo.mo
 import { PermisosModule } from './modules/permisos/permisos.module';
 import { SalonModule } from './modules/salon/salon.module';
 import { AlumnoModule } from './modules/alumno/alumno.module';
+import { CursoModule } from './modules/curso/curso.module';
 import { PrismaModule } from './providers/prisma.module';
 
 @Module({
@@ -27,7 +28,8 @@ import { PrismaModule } from './providers/prisma.module';
     AdministrativoModule,
     PermisosModule,
     SalonModule,
-    AlumnoModule
+    AlumnoModule,
+    CursoModule
   ],
   controllers: [AppController],
   providers: [AppService],

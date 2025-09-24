@@ -99,10 +99,39 @@ function OwnerDashboardContent() {
             </Link>
           </div>
 
+          {/* Card: Gestionar Cursos */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="flex items-center mb-4">
+              <div className="bg-orange-100 p-3 rounded-full">
+                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+              </div>
+              <h3 className="ml-3 text-lg font-semibold text-gray-900">Cursos</h3>
+            </div>
+            <p className="text-gray-600 mb-4">
+              Crear y gestionar cursos con sus competencias.
+            </p>
+            <div className="space-y-2">
+              <Link 
+                href="/owner/cursos/nuevo"
+                className="w-full bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-4 rounded-md transition-colors inline-block text-center"
+              >
+                Crear Curso
+              </Link>
+              <Link 
+                href="/owner/cursos"
+                className="w-full bg-orange-100 hover:bg-orange-200 text-orange-700 font-medium py-2 px-4 rounded-md transition-colors inline-block text-center border border-orange-300"
+              >
+                Ver Todos los Cursos
+              </Link>
+            </div>
+          </div>
+
         </div>
 
         {/* Stats Section */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-5 gap-4">
           <div className="bg-white rounded-lg shadow-md p-4 text-center">
             <div className="text-2xl font-bold text-blue-600">0</div>
             <div className="text-sm text-gray-600">Owners</div>
@@ -117,6 +146,10 @@ function OwnerDashboardContent() {
           </div>
           <div className="bg-white rounded-lg shadow-md p-4 text-center">
             <div className="text-2xl font-bold text-orange-600">0</div>
+            <div className="text-sm text-gray-600">Cursos</div>
+          </div>
+          <div className="bg-white rounded-lg shadow-md p-4 text-center">
+            <div className="text-2xl font-bold text-gray-600">0</div>
             <div className="text-sm text-gray-600">Usuarios Total</div>
           </div>
         </div>

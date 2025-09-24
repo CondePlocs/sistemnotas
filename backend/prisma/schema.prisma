@@ -49,6 +49,10 @@ model Usuario {
   // Relaciones de apoderado-alumno
   relacionesApoderadoAlumno ApoderadoAlumno[] @relation("RelacionCreador")
 
+  // Relaciones de cursos y competencias
+  cursosCreados       Curso[]       @relation("CursoCreador")
+  competenciasCreadas Competencia[] @relation("CompetenciaCreador")
+
   @@map("usuario")
 }
 
@@ -409,4 +413,59 @@ model ApoderadoAlumno {
   @@index([esPrincipal])
   
   @@map("apoderado_alumno")
+}
+
+// ========================================
+// SISTEMA DE CURSOS Y COMPETENCIAS
+// ========================================
+
+// Modelo Curso - Cursos creados por el Owner (Matemática, Comunicación, etc.)
+model Curso {
+  id          Int            @id @default(autoincrement())
+  nombre      String         // "Matemática", "Comunicación", "Personal Social"
+  descripcion String?        // Descripción opcional del curso
+  nivel       NivelEducativo // INICIAL, PRIMARIA, SECUNDARIA
+  color       String?        // Color para UI (ej: "#3B82F6")
+  activo      Boolean        @default(true)
+  creadoPor   Int            // Owner que creó el curso
+  creadoEn    DateTime       @default(now())
+  actualizadoEn DateTime     @updatedAt
+
+  // Relaciones
+  competencias Competencia[]
+  creador      Usuario       @relation("CursoCreador", fields: [creadoPor], references: [id])
+
+  // Constraints e índices
+  @@unique([nombre, nivel]) // No duplicar "Matemática - PRIMARIA"
+  @@index([nivel])
+  @@index([activo])
+  @@index([creadoPor])
+  @@index([nivel, activo]) // Búsquedas optimizadas por nivel activo
+  
+  @@map("curso")
+}
+
+// Modelo Competencia - Competencias de cada curso
+model Competencia {
+  id          Int      @id @default(autoincrement())
+  cursoId     Int
+  nombre      String   // "Domina números y operaciones", "Desarrolla lógica matemática"
+  orden       Int      // Para ordenar competencias (1, 2, 3, ...)
+  activo      Boolean  @default(true)
+  creadoPor   Int      // Owner que creó la competencia
+  creadoEn    DateTime @default(now())
+  actualizadoEn DateTime @updatedAt
+
+  // Relaciones
+  curso   Curso   @relation(fields: [cursoId], references: [id], onDelete: Cascade)
+  creador Usuario @relation("CompetenciaCreador", fields: [creadoPor], references: [id])
+
+  // Constraints e índices
+  @@unique([cursoId, orden]) // No duplicar orden en mismo curso
+  @@index([cursoId])
+  @@index([activo])
+  @@index([creadoPor])
+  @@index([cursoId, orden, activo]) // Ordenamiento eficiente
+  
+  @@map("competencia")
 }
