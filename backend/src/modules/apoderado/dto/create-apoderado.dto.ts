@@ -1,4 +1,6 @@
-import { IsString, IsOptional, IsNotEmpty, IsEmail, IsDateString } from 'class-validator';
+import { IsString, IsOptional, IsNotEmpty, IsEmail, IsDateString, IsArray, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+import { RelacionApoderadoAlumnoDto } from './relacion-apoderado-alumno.dto';
 
 export class CreateApoderadoDto {
   // Datos del Usuario (básicos)
@@ -43,10 +45,6 @@ export class CreateApoderadoDto {
   @IsString()
   nacionalidad?: string;
 
-  @IsString()
-  @IsNotEmpty()
-  parentesco: string; // Campo obligatorio
-
   @IsOptional()
   @IsString()
   direccion?: string;
@@ -62,4 +60,10 @@ export class CreateApoderadoDto {
   @IsOptional()
   @IsString()
   telefonoTrabajo?: string;
+
+  // Relaciones con alumnos
+  @IsArray({ message: 'Las relaciones con alumnos deben ser un arreglo' })
+  @ValidateNested({ each: true })
+  @Type(() => RelacionApoderadoAlumnoDto)
+  alumnos: RelacionApoderadoAlumnoDto[];
 }

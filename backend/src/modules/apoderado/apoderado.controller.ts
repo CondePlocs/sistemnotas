@@ -24,10 +24,28 @@ export class ApoderadoController {
     return this.apoderadoService.obtenerApoderados(directorUserId);
   }
 
+  // ========================================
+  // NUEVOS ENDPOINTS PARA GESTIÓN DE RELACIONES
+  // ========================================
+
+  @Get('alumnos-disponibles')
+  @Roles('DIRECTOR', 'ADMINISTRATIVO')
+  async obtenerAlumnosDisponibles(@Req() request: any) {
+    const usuarioId = request.user.id;
+    return this.apoderadoService.obtenerAlumnosDelColegio(usuarioId);
+  }
+
   @Get(':id')
   @Roles('DIRECTOR')
   async obtenerApoderado(@Param('id', ParseIntPipe) id: number, @Req() request: any) {
     const directorUserId = request.user.id;
     return this.apoderadoService.obtenerApoderado(id, directorUserId);
+  }
+
+  @Get(':id/alumnos')
+  @Roles('DIRECTOR', 'ADMINISTRATIVO')
+  async obtenerAlumnosDeApoderado(@Param('id', ParseIntPipe) id: number, @Req() request: any) {
+    const usuarioId = request.user.id;
+    return this.apoderadoService.obtenerAlumnosDeApoderado(id, usuarioId);
   }
 }

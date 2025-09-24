@@ -46,6 +46,9 @@ model Usuario {
   // Relaciones de alumnos
   alumnosCreados        Alumno[] @relation("AlumnoCreador")
 
+  // Relaciones de apoderado-alumno
+  relacionesApoderadoAlumno ApoderadoAlumno[] @relation("RelacionCreador")
+
   @@map("usuario")
 }
 
@@ -224,9 +227,6 @@ model Apoderado {
   estadoCivil     String?
   nacionalidad    String?
 
-  // Relación con el alumno
-  parentesco String // padre, madre, tío, hermano, tutor legal
-
   // Contacto
   direccion String?
 
@@ -234,6 +234,9 @@ model Apoderado {
   ocupacion       String?
   centroTrabajo   String?
   telefonoTrabajo String?
+
+  // Relación con alumnos (muchos a muchos)
+  alumnos ApoderadoAlumno[]
 
   creadoEn      DateTime @default(now())
   actualizadoEn DateTime @updatedAt
@@ -365,10 +368,45 @@ model Alumno {
   colegio           Colegio    @relation(fields: [colegioId], references: [id], onDelete: Cascade)
   creadorUser       Usuario    @relation("AlumnoCreador", fields: [creadoPor], references: [id])
   
+  // Relación con apoderados (muchos a muchos)
+  apoderados        ApoderadoAlumno[]
+  
   // Índices para optimización
   @@index([colegioId])
   @@index([dni])
   @@index([activo])
   
   @@map("alumno")
+}
+
+// Modelo ApoderadoAlumno - Tabla intermedia para relación muchos a muchos
+model ApoderadoAlumno {
+  id           Int       @id @default(autoincrement())
+  apoderadoId  Int       // FK al apoderado
+  alumnoId     Int       // FK al alumno
+  
+  // Información específica de la relación
+  parentesco   String    // padre, madre, tío, hermano, tutor legal, abuelo, etc.
+  esPrincipal  Boolean   @default(false) // Apoderado principal del alumno
+  activo       Boolean   @default(true)  // Para soft delete de relaciones
+  
+  // Auditoría completa
+  creadoPor    Int       // Usuario que creó la relación (director/administrativo)
+  creadoEn     DateTime  @default(now())
+  actualizadoEn DateTime @updatedAt
+  actualizadoPor Int?    // Usuario que hizo la última actualización
+  
+  // Relaciones
+  apoderado    Apoderado @relation(fields: [apoderadoId], references: [id], onDelete: Cascade)
+  alumno       Alumno    @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
+  creador      Usuario   @relation("RelacionCreador", fields: [creadoPor], references: [id])
+  
+  // Índices únicos y de optimización
+  @@unique([apoderadoId, alumnoId]) // Un apoderado no puede tener relación duplicada con el mismo alumno
+  @@index([apoderadoId])
+  @@index([alumnoId])
+  @@index([activo])
+  @@index([esPrincipal])
+  
+  @@map("apoderado_alumno")
 }

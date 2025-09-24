@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../providers/prisma.service';
-import { CreateApoderadoDto } from './dto/create-apoderado.dto';
+import { CreateApoderadoDto, RelacionApoderadoAlumnoDto, CrearRelacionesDto, ActualizarRelacionDto } from './dto';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -122,13 +122,39 @@ export class ApoderadoService {
           sexo: createApoderadoDto.sexo,
           estadoCivil: createApoderadoDto.estadoCivil,
           nacionalidad: createApoderadoDto.nacionalidad,
-          parentesco: createApoderadoDto.parentesco,
           direccion: createApoderadoDto.direccion,
           ocupacion: createApoderadoDto.ocupacion,
           centroTrabajo: createApoderadoDto.centroTrabajo,
           telefonoTrabajo: createApoderadoDto.telefonoTrabajo,
         }
       });
+
+      // Crear relaciones con alumnos si se proporcionaron
+      if (createApoderadoDto.alumnos && createApoderadoDto.alumnos.length > 0) {
+        // Verificar que todos los alumnos pertenecen al mismo colegio
+        const alumnosIds = createApoderadoDto.alumnos.map(rel => rel.alumnoId);
+        const alumnos = await prisma.alumno.findMany({
+          where: {
+            id: { in: alumnosIds },
+            colegio: { id: colegioId }
+          }
+        });
+
+        if (alumnos.length !== alumnosIds.length) {
+          throw new ForbiddenException('Algunos alumnos no pertenecen a este colegio o no existen');
+        }
+
+        // Crear las relaciones (usando el nombre correcto de la tabla)
+        await prisma.apoderadoAlumno.createMany({
+          data: createApoderadoDto.alumnos.map(rel => ({
+            apoderadoId: apoderado.id,
+            alumnoId: rel.alumnoId,
+            parentesco: rel.parentesco,
+            esPrincipal: rel.esPrincipal || false,
+            creadoPor: userId
+          }))
+        });
+      }
 
       return { usuario, usuarioRol, apoderado };
     });
@@ -269,5 +295,378 @@ export class ApoderadoService {
     }
 
     return apoderado;
+  }
+
+  // ========================================
+  // NUEVOS MÉTODOS PARA GESTIÓN DE RELACIONES APODERADO-ALUMNO
+  // ========================================
+
+  /**
+   * Obtener alumnos disponibles del colegio para asignar a apoderados
+   */
+  async obtenerAlumnosDelColegio(usuarioId: number) {
+    // Obtener el colegio del usuario (director o administrativo)
+    const usuarioRol = await this.prisma.usuarioRol.findFirst({
+      where: { 
+        usuario_id: usuarioId,
+        rol: {
+          nombre: {
+            in: ['DIRECTOR', 'ADMINISTRATIVO']
+          }
+        }
+      },
+      include: {
+        rol: true
+      }
+    });
+
+    if (!usuarioRol?.colegio_id) {
+      throw new ForbiddenException('Usuario no tiene acceso a alumnos');
+    }
+
+    // Si es administrativo, verificar permisos
+    if (usuarioRol.rol.nombre === 'ADMINISTRATIVO') {
+      const administrativo = await this.prisma.administrativo.findFirst({
+        where: {
+          usuarioRolId: usuarioRol.id
+        }
+      });
+
+      if (administrativo) {
+        const permisos = await this.prisma.permisosAdministrativo.findUnique({
+          where: {
+            administrativoId: administrativo.id
+          }
+        });
+
+        if (!permisos?.puedeRegistrarApoderados) {
+          throw new ForbiddenException('No tienes permisos para gestionar apoderados');
+        }
+      }
+    }
+
+    // Obtener alumnos activos del colegio
+    return this.prisma.alumno.findMany({
+      where: {
+        colegio: {
+          id: usuarioRol.colegio_id
+        },
+        activo: true
+      },
+      select: {
+        id: true,
+        dni: true,
+        nombres: true,
+        apellidos: true,
+        fechaNacimiento: true,
+        sexo: true,
+        colegio: {
+          select: {
+            id: true,
+            nombre: true
+          }
+        }
+      },
+      orderBy: [
+        { apellidos: 'asc' },
+        { nombres: 'asc' }
+      ]
+    });
+  }
+
+  /**
+   * Obtener alumnos de un apoderado específico
+   */
+  async obtenerAlumnosDeApoderado(apoderadoId: number, usuarioId: number) {
+    // Verificar acceso del usuario
+    const usuarioRol = await this.prisma.usuarioRol.findFirst({
+      where: { 
+        usuario_id: usuarioId,
+        rol: {
+          nombre: {
+            in: ['DIRECTOR', 'ADMINISTRATIVO']
+          }
+        }
+      }
+    });
+
+    if (!usuarioRol?.colegio_id) {
+      throw new ForbiddenException('Usuario no tiene acceso');
+    }
+
+    // Verificar que el apoderado pertenece al mismo colegio
+    const apoderado = await this.prisma.apoderado.findUnique({
+      where: { id: apoderadoId },
+      include: {
+        usuarioRol: true
+      }
+    });
+
+    if (!apoderado || apoderado.usuarioRol.colegio_id !== usuarioRol.colegio_id) {
+      throw new ForbiddenException('No tienes acceso a este apoderado');
+    }
+
+    // Obtener relaciones del apoderado con alumnos
+    // NOTA: Este método funcionará después de la migración
+    
+    return this.prisma.apoderadoAlumno.findMany({
+      where: {
+        apoderadoId,
+        activo: true
+      },
+      include: {
+        alumno: {
+          select: {
+            id: true,
+            dni: true,
+            nombres: true,
+            apellidos: true,
+            fechaNacimiento: true,
+            sexo: true,
+            activo: true
+          }
+        },
+        creador: {
+          select: {
+            id: true,
+            nombres: true,
+            apellidos: true
+          }
+        }
+      },
+      orderBy: {
+        creadoEn: 'desc'
+      }
+    });
+    
+    
+    // Placeholder hasta que se ejecute la migración
+    return [];
+  }
+
+  /**
+   * Crear relaciones entre apoderado y alumnos
+   */
+  async crearRelacionesApoderadoAlumno(
+    apoderadoId: number, 
+    relaciones: RelacionApoderadoAlumnoDto[], 
+    usuarioId: number
+  ) {
+    // Verificar acceso del usuario
+    const usuarioRol = await this.prisma.usuarioRol.findFirst({
+      where: { 
+        usuario_id: usuarioId,
+        rol: {
+          nombre: {
+            in: ['DIRECTOR', 'ADMINISTRATIVO']
+          }
+        }
+      }
+    });
+
+    if (!usuarioRol?.colegio_id) {
+      throw new ForbiddenException('Usuario no tiene acceso');
+    }
+
+    // Verificar que el apoderado existe y pertenece al mismo colegio
+    const apoderado = await this.prisma.apoderado.findUnique({
+      where: { id: apoderadoId },
+      include: {
+        usuarioRol: true
+      }
+    });
+
+    if (!apoderado || apoderado.usuarioRol.colegio_id !== usuarioRol.colegio_id) {
+      throw new ForbiddenException('No tienes acceso a este apoderado');
+    }
+
+    // Verificar que todos los alumnos pertenecen al mismo colegio
+    const alumnosIds = relaciones.map(rel => rel.alumnoId);
+    const alumnos = await this.prisma.alumno.findMany({
+      where: {
+        id: { in: alumnosIds },
+        colegio: { id: usuarioRol.colegio_id }
+      }
+    });
+
+    if (alumnos.length !== alumnosIds.length) {
+      throw new ForbiddenException('Algunos alumnos no pertenecen a este colegio o no existen');
+    }
+
+    // Crear las relaciones
+    // NOTA: Este método funcionará después de la migración
+    
+    const relacionesCreadas = await this.prisma.apoderadoAlumno.createMany({
+      data: relaciones.map(rel => ({
+        apoderadoId,
+        alumnoId: rel.alumnoId,
+        parentesco: rel.parentesco,
+        esPrincipal: rel.esPrincipal || false,
+        creadoPor: usuarioId
+      }))
+    });
+
+    return {
+      success: true,
+      message: 'Relaciones creadas exitosamente',
+      count: relacionesCreadas.count
+    };
+    
+
+    // Placeholder hasta que se ejecute la migración
+    return {
+      success: true,
+      message: 'Funcionalidad disponible después de la migración',
+      count: 0
+    };
+  }
+
+  /**
+   * Actualizar una relación específica apoderado-alumno
+   */
+  async actualizarRelacionApoderadoAlumno(
+    relacionId: number,
+    actualizarDto: ActualizarRelacionDto,
+    usuarioId: number
+  ) {
+    // Verificar acceso del usuario
+    const usuarioRol = await this.prisma.usuarioRol.findFirst({
+      where: { 
+        usuario_id: usuarioId,
+        rol: {
+          nombre: {
+            in: ['DIRECTOR', 'ADMINISTRATIVO']
+          }
+        }
+      }
+    });
+
+    if (!usuarioRol?.colegio_id) {
+      throw new ForbiddenException('Usuario no tiene acceso');
+    }
+
+    // NOTA: Este método funcionará después de la migración
+    
+    // Verificar que la relación existe y pertenece al colegio del usuario
+    const relacion = await this.prisma.apoderadoAlumno.findUnique({
+      where: { id: relacionId },
+      include: {
+        apoderado: {
+          include: {
+            usuarioRol: true
+          }
+        }
+      }
+    });
+
+    if (!relacion || relacion.apoderado.usuarioRol.colegio_id !== usuarioRol.colegio_id) {
+      throw new ForbiddenException('No tienes acceso a esta relación');
+    }
+
+    // Actualizar la relación
+    const relacionActualizada = await this.prisma.apoderadoAlumno.update({
+      where: { id: relacionId },
+      data: {
+        ...actualizarDto,
+        actualizadoPor: usuarioId
+      },
+      include: {
+        alumno: {
+          select: {
+            id: true,
+            nombres: true,
+            apellidos: true
+          }
+        },
+        apoderado: {
+          include: {
+            usuarioRol: {
+              include: {
+                usuario: {
+                  select: {
+                    nombres: true,
+                    apellidos: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    return {
+      success: true,
+      message: 'Relación actualizada exitosamente',
+      data: relacionActualizada
+    };
+    
+
+    // Placeholder hasta que se ejecute la migración
+    return {
+      success: true,
+      message: 'Funcionalidad disponible después de la migración',
+      data: null
+    };
+  }
+
+  /**
+   * Eliminar (desactivar) una relación apoderado-alumno
+   */
+  async eliminarRelacionApoderadoAlumno(relacionId: number, usuarioId: number) {
+    // Verificar acceso del usuario
+    const usuarioRol = await this.prisma.usuarioRol.findFirst({
+      where: { 
+        usuario_id: usuarioId,
+        rol: {
+          nombre: {
+            in: ['DIRECTOR', 'ADMINISTRATIVO']
+          }
+        }
+      }
+    });
+
+    if (!usuarioRol?.colegio_id) {
+      throw new ForbiddenException('Usuario no tiene acceso');
+    }
+
+    // NOTA: Este método funcionará después de la migración
+    
+    // Verificar que la relación existe y pertenece al colegio del usuario
+    const relacion = await this.prisma.apoderadoAlumno.findUnique({
+      where: { id: relacionId },
+      include: {
+        apoderado: {
+          include: {
+            usuarioRol: true
+          }
+        }
+      }
+    });
+
+    if (!relacion || relacion.apoderado.usuarioRol.colegio_id !== usuarioRol.colegio_id) {
+      throw new ForbiddenException('No tienes acceso a esta relación');
+    }
+
+    // Soft delete - marcar como inactivo
+    await this.prisma.apoderadoAlumno.update({
+      where: { id: relacionId },
+      data: {
+        activo: false,
+        actualizadoPor: usuarioId
+      }
+    });
+
+    return {
+      success: true,
+      message: 'Relación eliminada exitosamente'
+    };
+    
+
+    // Placeholder hasta que se ejecute la migración
+    return {
+      success: true,
+      message: 'Funcionalidad disponible después de la migración'
+    };
   }
 }

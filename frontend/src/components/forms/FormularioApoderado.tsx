@@ -2,29 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-
-interface ApoderadoFormData {
-  // Datos básicos del usuario
-  email: string;
-  password: string;
-  dni?: string;
-  nombres?: string;
-  apellidos?: string;
-  telefono?: string;
-
-  // Relación con el estudiante
-  parentesco: string;
-
-  // Datos específicos del apoderado
-  fechaNacimiento?: string;
-  sexo?: string;
-  estadoCivil?: string;
-  nacionalidad?: string;
-  direccion?: string;
-  ocupacion?: string;
-  centroTrabajo?: string;
-  telefonoTrabajo?: string;
-}
+import { ApoderadoFormData, AlumnoConParentesco } from '@/types/apoderado';
+import SelectorAlumnos from './SelectorAlumnos';
 
 interface FormularioApoderadoProps {
   onSuccess?: () => void;
@@ -36,22 +15,46 @@ export default function FormularioApoderado({ onSuccess, redirectPath = '/direct
   const [formData, setFormData] = useState<ApoderadoFormData>({
     email: '',
     password: '',
-    parentesco: '',
+    alumnos: [],
   });
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validación: debe tener al menos un alumno seleccionado
+    if (formData.alumnos.length === 0) {
+      alert('Debe seleccionar al menos un alumno para el apoderado');
+      return;
+    }
+
+    // Validación: debe tener al menos un apoderado principal
+    const tienePrincipal = formData.alumnos.some(item => item.esPrincipal);
+    if (!tienePrincipal) {
+      alert('Debe marcar al menos un alumno como "Apoderado Principal"');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3001/api/apoderados', {
+      // Transformar los datos para el backend
+      const dataParaEnviar = {
+        ...formData,
+        alumnos: formData.alumnos.map(item => ({
+          alumnoId: item.alumno.id,
+          parentesco: item.parentesco,
+          esPrincipal: item.esPrincipal
+        }))
+      };
+
+      const response = await fetch('/api/apoderados', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify(formData),
+        body: JSON.stringify(dataParaEnviar),
       });
 
       if (!response.ok) {
@@ -180,34 +183,18 @@ export default function FormularioApoderado({ onSuccess, redirectPath = '/direct
           </div>
         </div>
 
-        {/* Relación con el Estudiante */}
+        {/* Relación con los Estudiantes */}
         <div className="border-t border-gray-200 pt-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Relación con el Estudiante</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Relación con los Estudiantes</h3>
+          <p className="text-sm text-gray-600 mb-4">
+            Selecciona los alumnos de los cuales será apoderado y define el tipo de parentesco para cada uno.
+          </p>
           
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Parentesco <span className="text-red-500">*</span>
-            </label>
-            <select
-              name="parentesco"
-              value={formData.parentesco}
-              onChange={handleChange}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">Seleccionar</option>
-              <option value="Padre">Padre</option>
-              <option value="Madre">Madre</option>
-              <option value="Abuelo">abuelo</option>
-              <option value="Abuela">Abuela</option>
-              <option value="Tío">Tío</option>
-              <option value="Tía">Tía</option>
-              <option value="Hermano">Hermano</option>
-              <option value="Hermana">Hermana</option>
-              <option value="Tutor Legal">Tutor Legal</option>
-              <option value="Otro">Otro</option>
-            </select>
-          </div>
+          <SelectorAlumnos
+            alumnosSeleccionados={formData.alumnos}
+            onAlumnosChange={(alumnos) => setFormData(prev => ({ ...prev, alumnos }))}
+            disabled={loading}
+          />
         </div>
 
         {/* Datos específicos del apoderado */}
