@@ -265,7 +265,7 @@ export class SalonService {
 
   // MÉTODOS PRIVADOS DE VALIDACIÓN
 
-  private async verificarDirectorYColegio(usuarioId: number) {
+  async verificarDirectorYColegio(usuarioId: number) {
     const director = await this.prisma.usuarioRol.findFirst({
       where: {
         usuario_id: usuarioId,
@@ -330,4 +330,5 @@ export class SalonService {
       throw new ConflictException(`Ya existe un salón "${grado} - ${seccion}" en tu colegio`);
     }
   }
+
 }
