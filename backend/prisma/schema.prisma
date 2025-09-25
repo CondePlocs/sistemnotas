@@ -325,6 +325,7 @@ model PermisosAdministrativo {
   puedeRegistrarApoderados        Boolean  @default(false)
   puedeRegistrarAdministrativos   Boolean  @default(false)
   puedeRegistrarAlumnos           Boolean  @default(false)
+  puedeGestionarSalones           Boolean  @default(false)
   
   // Auditoría - Quién otorgó los permisos
   otorgadoPor                     Int?

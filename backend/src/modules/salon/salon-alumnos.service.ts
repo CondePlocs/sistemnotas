@@ -263,8 +263,21 @@ export class SalonAlumnosService {
     });
 
     if (usuarioRolAdmin && usuarioRolAdmin.colegio_id) {
-      // Por ahora permitir a todos los administrativos
-      return { colegioId: usuarioRolAdmin.colegio_id, tipo: 'ADMINISTRATIVO' };
+      // Verificar que el administrativo tenga permisos para gestionar salones
+      const administrativo = await this.prisma.administrativo.findFirst({
+        where: {
+          usuarioRolId: usuarioRolAdmin.id
+        },
+        include: {
+          permisos: true
+        }
+      });
+
+      if (administrativo?.permisos?.puedeGestionarSalones) {
+        return { colegioId: usuarioRolAdmin.colegio_id, tipo: 'ADMINISTRATIVO' };
+      }
+
+      throw new ForbiddenException('No tienes permisos para gestionar salones. Contacta al director para obtener permisos.');
     }
 
     throw new ForbiddenException('No tienes permisos para asignar alumnos');

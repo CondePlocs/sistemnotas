@@ -32,7 +32,7 @@ export class SalonController {
 
   // Crear un salón individual (modo manual)
   @Post()
-  @Roles('DIRECTOR')
+  @Roles('DIRECTOR', 'ADMINISTRATIVO')
   @HttpCode(HttpStatus.CREATED)
   async crearSalon(@Body() createSalonDto: CreateSalonDto, @Request() req: any) {
     return this.salonService.crearSalon(createSalonDto, req.user.id);
@@ -48,7 +48,7 @@ export class SalonController {
 
   // Obtener todos los salones del colegio del director
   @Get()
-  @Roles('DIRECTOR')
+  @Roles('DIRECTOR', 'ADMINISTRATIVO')
   async obtenerSalones(@Request() req: any) {
     return this.salonService.obtenerSalonesPorDirector(req.user.id);
   }

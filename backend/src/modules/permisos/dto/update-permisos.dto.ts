@@ -20,4 +20,8 @@ export class UpdatePermisosDto {
   @IsOptional()
   @IsBoolean()
   puedeRegistrarAlumnos?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  puedeGestionarSalones?: boolean;
 }

@@ -266,6 +266,7 @@ export class SalonService {
   // MÉTODOS PRIVADOS DE VALIDACIÓN
 
   async verificarDirectorYColegio(usuarioId: number) {
+    // Primero verificar si es director
     const director = await this.prisma.usuarioRol.findFirst({
       where: {
         usuario_id: usuarioId,
@@ -283,14 +284,44 @@ export class SalonService {
       }
     });
 
-    if (!director || !director.colegio) {
-      throw new ForbiddenException('No tienes permisos de director o no tienes colegio asignado');
+    if (director && director.colegio) {
+      return {
+        colegioId: director.colegio.id,
+        colegio: director.colegio,
+      };
     }
 
-    return {
-      colegioId: director.colegio.id,
-      colegio: director.colegio,
-    };
+    // Si no es director, verificar si es administrativo con permisos
+    const administrativo = await this.prisma.usuarioRol.findFirst({
+      where: {
+        usuario_id: usuarioId,
+        rol: {
+          nombre: 'ADMINISTRATIVO'
+        }
+      },
+      include: {
+        colegio: {
+          select: {
+            id: true,
+            nombre: true,
+          }
+        },
+        administrativo: {
+          include: {
+            permisos: true
+          }
+        }
+      }
+    });
+
+    if (administrativo && administrativo.colegio && administrativo.administrativo?.permisos?.puedeGestionarSalones) {
+      return {
+        colegioId: administrativo.colegio.id,
+        colegio: administrativo.colegio,
+      };
+    }
+
+    throw new ForbiddenException('No tienes permisos para gestionar salones o no tienes colegio asignado');
   }
 
   private async verificarNivelAutorizado(colegioId: number, nivel: NivelEducativo) {
