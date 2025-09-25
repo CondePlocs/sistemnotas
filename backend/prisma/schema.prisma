@@ -48,6 +48,10 @@ model Usuario {
 
   // Relaciones de apoderado-alumno
   relacionesApoderadoAlumno ApoderadoAlumno[] @relation("RelacionCreador")
+  
+  // Relaciones de cursos automáticos - NUEVO
+  salonCursosAsignados      SalonCurso[]     @relation("SalonCursoAsignador")
+  alumnoCursosAsignados     AlumnoCurso[]    @relation("AlumnoCursoAsignador")
 
   // Relaciones de cursos y competencias
   cursosCreados       Curso[]       @relation("CursoCreador")
@@ -186,6 +190,12 @@ model Salon {
   
   // Relación con alumnos (muchos a muchos)
   alumnos     AlumnoSalon[]
+  
+  // Relación con cursos (muchos a muchos) - NUEVO
+  cursos      SalonCurso[]
+  
+  // Relación con alumnos-cursos (referencia de origen) - NUEVO
+  alumnosCursos AlumnoCurso[]
 
   // Evitar duplicados: Un colegio no puede tener dos salones iguales
   @@unique([colegioId, nivel, grado, seccion])
@@ -385,6 +395,9 @@ model Alumno {
   // Relación con salones (muchos a muchos)
   salones           AlumnoSalon[]
   
+  // Relación con cursos (muchos a muchos) - NUEVO
+  cursos            AlumnoCurso[]
+  
   // Índices para optimización
   @@index([colegioId])
   @@index([dni])
@@ -444,6 +457,12 @@ model Curso {
   // Relaciones
   competencias Competencia[]
   creador      Usuario       @relation("CursoCreador", fields: [creadoPor], references: [id])
+  
+  // Relación con salones (muchos a muchos) - NUEVO
+  salones      SalonCurso[]
+  
+  // Relación con alumnos (muchos a muchos) - NUEVO
+  alumnos      AlumnoCurso[]
 
   // Constraints e índices
   @@unique([nombre, nivel]) // No duplicar "Matemática - PRIMARIA"
@@ -511,4 +530,64 @@ model AlumnoSalon {
   @@index([alumnoId, activo]) // Historial de salones por alumno
   
   @@map("alumno_salon")
+}
+
+// ========================================
+// SISTEMA DE CURSOS AUTOMÁTICOS
+// ========================================
+
+// Modelo SalonCurso - Relación muchos a muchos entre Salón y Curso
+model SalonCurso {
+  id               Int       @id @default(autoincrement())
+  salonId          Int       // FK al salón
+  cursoId          Int       // FK al curso
+  
+  // Auditoría y control
+  activo           Boolean   @default(true)
+  asignadoEn       DateTime  @default(now())
+  asignadoPor      Int?      // Usuario que asignó (puede ser automático)
+  
+  // Relaciones
+  salon            Salon     @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  curso            Curso     @relation(fields: [cursoId], references: [id], onDelete: Cascade)
+  asignador        Usuario?  @relation("SalonCursoAsignador", fields: [asignadoPor], references: [id])
+  
+  // Constraints
+  @@unique([salonId, cursoId]) // Un curso no puede estar duplicado en el mismo salón
+  @@index([salonId])
+  @@index([cursoId])
+  @@index([salonId, activo]) // Consultas de cursos por salón
+  @@index([cursoId, activo]) // Consultas de salones por curso
+  
+  @@map("salon_curso")
+}
+
+// Modelo AlumnoCurso - Relación muchos a muchos entre Alumno y Curso
+model AlumnoCurso {
+  id               Int       @id @default(autoincrement())
+  alumnoId         Int       // FK al alumno
+  cursoId          Int       // FK al curso
+  salonId          Int?      // FK al salón (referencia de dónde viene la asignación)
+  
+  // Auditoría y control
+  activo           Boolean   @default(true)
+  asignadoEn       DateTime  @default(now())
+  asignadoPor      Int?      // Usuario que asignó (puede ser automático)
+  
+  // Relaciones
+  alumno           Alumno    @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
+  curso            Curso     @relation(fields: [cursoId], references: [id], onDelete: Cascade)
+  salon            Salon?    @relation(fields: [salonId], references: [id], onDelete: SetNull)
+  asignador        Usuario?  @relation("AlumnoCursoAsignador", fields: [asignadoPor], references: [id])
+  
+  // Constraints
+  @@unique([alumnoId, cursoId]) // Un alumno no puede tener el mismo curso duplicado
+  @@index([alumnoId])
+  @@index([cursoId])
+  @@index([salonId])
+  @@index([alumnoId, activo]) // Consultas de cursos por alumno
+  @@index([cursoId, activo]) // Consultas de alumnos por curso
+  @@index([salonId, activo]) // Consultas por salón de origen
+  
+  @@map("alumno_curso")
 }

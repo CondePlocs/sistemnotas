@@ -217,3 +217,120 @@ export const validarCompetenciaFormData = (data: CompetenciaFormData): string[] 
   
   return errores;
 };
+
+// ========================================
+// TIPOS PARA CURSOS AUTOMÁTICOS
+// ========================================
+
+// Curso asignado a un salón
+export interface SalonCurso {
+  id: number;
+  salonId: number;
+  cursoId: number;
+  activo: boolean;
+  asignadoEn: string;
+  asignadoPor?: number;
+  
+  // Relaciones
+  curso: {
+    id: number;
+    nombre: string;
+    nivel: NivelEducativo;
+    color?: string;
+    competencias?: {
+      id: number;
+      nombre: string;
+    }[];
+  };
+}
+
+// Curso asignado a un alumno
+export interface AlumnoCurso {
+  id: number;
+  alumnoId: number;
+  cursoId: number;
+  salonId?: number;
+  activo: boolean;
+  asignadoEn: string;
+  asignadoPor?: number;
+  
+  // Relaciones
+  curso: {
+    id: number;
+    nombre: string;
+    nivel: NivelEducativo;
+    color?: string;
+    competencias?: {
+      id: number;
+      nombre: string;
+    }[];
+  };
+  salon?: {
+    id: number;
+    nivel: NivelEducativo;
+    grado: string;
+    seccion: string;
+  };
+}
+
+// Respuesta de asignación automática de cursos a salón
+export interface AsignacionCursosSalonResponse {
+  success: boolean;
+  cursosAsignados: number;
+  cursos: {
+    id: number;
+    nombre: string;
+    nivel: NivelEducativo;
+    color?: string;
+  }[];
+  mensaje: string;
+}
+
+// Respuesta de asignación automática de cursos a alumno
+export interface AsignacionCursosAlumnoResponse {
+  success: boolean;
+  cursosAsignados: number;
+  cursos: {
+    id: number;
+    nombre: string;
+    nivel: NivelEducativo;
+    color?: string;
+  }[];
+  mensaje: string;
+}
+
+// Props para componente de lista de cursos de salón
+export interface CursosSalonProps {
+  salonId: number;
+  salon: {
+    id: number;
+    nivel: NivelEducativo;
+    grado: string;
+    seccion: string;
+  };
+  onRefresh?: () => void;
+}
+
+// Props para componente de lista de cursos de alumno
+export interface CursosAlumnoProps {
+  alumnoId: number;
+  alumno: {
+    id: number;
+    nombres: string;
+    apellidos: string;
+  };
+  onRefresh?: () => void;
+}
+
+// Estadísticas de cursos automáticos
+export interface EstadisticasCursosAutomaticos {
+  totalSalones: number;
+  totalAlumnos: number;
+  totalCursosAsignados: number;
+  porNivel: {
+    nivel: NivelEducativo;
+    salones: number;
+    alumnos: number;
+    cursosAsignados: number;
+  }[];
+}

@@ -4,10 +4,14 @@ import { CreateSalonDto } from './dto/create-salon.dto';
 import { CreateSalonesLoteDto } from './dto/create-salones-lote.dto';
 import { UpdateSalonDto } from './dto/update-salon.dto';
 import { NivelEducativo, SalonCreado } from '../../types/salon.types';
+import { SalonCursosService } from './salon-cursos.service';
 
 @Injectable()
 export class SalonService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly salonCursosService: SalonCursosService
+  ) {}
 
   // Crear un salón individual (modo manual)
   async crearSalon(createSalonDto: CreateSalonDto, usuarioId: number) {
@@ -51,11 +55,34 @@ export class SalonService {
       }
     });
 
-    return {
-      success: true,
-      message: 'Salón creado exitosamente',
-      salon,
-    };
+    // 5. Asignar cursos automáticamente al salón recién creado
+    try {
+      const resultadoCursos = await this.salonCursosService.asignarCursosAutomaticamenteASalon(
+        salon.id, 
+        createSalonDto.nivel, 
+        usuarioId
+      );
+      
+      return {
+        success: true,
+        message: 'Salón creado exitosamente',
+        salon,
+        cursosAsignados: resultadoCursos.cursosAsignados,
+        cursosInfo: resultadoCursos.mensaje
+      };
+    } catch (error) {
+      // Si falla la asignación de cursos, el salón ya está creado
+      // Solo logueamos el error pero no fallamos la operación
+      console.error('Error al asignar cursos automáticamente:', error);
+      
+      return {
+        success: true,
+        message: 'Salón creado exitosamente (sin asignación automática de cursos)',
+        salon,
+        cursosAsignados: 0,
+        cursosInfo: 'Error en asignación automática de cursos'
+      };
+    }
   }
 
   // Crear múltiples salones (modo automático)
@@ -105,6 +132,26 @@ export class SalonService {
       return salonesCreados;
     });
 
+    // 5. Asignar cursos automáticamente a cada salón creado
+    let totalCursosAsignados = 0;
+    const cursosInfo: string[] = [];
+
+    for (const salon of salones) {
+      try {
+        const resultadoCursos = await this.salonCursosService.asignarCursosAutomaticamenteASalon(
+          salon.id, 
+          createSalonesLoteDto.nivel, 
+          usuarioId
+        );
+        
+        totalCursosAsignados += resultadoCursos.cursosAsignados;
+        cursosInfo.push(`Salón ${salon.grado} ${salon.seccion}: ${resultadoCursos.cursosAsignados} cursos`);
+      } catch (error) {
+        console.error(`Error al asignar cursos al salón ${salon.grado} ${salon.seccion}:`, error);
+        cursosInfo.push(`Salón ${salon.grado} ${salon.seccion}: Error en asignación`);
+      }
+    }
+
     return {
       success: true,
       message: `${salones.length} salones creados exitosamente`,
@@ -114,6 +161,10 @@ export class SalonService {
         nivel: createSalonesLoteDto.nivel,
         grado: createSalonesLoteDto.grado,
         secciones: createSalonesLoteDto.secciones,
+      },
+      cursosAsignados: {
+        total: totalCursosAsignados,
+        detalle: cursosInfo
       }
     };
   }

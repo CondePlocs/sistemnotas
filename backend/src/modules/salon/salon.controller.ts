@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common';
 import { SalonService } from './salon.service';
 import { SalonAlumnosService } from './salon-alumnos.service';
+import { SalonCursosService } from './salon-cursos.service';
 import { CreateSalonDto } from './dto/create-salon.dto';
 import { CreateSalonesLoteDto } from './dto/create-salones-lote.dto';
 import { UpdateSalonDto } from './dto/update-salon.dto';
@@ -27,7 +28,8 @@ import { Roles } from '../auth/decorators/roles.decorator';
 export class SalonController {
   constructor(
     private readonly salonService: SalonService,
-    private readonly salonAlumnosService: SalonAlumnosService
+    private readonly salonAlumnosService: SalonAlumnosService,
+    private readonly salonCursosService: SalonCursosService
   ) {}
 
   // Crear un salón individual (modo manual)
@@ -154,6 +156,26 @@ export class SalonController {
       success: true,
       message: resultado.message,
       data: resultado.asignacion
+    };
+  }
+
+  // ========================================
+  // ENDPOINTS PARA GESTIÓN DE CURSOS
+  // ========================================
+
+  // Obtener cursos asignados a un salón
+  @Get(':id/cursos')
+  @Roles('DIRECTOR', 'ADMINISTRATIVO', 'PROFESOR')
+  async obtenerCursosDeSalon(
+    @Param('id', ParseIntPipe) salonId: number,
+    @Request() req: any
+  ) {
+    const cursos = await this.salonCursosService.obtenerCursosDeSalon(salonId);
+    
+    return {
+      success: true,
+      cursos: cursos,
+      total: cursos.length
     };
   }
 }

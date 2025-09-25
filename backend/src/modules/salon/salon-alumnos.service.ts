@@ -1,10 +1,14 @@
 import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../providers/prisma.service';
 import { AsignarAlumnosDto, RemoverAlumnoDto, FiltrosAlumnosDisponiblesDto } from './dto/asignar-alumnos.dto';
+import { SalonCursosService } from './salon-cursos.service';
 
 @Injectable()
 export class SalonAlumnosService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private salonCursosService: SalonCursosService
+  ) {}
 
   // Asignar múltiples alumnos a un salón
   async asignarAlumnos(asignarAlumnosDto: AsignarAlumnosDto, usuarioId: number) {
@@ -24,7 +28,7 @@ export class SalonAlumnosService {
     await this.verificarAlumnosDisponibles(asignarAlumnosDto.alumnos.map(a => a.alumnoId));
 
     // 5. Crear las asignaciones en transacción
-    return await this.prisma.$transaction(async (tx) => {
+    const resultadoAsignacion = await this.prisma.$transaction(async (tx) => {
       const asignaciones: any[] = [];
       
       for (const alumnoDto of asignarAlumnosDto.alumnos) {
@@ -55,6 +59,35 @@ export class SalonAlumnosService {
         totalAsignados: asignaciones.length
       };
     });
+
+    // 6. Asignar cursos automáticamente a cada alumno
+    const cursosAsignados: any[] = [];
+    for (const asignacion of resultadoAsignacion.asignaciones) {
+      try {
+        const resultadoCursos = await this.salonCursosService.asignarCursosAutomaticamenteAAlumno(
+          asignacion.alumno.id,
+          asignarAlumnosDto.salonId,
+          usuarioId
+        );
+        cursosAsignados.push({
+          alumnoId: asignacion.alumno.id,
+          cursosAsignados: resultadoCursos.cursosAsignados,
+          mensaje: resultadoCursos.mensaje
+        });
+      } catch (error) {
+        console.error(`Error al asignar cursos al alumno ${asignacion.alumno.id}:`, error);
+        cursosAsignados.push({
+          alumnoId: asignacion.alumno.id,
+          cursosAsignados: 0,
+          mensaje: 'Error en asignación automática de cursos'
+        });
+      }
+    }
+
+    return {
+      ...resultadoAsignacion,
+      cursosAsignados: cursosAsignados
+    };
   }
 
   // Obtener alumnos de un salón específico

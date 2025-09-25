@@ -18,11 +18,15 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { AlumnoService } from './alumno.service';
 import { CrearAlumnoDto, ActualizarAlumnoDto } from './dto';
+import { SalonCursosService } from '../salon/salon-cursos.service';
 
 @Controller('api/alumnos')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class AlumnoController {
-  constructor(private readonly alumnoService: AlumnoService) {}
+  constructor(
+    private readonly alumnoService: AlumnoService,
+    private readonly salonCursosService: SalonCursosService
+  ) {}
 
   @Post()
   @Roles('DIRECTOR', 'ADMINISTRATIVO')
@@ -190,6 +194,30 @@ export class AlumnoController {
       };
     } catch (error) {
       console.error('Error en AlumnoController.obtenerEstadisticas:', error);
+      throw new HttpException(
+        'Error interno del servidor', 
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  // Obtener cursos asignados a un alumno
+  @Get(':id/cursos')
+  @Roles('DIRECTOR', 'ADMINISTRATIVO', 'PROFESOR', 'APODERADO')
+  async obtenerCursosDeAlumno(
+    @Param('id', ParseIntPipe) alumnoId: number,
+    @Request() req: any
+  ) {
+    try {
+      const cursos = await this.salonCursosService.obtenerCursosDeAlumno(alumnoId);
+      
+      return {
+        success: true,
+        cursos: cursos,
+        total: cursos.length
+      };
+    } catch (error) {
+      console.error('Error en AlumnoController.obtenerCursosDeAlumno:', error);
       throw new HttpException(
         'Error interno del servidor', 
         HttpStatus.INTERNAL_SERVER_ERROR
