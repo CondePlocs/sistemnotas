@@ -10,6 +10,7 @@ import {
   validarCursoFormData 
 } from '@/types/curso';
 import SelectorCompetencias from './SelectorCompetencias';
+import ColorSelector from './ColorSelector';
 
 interface FormularioCursoProps {
   onSuccess?: (curso: any) => void;
@@ -204,26 +205,17 @@ export default function FormularioCurso({
           </div>
         </div>
 
-        {/* Color del Curso */}
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Color del Curso</h3>
-          
-          <div className="grid grid-cols-4 gap-2">
-            {COLORES_CURSO.map(color => (
-              <button
-                key={color.valor}
-                type="button"
-                onClick={() => setFormData(prev => ({ ...prev, color: color.valor }))}
-                className={`w-12 h-12 rounded-lg border-2 transition-all duration-200 ${
-                  formData.color === color.valor 
-                    ? 'border-gray-800 scale-110' 
-                    : 'border-gray-300 hover:border-gray-400'
-                }`}
-                style={{ backgroundColor: color.valor }}
-                title={color.nombre}
-              />
-            ))}
-          </div>
+        {/* Sección de Color */}
+        <div className="bg-gray-50 p-6 rounded-lg">
+          <ColorSelector
+            value={formData.color || '#3B82F6'}
+            onChange={(color) => setFormData(prev => ({ ...prev, color }))}
+            disabled={loading}
+            showPresets={true}
+            showCustomPicker={true}
+            label="Color del curso"
+            placeholder="Seleccionar color para el curso"
+          />
         </div>
 
         {/* Competencias */}

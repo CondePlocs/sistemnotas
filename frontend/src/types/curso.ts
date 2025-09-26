@@ -150,21 +150,77 @@ export interface SelectorCompetenciasProps {
   maxCompetencias?: number;
 }
 
+// Props para selector de colores
+export interface ColorSelectorProps {
+  value: string;
+  onChange: (color: string) => void;
+  disabled?: boolean;
+  showPresets?: boolean;
+  showCustomPicker?: boolean;
+  label?: string;
+  placeholder?: string;
+}
+
 // ========================================
 // CONSTANTES Y UTILIDADES
 // ========================================
 
-// Colores predefinidos para cursos
-export const COLORES_CURSO = [
-  { nombre: 'Azul', valor: '#3B82F6', clase: 'bg-blue-500' },
-  { nombre: 'Verde', valor: '#10B981', clase: 'bg-green-500' },
-  { nombre: 'Rojo', valor: '#EF4444', clase: 'bg-red-500' },
-  { nombre: 'Amarillo', valor: '#F59E0B', clase: 'bg-yellow-500' },
-  { nombre: 'Púrpura', valor: '#8B5CF6', clase: 'bg-purple-500' },
-  { nombre: 'Rosa', valor: '#EC4899', clase: 'bg-pink-500' },
-  { nombre: 'Índigo', valor: '#6366F1', clase: 'bg-indigo-500' },
-  { nombre: 'Gris', valor: '#6B7280', clase: 'bg-gray-500' },
-];
+// Paleta expandida de colores para cursos organizados por categorías
+export const PALETA_COLORES_CURSO = {
+  basicos: [
+    { nombre: 'Azul', valor: '#3B82F6', clase: 'bg-blue-500' },
+    { nombre: 'Verde', valor: '#10B981', clase: 'bg-green-500' },
+    { nombre: 'Rojo', valor: '#EF4444', clase: 'bg-red-500' },
+    { nombre: 'Amarillo', valor: '#F59E0B', clase: 'bg-yellow-500' },
+    { nombre: 'Púrpura', valor: '#8B5CF6', clase: 'bg-purple-500' },
+    { nombre: 'Rosa', valor: '#EC4899', clase: 'bg-pink-500' },
+    { nombre: 'Índigo', valor: '#6366F1', clase: 'bg-indigo-500' },
+    { nombre: 'Gris', valor: '#6B7280', clase: 'bg-gray-500' },
+  ],
+  vibrantes: [
+    { nombre: 'Naranja Vibrante', valor: '#FF6B35', clase: 'bg-orange-600' },
+    { nombre: 'Verde Lima', valor: '#84CC16', clase: 'bg-lime-500' },
+    { nombre: 'Cian', valor: '#06B6D4', clase: 'bg-cyan-500' },
+    { nombre: 'Magenta', valor: '#D946EF', clase: 'bg-fuchsia-500' },
+    { nombre: 'Coral', valor: '#FF7849', clase: 'bg-red-400' },
+    { nombre: 'Turquesa', valor: '#14B8A6', clase: 'bg-teal-500' },
+    { nombre: 'Violeta', valor: '#7C3AED', clase: 'bg-violet-600' },
+    { nombre: 'Esmeralda', valor: '#059669', clase: 'bg-emerald-600' },
+  ],
+  pasteles: [
+    { nombre: 'Azul Pastel', valor: '#93C5FD', clase: 'bg-blue-300' },
+    { nombre: 'Verde Pastel', valor: '#86EFAC', clase: 'bg-green-300' },
+    { nombre: 'Rosa Pastel', valor: '#F9A8D4', clase: 'bg-pink-300' },
+    { nombre: 'Amarillo Pastel', valor: '#FDE047', clase: 'bg-yellow-300' },
+    { nombre: 'Púrpura Pastel', valor: '#C4B5FD', clase: 'bg-purple-300' },
+    { nombre: 'Naranja Pastel', valor: '#FDBA74', clase: 'bg-orange-300' },
+    { nombre: 'Gris Pastel', valor: '#D1D5DB', clase: 'bg-gray-300' },
+    { nombre: 'Índigo Pastel', valor: '#A5B4FC', clase: 'bg-indigo-300' },
+  ],
+  oscuros: [
+    { nombre: 'Azul Oscuro', valor: '#1E40AF', clase: 'bg-blue-800' },
+    { nombre: 'Verde Oscuro', valor: '#166534', clase: 'bg-green-800' },
+    { nombre: 'Rojo Oscuro', valor: '#991B1B', clase: 'bg-red-800' },
+    { nombre: 'Púrpura Oscuro', valor: '#581C87', clase: 'bg-purple-800' },
+    { nombre: 'Gris Oscuro', valor: '#374151', clase: 'bg-gray-700' },
+    { nombre: 'Índigo Oscuro', valor: '#312E81', clase: 'bg-indigo-800' },
+    { nombre: 'Teal Oscuro', valor: '#134E4A', clase: 'bg-teal-800' },
+    { nombre: 'Slate', valor: '#475569', clase: 'bg-slate-600' },
+  ],
+  materias: [
+    { nombre: 'Matemática', valor: '#2563EB', clase: 'bg-blue-600' },
+    { nombre: 'Ciencias', valor: '#16A34A', clase: 'bg-green-600' },
+    { nombre: 'Lenguaje', valor: '#DC2626', clase: 'bg-red-600' },
+    { nombre: 'Historia', valor: '#CA8A04', clase: 'bg-yellow-600' },
+    { nombre: 'Arte', valor: '#9333EA', clase: 'bg-purple-600' },
+    { nombre: 'Educación Física', valor: '#EA580C', clase: 'bg-orange-600' },
+    { nombre: 'Inglés', valor: '#0891B2', clase: 'bg-cyan-600' },
+    { nombre: 'Música', valor: '#BE185D', clase: 'bg-pink-600' },
+  ]
+};
+
+// Mantener compatibilidad con código existente
+export const COLORES_CURSO = PALETA_COLORES_CURSO.basicos;
 
 // Opciones para niveles educativos
 export const NIVELES_EDUCATIVOS = [
@@ -175,10 +231,41 @@ export const NIVELES_EDUCATIVOS = [
 
 // Función para obtener el color de un curso
 export const obtenerColorCurso = (color?: string): string => {
-  if (color && COLORES_CURSO.find(c => c.valor === color)) {
+  if (color && isValidHexColor(color)) {
     return color;
   }
   return COLORES_CURSO[0].valor; // Azul por defecto
+};
+
+// Función para validar formato HEX
+export const isValidHexColor = (color: string): boolean => {
+  return /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(color);
+};
+
+// Función para obtener todos los colores de la paleta
+export const obtenerTodosLosColores = () => {
+  return [
+    ...PALETA_COLORES_CURSO.basicos,
+    ...PALETA_COLORES_CURSO.vibrantes,
+    ...PALETA_COLORES_CURSO.pasteles,
+    ...PALETA_COLORES_CURSO.oscuros,
+    ...PALETA_COLORES_CURSO.materias,
+  ];
+};
+
+// Función para verificar contraste (básico)
+export const tieneContrasteAdecuado = (color: string): boolean => {
+  // Convertir hex a RGB y calcular luminancia básica
+  const hex = color.replace('#', '');
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  
+  // Fórmula básica de luminancia
+  const luminancia = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  
+  // Evitar colores muy claros (difíciles de leer)
+  return luminancia < 0.9 && luminancia > 0.1;
 };
 
 // Función para validar datos de curso

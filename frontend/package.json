@@ -11,8 +11,10 @@
   "dependencies": {
     "@headlessui/react": "^2.2.8",
     "@heroicons/react": "^2.2.0",
+    "@types/react-color": "^3.0.13",
     "next": "15.5.3",
     "react": "19.1.0",
+    "react-color": "^2.19.3",
     "react-dom": "19.1.0"
   },
   "devDependencies": {
