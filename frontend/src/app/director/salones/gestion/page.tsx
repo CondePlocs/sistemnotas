@@ -22,6 +22,7 @@ interface EstadoGestion {
   error: string | null;
   filtroNivel: string;
   busqueda: string;
+  refreshTrigger: number;
 }
 
 export default function GestionSalonesPage() {
@@ -33,7 +34,8 @@ export default function GestionSalonesPage() {
     cargando: true,
     error: null,
     filtroNivel: 'TODOS',
-    busqueda: ''
+    busqueda: '',
+    refreshTrigger: 0
   });
 
   // Cargar salones del colegio
@@ -105,8 +107,13 @@ export default function GestionSalonesPage() {
   };
 
   const onAsignacionExitosa = () => {
-    cargarSalones(); // Recargar para actualizar contadores
-    cerrarModalAsignacion();
+    // Incrementar refreshTrigger para forzar actualización de tarjetas
+    setEstado(prev => ({ 
+      ...prev, 
+      refreshTrigger: prev.refreshTrigger + 1,
+      modalAsignacionAbierto: false,
+      salonSeleccionado: null
+    }));
   };
 
   if (estado.cargando) {
@@ -236,6 +243,7 @@ export default function GestionSalonesPage() {
                         key={salon.id}
                         salon={salon}
                         onAsignarAlumnos={abrirModalAsignacion}
+                        refreshTrigger={estado.refreshTrigger}
                       />
                     ))}
                   </div>

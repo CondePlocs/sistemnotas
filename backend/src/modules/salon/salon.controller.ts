@@ -10,7 +10,9 @@ import {
   Request,
   ParseIntPipe,
   HttpCode,
-  HttpStatus
+  HttpStatus,
+  Query,
+  ForbiddenException
 } from '@nestjs/common';
 import { SalonService } from './salon.service';
 import { SalonAlumnosService } from './salon-alumnos.service';
@@ -22,6 +24,7 @@ import { AsignarAlumnosDto, RemoverAlumnoDto, FiltrosAlumnosDisponiblesDto } fro
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { PrismaService } from '../../providers/prisma.service';
 
 @Controller('api/salones')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -29,7 +32,8 @@ export class SalonController {
   constructor(
     private readonly salonService: SalonService,
     private readonly salonAlumnosService: SalonAlumnosService,
-    private readonly salonCursosService: SalonCursosService
+    private readonly salonCursosService: SalonCursosService,
+    private readonly prisma: PrismaService
   ) {}
 
   // Crear un salón individual (modo manual)
@@ -114,25 +118,62 @@ export class SalonController {
     };
   }
 
-  // Obtener alumnos disponibles para asignar (con filtros)
+  // Obtener alumnos disponibles para asignar
   @Get('alumnos-disponibles')
   @Roles('DIRECTOR', 'ADMINISTRATIVO')
   async obtenerAlumnosDisponibles(
     @Request() req: any,
-    @Body() filtros: FiltrosAlumnosDisponiblesDto = {}
+    @Query('busqueda') busqueda?: string
   ) {
-    // Obtener el colegio del usuario desde su rol
-    const usuario = await this.salonAlumnosService.obtenerColegioUsuario(req.user.id);
-    
-    const resultado = await this.salonAlumnosService.obtenerAlumnosDisponibles(
-      usuario.colegioId, 
-      filtros, 
-      req.user.id
-    );
-    
+    // Obtener alumnos del colegio del usuario
+    const usuario = await this.prisma.usuarioRol.findFirst({
+      where: { usuario_id: req.user.id },
+      include: { colegio: true }
+    });
+
+    if (!usuario || !usuario.colegio_id) {
+      throw new ForbiddenException('No tienes permisos para consultar alumnos');
+    }
+
+    // Buscar alumnos activos del colegio que NO estén asignados a ningún salón
+    const whereConditions: any = {
+      colegioId: usuario.colegio_id,
+      activo: true,
+      // Excluir alumnos que ya están asignados a un salón
+      salones: {
+        none: {}
+      }
+    };
+
+    // Filtro por búsqueda (nombre, apellido o DNI)
+    if (busqueda) {
+      whereConditions.OR = [
+        { nombres: { contains: busqueda, mode: 'insensitive' } },
+        { apellidos: { contains: busqueda, mode: 'insensitive' } },
+        { dni: { contains: busqueda } }
+      ];
+    }
+
+    const alumnos = await this.prisma.alumno.findMany({
+      where: whereConditions,
+      select: {
+        id: true,
+        nombres: true,
+        apellidos: true,
+        dni: true,
+        fechaNacimiento: true,
+        sexo: true,
+      },
+      orderBy: [
+        { apellidos: 'asc' },
+        { nombres: 'asc' }
+      ]
+    });
+
     return {
       success: true,
-      data: resultado
+      data: alumnos,
+      total: alumnos.length
     };
   }
 
@@ -155,7 +196,7 @@ export class SalonController {
     return {
       success: true,
       message: resultado.message,
-      data: resultado.asignacion
+      data: { alumnoId: resultado.alumnoId }
     };
   }
 

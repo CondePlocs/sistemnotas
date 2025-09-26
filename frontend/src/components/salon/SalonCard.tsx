@@ -13,9 +13,10 @@ import {
 interface SalonCardProps {
   salon: Salon;
   onAsignarAlumnos: (salon: Salon) => void;
+  refreshTrigger?: number; // Para forzar actualización
 }
 
-export default function SalonCard({ salon, onAsignarAlumnos }: SalonCardProps) {
+export default function SalonCard({ salon, onAsignarAlumnos, refreshTrigger }: SalonCardProps) {
   const [datosAlumnos, setDatosAlumnos] = useState<{
     totalAlumnos: number;
     cargando: boolean;
@@ -27,7 +28,7 @@ export default function SalonCard({ salon, onAsignarAlumnos }: SalonCardProps) {
   // Cargar cantidad de alumnos del salón
   useEffect(() => {
     cargarDatosAlumnos();
-  }, [salon.id]);
+  }, [salon.id, refreshTrigger]);
 
   const cargarDatosAlumnos = async () => {
     try {
@@ -38,7 +39,7 @@ export default function SalonCard({ salon, onAsignarAlumnos }: SalonCardProps) {
       if (response.ok) {
         const data = await response.json();
         setDatosAlumnos({
-          totalAlumnos: data.data?.totalAlumnos || 0,
+          totalAlumnos: data.data?.estadisticas?.totalAlumnos || 0,
           cargando: false
         });
       } else {

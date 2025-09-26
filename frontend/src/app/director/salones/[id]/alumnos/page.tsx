@@ -50,7 +50,7 @@ export default function AlumnosPorSalonPage() {
     try {
       setEstado(prev => ({ ...prev, cargando: true, error: null }));
 
-      const response = await fetch(`/api/salones/${salonId}/alumnos`, {
+      const response = await fetch(`http://localhost:3001/api/salones/${salonId}/alumnos`, {
         credentials: 'include'
       });
 
@@ -82,20 +82,27 @@ export default function AlumnosPorSalonPage() {
     try {
       setEstado(prev => ({ ...prev, eliminandoAlumno: alumnoId }));
 
-      const response = await fetch(`/api/salones/${salonId}/alumnos/${alumnoId}`, {
+      const response = await fetch(`http://localhost:3001/api/salones/${salonId}/alumnos/${alumnoId}`, {
         method: 'DELETE',
         credentials: 'include'
       });
 
       if (!response.ok) {
-        throw new Error('Error al remover alumno');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al remover alumno');
       }
+
+      const result = await response.json();
+      console.log('✅ Alumno removido exitosamente:', result);
 
       // Recargar datos
       await cargarDatosSalon();
-    } catch (error) {
-      console.error('Error:', error);
-      alert('Error al remover el alumno del salón');
+      
+      // Mostrar mensaje de éxito
+      alert(result.message || 'Alumno removido exitosamente');
+    } catch (error: any) {
+      console.error('❌ Error al remover alumno:', error);
+      alert(`Error: ${error?.message || 'Error desconocido'}`);
     } finally {
       setEstado(prev => ({ ...prev, eliminandoAlumno: null }));
     }
@@ -115,7 +122,7 @@ export default function AlumnosPorSalonPage() {
   };
 
   // Filtrar alumnos por búsqueda
-  const alumnosFiltrados = estado.datosCompletos?.alumnos.filter(asignacion =>
+  const alumnosFiltrados = estado.datosCompletos?.asignaciones?.filter(asignacion =>
     !estado.busqueda ||
     asignacion.alumno.nombres.toLowerCase().includes(estado.busqueda.toLowerCase()) ||
     asignacion.alumno.apellidos.toLowerCase().includes(estado.busqueda.toLowerCase()) ||
@@ -161,7 +168,7 @@ export default function AlumnosPorSalonPage() {
     );
   }
 
-  const { salon, alumnos, totalAlumnos } = estado.datosCompletos;
+  const { salon, asignaciones, estadisticas } = estado.datosCompletos;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -186,7 +193,7 @@ export default function AlumnosPorSalonPage() {
                     {salon.grado} - {salon.seccion}
                   </h1>
                   <p className="text-gray-600">
-                    {salon.nivel} • {totalAlumnos} alumno{totalAlumnos !== 1 ? 's' : ''} asignado{totalAlumnos !== 1 ? 's' : ''}
+                    {salon.nivel} • {estadisticas.totalAlumnos} alumno{estadisticas.totalAlumnos !== 1 ? 's' : ''} asignado{estadisticas.totalAlumnos !== 1 ? 's' : ''}
                   </p>
                 </div>
               </div>
@@ -214,7 +221,7 @@ export default function AlumnosPorSalonPage() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Total Alumnos</p>
-                <p className="text-2xl font-bold text-gray-900">{totalAlumnos}</p>
+                <p className="text-2xl font-bold text-gray-900">{estadisticas.totalAlumnos}</p>
               </div>
             </div>
           </div>
@@ -226,7 +233,7 @@ export default function AlumnosPorSalonPage() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Capacidad</p>
-                <p className="text-2xl font-bold text-gray-900">{Math.round((totalAlumnos / 30) * 100)}%</p>
+                <p className="text-2xl font-bold text-gray-900">{Math.round((estadisticas.totalAlumnos / 30) * 100)}%</p>
               </div>
             </div>
           </div>
@@ -239,8 +246,8 @@ export default function AlumnosPorSalonPage() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Edad Promedio</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {alumnos.length > 0 
-                    ? Math.round(alumnos.reduce((sum, a) => sum + (a.alumno.edad || 0), 0) / alumnos.length)
+                  {asignaciones.length > 0 
+                    ? Math.round(asignaciones.reduce((sum: number, a: any) => sum + (a.alumno.edad || 0), 0) / asignaciones.length)
                     : 0
                   } años
                 </p>
@@ -265,7 +272,7 @@ export default function AlumnosPorSalonPage() {
               </div>
             </div>
             <div className="text-sm text-gray-600">
-              {alumnosFiltrados.length} de {totalAlumnos} alumnos
+              {alumnosFiltrados.length} de {estadisticas.totalAlumnos} alumnos
             </div>
           </div>
         </div>
@@ -276,15 +283,15 @@ export default function AlumnosPorSalonPage() {
             <div className="p-12 text-center">
               <UserGroupIcon className="mx-auto h-12 w-12 text-gray-400" />
               <h3 className="mt-2 text-sm font-medium text-gray-900">
-                {totalAlumnos === 0 ? 'No hay alumnos asignados' : 'No se encontraron alumnos'}
+                {estadisticas.totalAlumnos === 0 ? 'No hay alumnos asignados' : 'No se encontraron alumnos'}
               </h3>
               <p className="mt-1 text-sm text-gray-500">
-                {totalAlumnos === 0 
+                {estadisticas.totalAlumnos === 0 
                   ? 'Comienza asignando alumnos a este salón'
                   : 'Prueba ajustando los filtros de búsqueda'
                 }
               </p>
-              {totalAlumnos === 0 && (
+              {estadisticas.totalAlumnos === 0 && (
                 <button
                   onClick={abrirModalAsignacion}
                   className="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700"

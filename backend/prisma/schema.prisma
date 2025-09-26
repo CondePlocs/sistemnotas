@@ -188,8 +188,8 @@ model Salon {
   colegio     Colegio @relation(fields: [colegioId], references: [id], onDelete: Cascade)
   creadorUser Usuario @relation("SalonCreador", fields: [creadoPor], references: [id])
   
-  // Relación con alumnos (muchos a muchos)
-  alumnos     AlumnoSalon[]
+  // Relación con alumnos (registro único)
+  alumnos AlumnoSalon[]
   
   // Relación con cursos (muchos a muchos) - NUEVO
   cursos      SalonCurso[]
@@ -503,31 +503,25 @@ model Competencia {
 // SISTEMA DE ASIGNACIÓN ALUMNO-SALÓN
 // ========================================
 
-// Modelo AlumnoSalon - Relación muchos a muchos entre Alumno y Salón
+// Modelo AlumnoSalon - Registro único por alumno (ESTRATEGIA SIMPLIFICADA)
 model AlumnoSalon {
-  id               Int       @id @default(autoincrement())
-  alumnoId         Int
-  salonId          Int
-  fechaAsignacion  DateTime  @default(now())
-  fechaRetiro      DateTime? // Cuando el alumno sale del salón
-  activo           Boolean   @default(true)
-  asignadoPor      Int       // Usuario que hizo la asignación
-  creadoEn         DateTime  @default(now())
-  actualizadoEn    DateTime  @updatedAt
+  id              Int      @id @default(autoincrement())
+  alumnoId        Int      @unique // Un alumno = Un registro único
+  salonId         Int      // Salón actual del alumno
+  fechaAsignacion DateTime @default(now()) // Cuándo se asignó al salón
+  asignadoPor     Int      // Usuario que hizo la asignación
+  creadoEn        DateTime @default(now())
+  actualizadoEn   DateTime @updatedAt
 
   // Relaciones
-  alumno      Alumno  @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
-  salon       Salon   @relation(fields: [salonId], references: [id], onDelete: Cascade)
-  asignador   Usuario @relation("AlumnoSalonAsignador", fields: [asignadoPor], references: [id])
+  alumno    Alumno  @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
+  salon     Salon   @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  asignador Usuario @relation("AlumnoSalonAsignador", fields: [asignadoPor], references: [id])
 
-  // Constraints e índices
-  @@unique([alumnoId, salonId, activo]) // Un alumno activo por salón específico
-  @@index([alumnoId])
-  @@index([salonId])
-  @@index([activo])
+  // Índices optimizados
+  @@index([salonId]) // Consultas rápidas de alumnos por salón
+  @@index([alumnoId]) // Redundante por @unique pero explícito
   @@index([fechaAsignacion])
-  @@index([salonId, activo]) // Consultas de alumnos por salón
-  @@index([alumnoId, activo]) // Historial de salones por alumno
   
   @@map("alumno_salon")
 }

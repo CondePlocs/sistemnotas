@@ -10,7 +10,7 @@ export class SalonAlumnosService {
     private salonCursosService: SalonCursosService
   ) {}
 
-  // Asignar múltiples alumnos a un salón
+  // Asignar múltiples alumnos a un salón (ESTRATEGIA REGISTRO ÚNICO)
   async asignarAlumnos(asignarAlumnosDto: AsignarAlumnosDto, usuarioId: number) {
     // 1. Verificar que el usuario tenga permisos
     const usuario = await this.verificarPermisosAsignacion(usuarioId);
@@ -24,32 +24,69 @@ export class SalonAlumnosService {
       usuario.colegioId
     );
 
-    // 4. Verificar que los alumnos no estén ya asignados a otro salón activo
-    await this.verificarAlumnosDisponibles(asignarAlumnosDto.alumnos.map(a => a.alumnoId));
-
-    // 5. Crear las asignaciones en transacción
+    // 4. Procesar asignaciones con registro único por alumno
     const resultadoAsignacion = await this.prisma.$transaction(async (tx) => {
       const asignaciones: any[] = [];
       
       for (const alumnoDto of asignarAlumnosDto.alumnos) {
-        const asignacion = await tx.alumnoSalon.create({
-          data: {
-            alumnoId: alumnoDto.alumnoId,
-            salonId: asignarAlumnosDto.salonId,
-            asignadoPor: usuarioId,
-          },
+        // Verificar si el alumno ya tiene una asignación
+        const asignacionExistente = await tx.alumnoSalon.findUnique({
+          where: { alumnoId: alumnoDto.alumnoId },
           include: {
-            alumno: {
-              select: {
-                id: true,
-                nombres: true,
-                apellidos: true,
-                dni: true,
-                fechaNacimiento: true,
-              }
-            }
+            salon: { select: { id: true, grado: true, seccion: true } }
           }
         });
+
+        let asignacion;
+        
+        if (asignacionExistente) {
+          // DELETE + CREATE: Eliminar registro anterior y crear nuevo (estrategia simplificada)
+          await tx.alumnoSalon.delete({
+            where: { alumnoId: alumnoDto.alumnoId }
+          });
+          
+          asignacion = await tx.alumnoSalon.create({
+            data: {
+              alumnoId: alumnoDto.alumnoId,
+              salonId: asignarAlumnosDto.salonId,
+              asignadoPor: usuarioId,
+            },
+            include: {
+              alumno: {
+                select: {
+                  id: true,
+                  nombres: true,
+                  apellidos: true,
+                  dni: true,
+                  fechaNacimiento: true,
+                }
+              },
+              salon: { select: { grado: true, seccion: true } }
+            }
+          });
+        } else {
+          // CREATE: Nueva asignación para alumno sin salón previo
+          asignacion = await tx.alumnoSalon.create({
+            data: {
+              alumnoId: alumnoDto.alumnoId,
+              salonId: asignarAlumnosDto.salonId,
+              asignadoPor: usuarioId,
+            },
+            include: {
+              alumno: {
+                select: {
+                  id: true,
+                  nombres: true,
+                  apellidos: true,
+                  dni: true,
+                  fechaNacimiento: true,
+                }
+              },
+              salon: { select: { grado: true, seccion: true } }
+            }
+          });
+        }
+
         asignaciones.push(asignacion);
       }
 
@@ -60,49 +97,39 @@ export class SalonAlumnosService {
       };
     });
 
-    // 6. Asignar cursos automáticamente a cada alumno
-    const cursosAsignados: any[] = [];
+    // 5. Asignar cursos automáticamente a cada alumno
     for (const asignacion of resultadoAsignacion.asignaciones) {
       try {
-        const resultadoCursos = await this.salonCursosService.asignarCursosAutomaticamenteAAlumno(
-          asignacion.alumno.id,
+        await this.salonCursosService.asignarCursosAutomaticamenteAAlumno(
+          asignacion.alumnoId,
           asignarAlumnosDto.salonId,
           usuarioId
         );
-        cursosAsignados.push({
-          alumnoId: asignacion.alumno.id,
-          cursosAsignados: resultadoCursos.cursosAsignados,
-          mensaje: resultadoCursos.mensaje
-        });
       } catch (error) {
-        console.error(`Error al asignar cursos al alumno ${asignacion.alumno.id}:`, error);
-        cursosAsignados.push({
-          alumnoId: asignacion.alumno.id,
-          cursosAsignados: 0,
-          mensaje: 'Error en asignación automática de cursos'
-        });
+        console.log(`⚠️ Error asignando cursos al alumno ${asignacion.alumnoId}:`, error);
       }
     }
 
     return {
-      ...resultadoAsignacion,
-      cursosAsignados: cursosAsignados
+      message: `Se asignaron ${resultadoAsignacion.totalAsignados} alumnos al salón ${salon.grado} - ${salon.seccion}`,
+      salon: resultadoAsignacion.salon,
+      asignaciones: resultadoAsignacion.asignaciones,
+      totalAsignados: resultadoAsignacion.totalAsignados
     };
   }
 
   // Obtener alumnos de un salón específico
   async obtenerAlumnosDeSalon(salonId: number, usuarioId: number) {
-    // 1. Verificar permisos del usuario
+    // Verificar permisos del usuario
     const usuario = await this.verificarPermisosConsulta(usuarioId);
     
-    // 2. Verificar que el salón existe y pertenece al colegio del usuario
+    // Verificar que el salón pertenece al colegio del usuario
     const salon = await this.verificarSalonYColegio(salonId, usuario.colegioId);
 
-    // 3. Obtener alumnos asignados al salón
+    // Obtener alumnos asignados al salón
     const asignaciones = await this.prisma.alumnoSalon.findMany({
       where: {
         salonId: salonId,
-        activo: true
       },
       include: {
         alumno: {
@@ -114,6 +141,13 @@ export class SalonAlumnosService {
             fechaNacimiento: true,
             sexo: true,
             numeroContacto: true,
+          }
+        },
+        salon: {
+          select: {
+            grado: true,
+            seccion: true,
+            nivel: true,
           }
         },
         asignador: {
@@ -130,113 +164,31 @@ export class SalonAlumnosService {
       ]
     });
 
-    // 4. Calcular edades y formatear respuesta
-    const alumnosConEdad = asignaciones.map(asignacion => ({
-      id: asignacion.id,
-      fechaAsignacion: asignacion.fechaAsignacion,
-      alumno: {
-        ...asignacion.alumno,
-        edad: this.calcularEdad(asignacion.alumno.fechaNacimiento)
+    // Calcular estadísticas
+    const estadisticas = {
+      totalAlumnos: asignaciones.length,
+      porSexo: {
+        masculino: asignaciones.filter(a => a.alumno.sexo === 'masculino').length,
+        femenino: asignaciones.filter(a => a.alumno.sexo === 'femenino').length,
       },
-      asignador: asignacion.asignador
-    }));
+      edadPromedio: this.calcularEdadPromedio(asignaciones.map(a => a.alumno.fechaNacimiento))
+    };
 
     return {
       salon: salon,
-      alumnos: alumnosConEdad,
-      totalAlumnos: alumnosConEdad.length
+      asignaciones: asignaciones,
+      estadisticas: estadisticas
     };
   }
 
-  // Obtener alumnos disponibles para asignar (con filtros)
-  async obtenerAlumnosDisponibles(
-    colegioId: number, 
-    filtros: FiltrosAlumnosDisponiblesDto,
-    usuarioId: number
-  ) {
-    // 1. Verificar permisos del usuario
-    await this.verificarPermisosConsulta(usuarioId);
-
-    // 2. Construir filtros de búsqueda
-    const whereConditions: any = {
-      colegioId: colegioId,
-      activo: true,
-      // Solo alumnos que NO tienen asignación activa a ningún salón
-      salones: {
-        none: {
-          activo: true
-        }
-      }
-    };
-
-    // Filtro por búsqueda (nombre, apellido o DNI)
-    if (filtros.busqueda) {
-      whereConditions.OR = [
-        { nombres: { contains: filtros.busqueda, mode: 'insensitive' } },
-        { apellidos: { contains: filtros.busqueda, mode: 'insensitive' } },
-        { dni: { contains: filtros.busqueda } }
-      ];
-    }
-
-    // 3. Obtener alumnos
-    const alumnos = await this.prisma.alumno.findMany({
-      where: whereConditions,
-      select: {
-        id: true,
-        nombres: true,
-        apellidos: true,
-        dni: true,
-        fechaNacimiento: true,
-        sexo: true,
-        numeroContacto: true,
-      },
-      orderBy: [
-        { apellidos: 'asc' },
-        { nombres: 'asc' }
-      ]
-    });
-
-    // 4. Filtrar por edad si se especifica
-    let alumnosFiltrados = alumnos;
-    if (filtros.edadMinima || filtros.edadMaxima) {
-      alumnosFiltrados = alumnos.filter(alumno => {
-        if (!alumno.fechaNacimiento) return false;
-        
-        const edad = this.calcularEdad(alumno.fechaNacimiento);
-        if (!edad) return false;
-        
-        if (filtros.edadMinima && edad < filtros.edadMinima) return false;
-        if (filtros.edadMaxima && edad > filtros.edadMaxima) return false;
-        
-        return true;
-      });
-    }
-
-    // 5. Agregar edad calculada
-    const alumnosConEdad = alumnosFiltrados.map(alumno => ({
-      ...alumno,
-      edad: this.calcularEdad(alumno.fechaNacimiento)
-    }));
-
-    return {
-      alumnos: alumnosConEdad,
-      total: alumnosConEdad.length,
-      filtros: filtros
-    };
-  }
-
-  // Remover alumno de un salón
+  // Remover alumno de un salón (ELIMINAR REGISTRO ÚNICO)
   async removerAlumno(removerAlumnoDto: RemoverAlumnoDto, usuarioId: number) {
     // 1. Verificar permisos del usuario
     const usuario = await this.verificarPermisosAsignacion(usuarioId);
     
     // 2. Verificar que la asignación existe
-    const asignacion = await this.prisma.alumnoSalon.findFirst({
-      where: {
-        alumnoId: removerAlumnoDto.alumnoId,
-        salonId: removerAlumnoDto.salonId,
-        activo: true
-      },
+    const asignacion = await this.prisma.alumnoSalon.findUnique({
+      where: { alumnoId: removerAlumnoDto.alumnoId },
       include: {
         alumno: { select: { nombres: true, apellidos: true } },
         salon: { select: { grado: true, seccion: true, colegioId: true } }
@@ -252,24 +204,19 @@ export class SalonAlumnosService {
       throw new ForbiddenException('No tienes permisos para modificar este salón');
     }
 
-    // 4. Desactivar la asignación (soft delete)
-    const asignacionActualizada = await this.prisma.alumnoSalon.update({
-      where: { id: asignacion.id },
-      data: {
-        activo: false,
-        fechaRetiro: new Date(),
-        actualizadoEn: new Date()
-      }
+    // 4. Eliminar la asignación (hard delete - registro único)
+    await this.prisma.alumnoSalon.delete({
+      where: { alumnoId: removerAlumnoDto.alumnoId }
     });
 
     return {
       message: `${asignacion.alumno.nombres} ${asignacion.alumno.apellidos} fue removido del salón ${asignacion.salon.grado} - ${asignacion.salon.seccion}`,
-      asignacion: asignacionActualizada
+      alumnoId: removerAlumnoDto.alumnoId
     };
   }
 
   // ========================================
-  // MÉTODOS AUXILIARES SIMPLIFICADOS
+  // MÉTODOS AUXILIARES
   // ========================================
 
   private async verificarPermisosAsignacion(usuarioId: number) {
@@ -298,68 +245,43 @@ export class SalonAlumnosService {
     if (usuarioRolAdmin && usuarioRolAdmin.colegio_id) {
       // Verificar que el administrativo tenga permisos para gestionar salones
       const administrativo = await this.prisma.administrativo.findFirst({
-        where: {
-          usuarioRolId: usuarioRolAdmin.id
-        },
-        include: {
-          permisos: true
-        }
+        where: { usuarioRolId: usuarioRolAdmin.id },
+        include: { permisos: true }
       });
 
-      if (administrativo?.permisos?.puedeGestionarSalones) {
-        return { colegioId: usuarioRolAdmin.colegio_id, tipo: 'ADMINISTRATIVO' };
+      if (!administrativo?.permisos?.puedeGestionarSalones) {
+        throw new ForbiddenException('No tienes permisos para gestionar salones. Contacta al director para obtener permisos.');
       }
 
-      throw new ForbiddenException('No tienes permisos para gestionar salones. Contacta al director para obtener permisos.');
+      return { colegioId: usuarioRolAdmin.colegio_id, tipo: 'ADMINISTRATIVO' };
     }
 
-    throw new ForbiddenException('No tienes permisos para asignar alumnos');
+    throw new ForbiddenException('No tienes permisos para asignar alumnos a salones');
   }
 
   private async verificarPermisosConsulta(usuarioId: number) {
-    // Verificar cualquier rol que permita consultar
     const usuarioRol = await this.prisma.usuarioRol.findFirst({
-      where: {
-        usuario_id: usuarioId,
-        rol: { 
-          nombre: { 
-            in: ['DIRECTOR', 'ADMINISTRATIVO', 'PROFESOR'] 
-          } 
-        }
-      },
-      include: { colegio: true, rol: true }
+      where: { usuario_id: usuarioId },
+      include: { rol: true, colegio: true }
     });
 
-    if (usuarioRol && usuarioRol.colegio_id) {
-      return { colegioId: usuarioRol.colegio_id, tipo: usuarioRol.rol.nombre };
+    if (!usuarioRol || !usuarioRol.colegio_id) {
+      throw new ForbiddenException('No tienes permisos para consultar salones');
     }
 
-    throw new ForbiddenException('No tienes permisos para consultar información de salones');
+    return { colegioId: usuarioRol.colegio_id, rol: usuarioRol.rol.nombre };
   }
 
   private async verificarSalonYColegio(salonId: number, colegioId: number) {
-    const salon = await this.prisma.salon.findUnique({
-      where: { id: salonId },
-      select: {
-        id: true,
-        colegioId: true,
-        nivel: true,
-        grado: true,
-        seccion: true,
-        activo: true
+    const salon = await this.prisma.salon.findFirst({
+      where: { 
+        id: salonId,
+        colegioId: colegioId 
       }
     });
 
     if (!salon) {
-      throw new NotFoundException('Salón no encontrado');
-    }
-
-    if (!salon.activo) {
-      throw new ConflictException('El salón está inactivo');
-    }
-
-    if (salon.colegioId !== colegioId) {
-      throw new ForbiddenException('El salón no pertenece a tu colegio');
+      throw new NotFoundException('Salón no encontrado o no pertenece a tu colegio');
     }
 
     return salon;
@@ -367,87 +289,39 @@ export class SalonAlumnosService {
 
   private async verificarAlumnosYColegio(alumnosIds: number[], colegioId: number) {
     const alumnos = await this.prisma.alumno.findMany({
-      where: {
+      where: { 
         id: { in: alumnosIds },
-        activo: true
-      },
-      select: {
-        id: true,
-        colegioId: true,
-        nombres: true,
-        apellidos: true
+        colegioId: colegioId 
       }
     });
 
     if (alumnos.length !== alumnosIds.length) {
-      throw new NotFoundException('Algunos alumnos no fueron encontrados o están inactivos');
-    }
-
-    const alumnosDeOtroColegio = alumnos.filter(alumno => alumno.colegioId !== colegioId);
-    if (alumnosDeOtroColegio.length > 0) {
-      throw new ForbiddenException('Algunos alumnos no pertenecen a tu colegio');
+      const alumnosEncontrados = alumnos.map(a => a.id);
+      const alumnosNoEncontrados = alumnosIds.filter(id => !alumnosEncontrados.includes(id));
+      throw new NotFoundException(`Los siguientes alumnos no fueron encontrados o no pertenecen a tu colegio: ${alumnosNoEncontrados.join(', ')}`);
     }
 
     return alumnos;
   }
 
-  private async verificarAlumnosDisponibles(alumnosIds: number[]) {
-    const asignacionesActivas = await this.prisma.alumnoSalon.findMany({
-      where: {
-        alumnoId: { in: alumnosIds },
-        activo: true
-      },
-      include: {
-        alumno: { select: { nombres: true, apellidos: true } },
-        salon: { select: { grado: true, seccion: true } }
-      }
-    });
-
-    if (asignacionesActivas.length > 0) {
-      const nombresAsignados = asignacionesActivas.map(a => 
-        `${a.alumno.nombres} ${a.alumno.apellidos} (${a.salon.grado} - ${a.salon.seccion})`
-      );
-      throw new ConflictException(
-        `Los siguientes alumnos ya están asignados a un salón: ${nombresAsignados.join(', ')}`
-      );
-    }
-  }
-
-  private calcularEdad(fechaNacimiento: Date | null): number | null {
-    if (!fechaNacimiento) return null;
+  private calcularEdadPromedio(fechasNacimiento: (Date | null)[]): number | null {
+    const fechasValidas = fechasNacimiento.filter(fecha => fecha !== null) as Date[];
+    
+    if (fechasValidas.length === 0) return null;
     
     const hoy = new Date();
-    const nacimiento = new Date(fechaNacimiento);
-    let edad = hoy.getFullYear() - nacimiento.getFullYear();
-    
-    const mesActual = hoy.getMonth();
-    const mesNacimiento = nacimiento.getMonth();
-    
-    if (mesActual < mesNacimiento || (mesActual === mesNacimiento && hoy.getDate() < nacimiento.getDate())) {
-      edad--;
-    }
-    
-    return edad;
-  }
-
-  // Método para obtener colegio del usuario (usado por el controller)
-  async obtenerColegioUsuario(usuarioId: number) {
-    const usuarioRol = await this.prisma.usuarioRol.findFirst({
-      where: {
-        usuario_id: usuarioId,
-        rol: { 
-          nombre: { 
-            in: ['DIRECTOR', 'ADMINISTRATIVO'] 
-          } 
-        }
-      },
-      include: { colegio: true }
+    const edades = fechasValidas.map(fecha => {
+      const edad = hoy.getFullYear() - fecha.getFullYear();
+      const mesActual = hoy.getMonth();
+      const mesNacimiento = fecha.getMonth();
+      
+      if (mesActual < mesNacimiento || (mesActual === mesNacimiento && hoy.getDate() < fecha.getDate())) {
+        return edad - 1;
+      }
+      
+      return edad;
     });
-
-    if (!usuarioRol || !usuarioRol.colegio_id) {
-      throw new ForbiddenException('No tienes permisos para esta operación');
-    }
-
-    return { colegioId: usuarioRol.colegio_id };
+    
+    return Math.round(edades.reduce((sum, edad) => sum + edad, 0) / edades.length);
   }
 }

@@ -41,8 +41,15 @@ export interface SalonConAlumnos {
     seccion: string;
     activo: boolean;
   };
-  alumnos: AlumnoSalon[];
-  totalAlumnos: number;
+  asignaciones: AlumnoSalon[];
+  estadisticas: {
+    totalAlumnos: number;
+    porSexo: {
+      masculino: number;
+      femenino: number;
+    };
+    edadPromedio: number | null;
+  };
 }
 
 export interface AlumnosDisponibles {

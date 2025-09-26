@@ -70,7 +70,7 @@ export default function ModalAsignacionAlumnos({
       const data = await response.json();
       setEstado(prev => ({
         ...prev,
-        alumnos: data.data?.alumnos || [],
+        alumnos: data.data || [],
         cargando: false
       }));
     } catch (error) {
