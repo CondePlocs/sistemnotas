@@ -11,15 +11,60 @@ function CursosSalonPageContent() {
   const params = useParams();
   const router = useRouter();
   const salonId = parseInt(params.id as string);
-
-  // En una implementación real, estos datos vendrían de una API
-  // Por ahora usamos datos de ejemplo
-  const salon = {
-    id: salonId,
-    nivel: 'PRIMARIA' as NivelEducativo,
-    grado: '1°',
-    seccion: 'A'
-  };
+  
+  const [salon, setSalon] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const cargarDatosSalon = async () => {
+      try {
+        const response = await fetch(`http://localhost:3001/api/salones/${salonId}/alumnos`, {
+          credentials: 'include'
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setSalon(data.data.salon);
+        }
+      } catch (error) {
+        console.error('Error cargando datos del salón:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    if (salonId) {
+      cargarDatosSalon();
+    }
+  }, [salonId]);
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Cargando datos del salón...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!salon) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">❌</div>
+          <h3 className="text-xl font-semibold text-gray-800 mb-2">Salón no encontrado</h3>
+          <button 
+            onClick={() => router.back()}
+            className="text-blue-600 hover:text-blue-800"
+          >
+            Volver atrás
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
