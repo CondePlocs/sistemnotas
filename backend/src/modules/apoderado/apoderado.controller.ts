@@ -35,6 +35,13 @@ export class ApoderadoController {
     return this.apoderadoService.obtenerAlumnosDelColegio(usuarioId);
   }
 
+  @Get('estadisticas-alumnos')
+  @Roles('DIRECTOR', 'ADMINISTRATIVO')
+  async obtenerEstadisticasAlumnos(@Req() request: any) {
+    const usuarioId = request.user.id;
+    return this.apoderadoService.obtenerEstadisticasAlumnos(usuarioId);
+  }
+
   @Get(':id')
   @Roles('DIRECTOR')
   async obtenerApoderado(@Param('id', ParseIntPipe) id: number, @Req() request: any) {

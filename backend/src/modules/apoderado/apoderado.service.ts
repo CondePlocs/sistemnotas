@@ -345,13 +345,19 @@ export class ApoderadoService {
       }
     }
 
-    // Obtener alumnos activos del colegio
+    // Obtener alumnos activos del colegio que NO tengan apoderado asignado
     return this.prisma.alumno.findMany({
       where: {
         colegio: {
           id: usuarioRol.colegio_id
         },
-        activo: true
+        activo: true,
+        // EXCLUIR alumnos que ya tienen apoderado
+        apoderados: {
+          none: {
+            activo: true
+          }
+        }
       },
       select: {
         id: true,
@@ -372,6 +378,54 @@ export class ApoderadoService {
         { nombres: 'asc' }
       ]
     });
+  }
+
+  /**
+   * Obtener estadísticas de alumnos disponibles vs asignados
+   */
+  async obtenerEstadisticasAlumnos(usuarioId: number) {
+    // Verificar permisos (reutilizar lógica existente)
+    const usuarioRol = await this.prisma.usuarioRol.findFirst({
+      where: { 
+        usuario_id: usuarioId,
+        rol: { nombre: { in: ['DIRECTOR', 'ADMINISTRATIVO'] } }
+      }
+    });
+
+    if (!usuarioRol?.colegio_id) {
+      throw new ForbiddenException('Usuario no tiene acceso a estadísticas');
+    }
+
+    // Contar alumnos totales del colegio
+    const totalAlumnos = await this.prisma.alumno.count({
+      where: {
+        colegioId: usuarioRol.colegio_id,
+        activo: true
+      }
+    });
+
+    // Contar alumnos con apoderado
+    const alumnosConApoderado = await this.prisma.alumno.count({
+      where: {
+        colegioId: usuarioRol.colegio_id,
+        activo: true,
+        apoderados: {
+          some: {
+            activo: true
+          }
+        }
+      }
+    });
+
+    // Contar alumnos sin apoderado
+    const alumnosSinApoderado = totalAlumnos - alumnosConApoderado;
+
+    return {
+      totalAlumnos,
+      alumnosConApoderado,
+      alumnosSinApoderado,
+      porcentajeAsignado: totalAlumnos > 0 ? Math.round((alumnosConApoderado / totalAlumnos) * 100) : 0
+    };
   }
 
   /**
