@@ -1,14 +1,15 @@
 'use client';
 
-import React from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import CursosAlumno from '@/components/cursos/CursosAlumno';
 
-export default function CursosAlumnoPage() {
+function CursosAlumnoPageContent() {
   const params = useParams();
   const router = useRouter();
   const alumnoId = parseInt(params.id as string);
-
   // En una implementación real, estos datos vendrían de una API
   // Por ahora usamos datos de ejemplo
   const alumno = {
@@ -54,5 +55,13 @@ export default function CursosAlumnoPage() {
         />
       </main>
     </div>
+  );
+}
+
+export default function CursosAlumnoPage() {
+  return (
+    <ProtectedRoute requiredRole="DIRECTOR">
+      <CursosAlumnoPageContent />
+    </ProtectedRoute>
   );
 }

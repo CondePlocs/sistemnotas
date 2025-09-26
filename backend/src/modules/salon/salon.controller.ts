@@ -196,7 +196,10 @@ export class SalonController {
     return {
       success: true,
       message: resultado.message,
-      data: { alumnoId: resultado.alumnoId }
+      data: { 
+        alumnoId: resultado.alumnoId,
+        cursosEliminados: resultado.cursosEliminados
+      }
     };
   }
 

@@ -40,11 +40,22 @@ export class SalonAlumnosService {
         let asignacion;
         
         if (asignacionExistente) {
-          // DELETE + CREATE: Eliminar registro anterior y crear nuevo (estrategia simplificada)
+          // DELETE + CREATE: Eliminar registro anterior, limpiar cursos y crear nuevo
+          
+          // 1. Eliminar cursos del salón anterior
+          await tx.alumnoCurso.deleteMany({
+            where: {
+              alumnoId: alumnoDto.alumnoId,
+              salonId: asignacionExistente.salon.id
+            }
+          });
+          
+          // 2. Eliminar asignación anterior
           await tx.alumnoSalon.delete({
             where: { alumnoId: alumnoDto.alumnoId }
           });
           
+          // 3. Crear nueva asignación
           asignacion = await tx.alumnoSalon.create({
             data: {
               alumnoId: alumnoDto.alumnoId,
@@ -181,7 +192,7 @@ export class SalonAlumnosService {
     };
   }
 
-  // Remover alumno de un salón (ELIMINAR REGISTRO ÚNICO)
+  // Remover alumno de un salón (ELIMINAR REGISTRO ÚNICO + LIMPIAR CURSOS)
   async removerAlumno(removerAlumnoDto: RemoverAlumnoDto, usuarioId: number) {
     // 1. Verificar permisos del usuario
     const usuario = await this.verificarPermisosAsignacion(usuarioId);
@@ -191,7 +202,7 @@ export class SalonAlumnosService {
       where: { alumnoId: removerAlumnoDto.alumnoId },
       include: {
         alumno: { select: { nombres: true, apellidos: true } },
-        salon: { select: { grado: true, seccion: true, colegioId: true } }
+        salon: { select: { id: true, grado: true, seccion: true, colegioId: true } }
       }
     });
 
@@ -204,14 +215,38 @@ export class SalonAlumnosService {
       throw new ForbiddenException('No tienes permisos para modificar este salón');
     }
 
-    // 4. Eliminar la asignación (hard delete - registro único)
-    await this.prisma.alumnoSalon.delete({
-      where: { alumnoId: removerAlumnoDto.alumnoId }
+    // 4. Eliminar la asignación Y los cursos en una transacción
+    const resultado = await this.prisma.$transaction(async (tx) => {
+      // 4.1. Contar cursos que se van a eliminar (para logging)
+      const cursosAEliminar = await tx.alumnoCurso.count({
+        where: {
+          alumnoId: removerAlumnoDto.alumnoId,
+          salonId: asignacion.salon.id
+        }
+      });
+
+      // 4.2. Eliminar cursos del alumno específicos de este salón
+      await tx.alumnoCurso.deleteMany({
+        where: {
+          alumnoId: removerAlumnoDto.alumnoId,
+          salonId: asignacion.salon.id
+        }
+      });
+
+      // 4.3. Eliminar la asignación alumno-salón
+      await tx.alumnoSalon.delete({
+        where: { alumnoId: removerAlumnoDto.alumnoId }
+      });
+
+      return { cursosEliminados: cursosAEliminar };
     });
+
+    console.log(`✅ Alumno ${removerAlumnoDto.alumnoId} removido del salón ${asignacion.salon.id}. Cursos eliminados: ${resultado.cursosEliminados}`);
 
     return {
       message: `${asignacion.alumno.nombres} ${asignacion.alumno.apellidos} fue removido del salón ${asignacion.salon.grado} - ${asignacion.salon.seccion}`,
-      alumnoId: removerAlumnoDto.alumnoId
+      alumnoId: removerAlumnoDto.alumnoId,
+      cursosEliminados: resultado.cursosEliminados
     };
   }
 

@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { SalonConAlumnos, AlumnoSalon } from '@/types/salon-alumnos';
 import { Salon } from '@/types/salon';
 import ModalAsignacionAlumnos from '@/components/modals/ModalAsignacionAlumnos';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import { 
   ArrowLeftIcon,
   UserGroupIcon, 
@@ -25,7 +26,7 @@ interface EstadoPagina {
   eliminandoAlumno: number | null;
 }
 
-export default function AlumnosPorSalonPage() {
+function AlumnosPorSalonPageContent() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
@@ -395,5 +396,13 @@ export default function AlumnosPorSalonPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function AlumnosPorSalonPage() {
+  return (
+    <ProtectedRoute requiredRole="DIRECTOR">
+      <AlumnosPorSalonPageContent />
+    </ProtectedRoute>
   );
 }

@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import { SalonConAlumnos } from '@/types/salon-alumnos';
 import { Salon } from '@/types/salon';
 import { OPCIONES_NIVELES_EDUCATIVOS } from '@/types/colegio';
@@ -25,7 +27,7 @@ interface EstadoGestion {
   refreshTrigger: number;
 }
 
-export default function GestionSalonesPage() {
+function GestionSalonesPageContent() {
   const { user } = useAuth();
   const [estado, setEstado] = useState<EstadoGestion>({
     salones: [],
@@ -264,5 +266,13 @@ export default function GestionSalonesPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function GestionSalonesPage() {
+  return (
+    <ProtectedRoute requiredRole="DIRECTOR">
+      <GestionSalonesPageContent />
+    </ProtectedRoute>
   );
 }

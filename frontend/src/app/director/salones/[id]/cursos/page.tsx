@@ -1,11 +1,13 @@
 'use client';
 
-import React from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import CursosSalon from '@/components/cursos/CursosSalon';
 import { NivelEducativo } from '@/types/curso';
 
-export default function CursosSalonPage() {
+function CursosSalonPageContent() {
   const params = useParams();
   const router = useRouter();
   const salonId = parseInt(params.id as string);
@@ -56,5 +58,13 @@ export default function CursosSalonPage() {
         />
       </main>
     </div>
+  );
+}
+
+export default function CursosSalonPage() {
+  return (
+    <ProtectedRoute requiredRole="DIRECTOR">
+      <CursosSalonPageContent />
+    </ProtectedRoute>
   );
 }
