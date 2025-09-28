@@ -18,13 +18,13 @@ export class SalonService {
     // 1. Verificar que el usuario es director y obtener su colegio
     const director = await this.verificarDirectorYColegio(usuarioId);
     
-    // 2. Verificar que el colegio tiene autorización para este nivel
-    await this.verificarNivelAutorizado(director.colegioId, createSalonDto.nivel);
+    // 2. Obtener colegioNivelId basado en colegio y nivel
+    const colegioNivel = await this.obtenerColegioNivelId(director.colegioId, createSalonDto.nivel);
     
     // 3. Verificar que no existe un salón duplicado
     await this.verificarSalonDuplicado(
       director.colegioId, 
-      createSalonDto.nivel, 
+      colegioNivel.id, 
       createSalonDto.grado, 
       createSalonDto.seccion
     );
@@ -33,7 +33,7 @@ export class SalonService {
     const salon = await this.prisma.salon.create({
       data: {
         colegioId: director.colegioId,
-        nivel: createSalonDto.nivel,
+        colegioNivelId: colegioNivel.id, // ← Usar FK a colegio_nivel
         grado: createSalonDto.grado,
         seccion: createSalonDto.seccion,
         creadoPor: usuarioId,
@@ -90,14 +90,14 @@ export class SalonService {
     // 1. Verificar que el usuario es director y obtener su colegio
     const director = await this.verificarDirectorYColegio(usuarioId);
     
-    // 2. Verificar que el colegio tiene autorización para este nivel
-    await this.verificarNivelAutorizado(director.colegioId, createSalonesLoteDto.nivel);
+    // 2. Obtener colegioNivelId basado en colegio y nivel
+    const colegioNivel = await this.obtenerColegioNivelId(director.colegioId, createSalonesLoteDto.nivel);
     
     // 3. Verificar que ningún salón del lote existe ya
     for (const seccion of createSalonesLoteDto.secciones) {
       await this.verificarSalonDuplicado(
         director.colegioId, 
-        createSalonesLoteDto.nivel, 
+        colegioNivel.id, 
         createSalonesLoteDto.grado, 
         seccion
       );
@@ -111,7 +111,7 @@ export class SalonService {
         const salon = await prisma.salon.create({
           data: {
             colegioId: director.colegioId,
-            nivel: createSalonesLoteDto.nivel,
+            colegioNivelId: colegioNivel.id, // ← Usar FK
             grado: createSalonesLoteDto.grado,
             seccion: seccion,
             creadoPor: usuarioId,
@@ -187,10 +187,15 @@ export class SalonService {
             nombres: true,
             apellidos: true,
           }
+        },
+        colegioNivel: {
+          include: {
+            nivel: true // ← Incluir datos del nivel
+          }
         }
       },
       orderBy: [
-        { nivel: 'asc' },
+        { colegioNivel: { nivel: { nombre: 'asc' } } }, // ← Ordenar por nombre del nivel
         { grado: 'asc' },
         { seccion: 'asc' },
       ]
@@ -198,10 +203,11 @@ export class SalonService {
 
     // 3. Agrupar por nivel para mejor presentación
     const salonesPorNivel = salones.reduce((acc, salon) => {
-      if (!acc[salon.nivel]) {
-        acc[salon.nivel] = [];
+      const nivelNombre = salon.colegioNivel?.nivel?.nombre || 'Sin nivel';
+      if (!acc[nivelNombre]) {
+        acc[nivelNombre] = [];
       }
-      acc[salon.nivel].push(salon);
+      acc[nivelNombre].push(salon);
       return acc;
     }, {} as Record<string, any[]>);
 
@@ -249,7 +255,7 @@ export class SalonService {
       if (nuevoGrado !== salonExistente.grado || nuevaSeccion !== salonExistente.seccion) {
         await this.verificarSalonDuplicado(
           director.colegioId,
-          salonExistente.nivel,
+          salonExistente.colegioNivelId,
           nuevoGrado,
           nuevaSeccion,
           id // Excluir el salón actual
@@ -375,24 +381,37 @@ export class SalonService {
     throw new ForbiddenException('No tienes permisos para gestionar salones o no tienes colegio asignado');
   }
 
-  private async verificarNivelAutorizado(colegioId: number, nivel: NivelEducativo) {
-    const nivelAutorizado = await this.prisma.colegioNivel.findFirst({
+  // Nuevo método para obtener colegioNivelId
+  private async obtenerColegioNivelId(colegioId: number, nivel: NivelEducativo) {
+    const colegioNivel = await this.prisma.colegioNivel.findFirst({
       where: {
         colegioId,
-        nivel: nivel as any,
         activo: true,
         puedeCrearSalones: true,
+        nivel: {
+          nombre: nivel as string
+        }
+      },
+      include: {
+        nivel: true
       }
     });
 
-    if (!nivelAutorizado) {
+    if (!colegioNivel) {
       throw new ForbiddenException(`Tu colegio no está autorizado para crear salones de nivel ${nivel}`);
     }
+
+    return colegioNivel;
+  }
+
+  private async verificarNivelAutorizado(colegioId: number, nivel: NivelEducativo) {
+    // Este método ahora usa obtenerColegioNivelId internamente
+    await this.obtenerColegioNivelId(colegioId, nivel);
   }
 
   private async verificarSalonDuplicado(
     colegioId: number, 
-    nivel: NivelEducativo, 
+    colegioNivelId: number, 
     grado: string, 
     seccion: string,
     excluirId?: number
@@ -400,7 +419,7 @@ export class SalonService {
     const salonExistente = await this.prisma.salon.findFirst({
       where: {
         colegioId,
-        nivel: nivel as any,
+        colegioNivelId, // ← Usar FK a colegio_nivel
         grado,
         seccion,
         activo: true,

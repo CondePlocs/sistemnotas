@@ -158,7 +158,11 @@ export class SalonAlumnosService {
           select: {
             grado: true,
             seccion: true,
-            nivel: true,
+            colegioNivel: {
+              include: {
+                nivel: true
+              }
+            }
           }
         },
         asignador: {
@@ -179,10 +183,14 @@ export class SalonAlumnosService {
     const estadisticas = {
       totalAlumnos: asignaciones.length,
       porSexo: {
-        masculino: asignaciones.filter(a => a.alumno.sexo === 'masculino').length,
-        femenino: asignaciones.filter(a => a.alumno.sexo === 'femenino').length,
+        masculino: asignaciones.filter(a => a.alumno?.sexo === 'masculino').length,
+        femenino: asignaciones.filter(a => a.alumno?.sexo === 'femenino').length,
       },
-      edadPromedio: this.calcularEdadPromedio(asignaciones.map(a => a.alumno.fechaNacimiento))
+      edadPromedio: this.calcularEdadPromedio(
+        asignaciones
+          .map(a => a.alumno?.fechaNacimiento)
+          .filter(fecha => fecha !== undefined)
+      )
     };
 
     return {

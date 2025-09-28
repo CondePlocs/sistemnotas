@@ -14,21 +14,20 @@ export interface UGEL {
   dre?: DRE;
 }
 
-// Enum para niveles educativos
-export enum NivelEducativo {
-  INICIAL = 'INICIAL',
-  PRIMARIA = 'PRIMARIA',
-  SECUNDARIA = 'SECUNDARIA'
-}
+// Importar tipos de nivel
+import { NivelEducativo, ColegioNivel } from './nivel';
 
-// Tipos para el modelo Colegio
+// Re-exportar para compatibilidad
+export { NivelEducativo };
+
+// Tipos para el modelo Colegio (actualizado)
 export interface ColegioFormData {
   nombre: string;
   codigoModular?: string;
   distrito?: string;
   direccion?: string;
   ugelId?: number; // ID de la UGEL seleccionada
-  nivelesPermitidos: NivelEducativo[]; // ← Niveles educativos autorizados
+  nivelesPermitidos: string[]; // ← Nombres de niveles ("INICIAL", "PRIMARIA", etc.)
 }
 
 export interface Colegio {
@@ -39,7 +38,7 @@ export interface Colegio {
   direccion?: string;
   ugelId?: number;
   ugel?: UGEL;
-  nivelesPermitidos?: { nivel: NivelEducativo }[]; // ← Niveles autorizados
+  nivelesPermitidos?: ColegioNivel[]; // ← Usar nueva estructura
   creadoEn: Date;
   actualizadoEn: Date;
 }

@@ -1,16 +1,25 @@
 import { NivelEducativo } from './colegio';
+import { ColegioNivel } from './nivel';
 
-// Tipo base para un salón
+// Tipo base para un salón (actualizado)
 export interface Salon {
   id: number;
   colegioId: number;
-  nivel: NivelEducativo;
+  colegioNivelId: number; // ← FK a colegio_nivel
   grado: string;
   seccion: string;
   activo: boolean;
   creadoPor: number;
   creadoEn: string;
   actualizadoEn: string;
+  
+  // Relaciones opcionales
+  colegioNivel?: ColegioNivel; // ← Datos del nivel
+}
+
+// Tipo para compatibilidad con código existente
+export interface SalonConNivel extends Salon {
+  nivel: string; // ← Nombre del nivel para mostrar en UI
 }
 
 // Datos para crear un salón individual

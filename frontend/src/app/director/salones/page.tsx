@@ -8,7 +8,11 @@ import CrearSalonModal from '@/components/CrearSalonModal';
 interface NivelesColegio {
   colegioId: number;
   colegioNombre: string;
-  nivelesPermitidos: NivelEducativo[];
+  nivelesPermitidos: {
+    id: number;
+    nombre: string;
+    puedeCrearSalones: boolean;
+  }[];
 }
 
 interface SalonCardProps {
@@ -238,10 +242,10 @@ function GestionSalonesContent() {
 
             {/* Cards de Niveles */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {nivelesColegio.nivelesPermitidos.map((nivel) => (
+              {nivelesColegio.nivelesPermitidos.map((nivelData) => (
                 <SalonCard
-                  key={nivel}
-                  nivel={nivel}
+                  key={nivelData.id}
+                  nivel={nivelData.nombre as NivelEducativo}
                   onCrearSalon={handleCrearSalon}
                 />
               ))}

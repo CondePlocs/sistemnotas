@@ -30,19 +30,28 @@ export class ColegioService {
         },
       });
 
-      // 2. Crear los niveles permitidos
+      // 2. Crear los niveles permitidos usando tabla Nivel
       const nivelesCreados = await Promise.all(
-        createColegioDto.nivelesPermitidos.map(nivel =>
-          prisma.colegioNivel.create({
+        createColegioDto.nivelesPermitidos.map(async (nombreNivel) => {
+          // Buscar el ID del nivel en la tabla Nivel
+          const nivel = await prisma.nivel.findUnique({
+            where: { nombre: nombreNivel }
+          });
+          
+          if (!nivel) {
+            throw new NotFoundException(`Nivel educativo '${nombreNivel}' no encontrado`);
+          }
+
+          return prisma.colegioNivel.create({
             data: {
               colegioId: colegio.id,
-              nivel: nivel as any, // Conversión temporal - el string coincide con el enum
+              nivelId: nivel.id, // ← Usar FK a tabla Nivel
               puedeCrearSalones: true,
               activo: true,
               // TODO: Agregar creadoPor cuando tengamos el usuario autenticado
             },
-          })
-        )
+          });
+        })
       );
 
       // 3. Retornar colegio con relaciones
@@ -113,9 +122,8 @@ export class ColegioService {
               where: {
                 activo: true // Solo niveles activos
               },
-              select: {
-                nivel: true,
-                puedeCrearSalones: true
+              include: {
+                nivel: true // ← Incluir datos de la tabla Nivel
               }
             }
           }
@@ -127,10 +135,14 @@ export class ColegioService {
       throw new NotFoundException('Director no encontrado o no tiene colegio asignado');
     }
 
-    // 2. Extraer solo los niveles
+    // 2. Extraer solo los niveles activos donde puede crear salones
     const niveles = director.colegio.nivelesPermitidos
-      .filter(nivel => nivel.puedeCrearSalones) // Solo niveles donde puede crear salones
-      .map(nivel => nivel.nivel);
+      .filter(colegioNivel => colegioNivel.puedeCrearSalones && colegioNivel.nivel?.activo)
+      .map(colegioNivel => ({
+        id: colegioNivel.nivel!.id,
+        nombre: colegioNivel.nivel!.nombre,
+        puedeCrearSalones: colegioNivel.puedeCrearSalones
+      }));
 
     return {
       colegioId: director.colegio.id,

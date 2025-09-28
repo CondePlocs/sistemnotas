@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { ColegioFormData, OPCIONES_NIVELES_EDUCATIVOS, DRE, UGEL, NivelEducativo } from '@/types/colegio';
+import { NIVELES_EDUCATIVOS } from '@/types/nivel';
 
 interface RegistroColegioFormProps {
   onSubmit: (data: ColegioFormData) => void;

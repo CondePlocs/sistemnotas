@@ -35,28 +35,28 @@ model Usuario {
   actualizado_en DateTime      @updatedAt
 
   // Relaciones
-  roles           UsuarioRol[] @relation("UsuarioRoles")
-  creados         UsuarioRol[] @relation("CreadoPor")
-  salonesCreados  Salon[]      @relation("SalonCreador") // ← Salones creados por este usuario
+  roles          UsuarioRol[] @relation("UsuarioRoles")
+  creados        UsuarioRol[] @relation("CreadoPor")
+  salonesCreados Salon[]      @relation("SalonCreador") // ← Salones creados por este usuario
 
   // Relaciones de permisos
-  permisosOtorgados     PermisosAdministrativo[] @relation("PermisosOtorgados")
-  permisosActualizados  PermisosAdministrativo[] @relation("PermisosActualizados")
+  permisosOtorgados    PermisosAdministrativo[] @relation("PermisosOtorgados")
+  permisosActualizados PermisosAdministrativo[] @relation("PermisosActualizados")
 
   // Relaciones de alumnos
-  alumnosCreados        Alumno[] @relation("AlumnoCreador")
+  alumnosCreados Alumno[] @relation("AlumnoCreador")
 
   // Relaciones de apoderado-alumno
   relacionesApoderadoAlumno ApoderadoAlumno[] @relation("RelacionCreador")
-  
+
   // Relaciones de cursos automáticos - NUEVO
-  salonCursosAsignados      SalonCurso[]     @relation("SalonCursoAsignador")
-  alumnoCursosAsignados     AlumnoCurso[]    @relation("AlumnoCursoAsignador")
+  salonCursosAsignados  SalonCurso[]  @relation("SalonCursoAsignador")
+  alumnoCursosAsignados AlumnoCurso[] @relation("AlumnoCursoAsignador")
 
   // Relaciones de cursos y competencias
   cursosCreados       Curso[]       @relation("CursoCreador")
   competenciasCreadas Competencia[] @relation("CompetenciaCreador")
-  
+
   // Relaciones de asignación alumno-salón
   asignacionesAlumnoSalon AlumnoSalon[] @relation("AlumnoSalonAsignador")
 
@@ -142,64 +142,82 @@ model Colegio {
   ugel              UGEL?          @relation(fields: [ugelId], references: [id])
   usuariosRol       UsuarioRol[]
   nivelesPermitidos ColegioNivel[] // ← Niveles educativos autorizados
-  salones           Salon[]        // ← Salones del colegio
-  alumnos           Alumno[]       // ← Alumnos del colegio
+  salones           Salon[] // ← Salones del colegio
+  alumnos           Alumno[] // ← Alumnos del colegio
 
   @@map("colegio")
 }
 
-// Enum para niveles educativos
+// Enum para niveles educativos (MANTENER por compatibilidad temporal)
 enum NivelEducativo {
   INICIAL
   PRIMARIA
   SECUNDARIA
 }
 
+// Modelo Nivel - Tabla normalizada de niveles educativos
+model Nivel {
+  id            Int      @id @default(autoincrement())
+  nombre        String   @unique // "INICIAL", "PRIMARIA", "SECUNDARIA"
+  activo        Boolean  @default(true)
+  creadoEn      DateTime @default(now())
+  actualizadoEn DateTime @updatedAt
+
+  // Relaciones
+  colegiosNivel ColegioNivel[]
+
+  @@map("nivel")
+}
+
 // Modelo ColegioNivel - Niveles autorizados por colegio
 model ColegioNivel {
-  id                Int            @id @default(autoincrement())
+  id                Int     @id @default(autoincrement())
   colegioId         Int
-  nivel             NivelEducativo
-  activo            Boolean        @default(true)
-  puedeCrearSalones Boolean        @default(true)
-  creadoEn          DateTime       @default(now())
-  actualizadoEn     DateTime       @updatedAt
+  nivelId           Int     // ← FK a tabla Nivel (ahora obligatorio)
+  activo            Boolean @default(true)
+  puedeCrearSalones Boolean @default(true)
+  creadoEn          DateTime @default(now())
+  actualizadoEn     DateTime @updatedAt
 
   // Relaciones
   colegio Colegio @relation(fields: [colegioId], references: [id], onDelete: Cascade)
+  nivel   Nivel   @relation(fields: [nivelId], references: [id]) // ← Relación limpia
+  salones Salon[] // ← Nueva relación con salones
 
-  @@unique([colegioId, nivel])
+  @@unique([colegioId, nivelId]) // ← Constraint actualizado
   @@map("colegio_nivel")
 }
 
 // Modelo Salon - Salones/Aulas por colegio
 model Salon {
-  id            Int            @id @default(autoincrement())
-  colegioId     Int
-  nivel         NivelEducativo
-  grado         String         // "1° Primaria", "3 años", "2° Secundaria"
-  seccion       String         // "A", "Los Leones", "Rojo", "Único"
-  activo        Boolean        @default(true)
-  creadoPor     Int            // ID del director que creó el salón (auditoría)
-  creadoEn      DateTime       @default(now())
-  actualizadoEn DateTime       @updatedAt
+  id              Int     @id @default(autoincrement())
+  colegioId       Int
+  colegioNivelId  Int     // ← FK a colegio_nivel (reemplaza nivel)
+  grado           String  // "1° Primaria", "3 años", "2° Secundaria"
+  seccion         String  // "A", "Los Leones", "Rojo", "Único"
+  activo          Boolean @default(true)
+  creadoPor       Int     // ID del director que creó el salón (auditoría)
+  creadoEn        DateTime @default(now())
+  actualizadoEn   DateTime @updatedAt
 
   // Relaciones
-  colegio     Colegio @relation(fields: [colegioId], references: [id], onDelete: Cascade)
-  creadorUser Usuario @relation("SalonCreador", fields: [creadoPor], references: [id])
-  
+  colegio      Colegio      @relation(fields: [colegioId], references: [id], onDelete: Cascade)
+  colegioNivel ColegioNivel @relation(fields: [colegioNivelId], references: [id]) // ← Nueva relación
+  creadorUser  Usuario      @relation("SalonCreador", fields: [creadoPor], references: [id])
+
   // Relación con alumnos (registro único)
   alumnos AlumnoSalon[]
-  
+
   // Relación con cursos (muchos a muchos) - NUEVO
-  cursos      SalonCurso[]
-  
+  cursos SalonCurso[]
+
   // Relación con alumnos-cursos (referencia de origen) - NUEVO
   alumnosCursos AlumnoCurso[]
 
   // Evitar duplicados: Un colegio no puede tener dos salones iguales
-  @@unique([colegioId, nivel, grado, seccion])
+  @@unique([colegioId, colegioNivelId, grado, seccion]) // ← Constraint actualizado
   @@index([colegioId])
+  @@index([colegioNivelId]) // ← Nuevo índice
   @@index([creadoPor])
   @@map("salon")
 }
@@ -225,11 +243,11 @@ model Profesor {
   institucionEgreso String?
 
   // Datos laborales
-  fechaIngreso       DateTime?
-  condicionLaboral   String? // nombrado, contratado
+  fechaIngreso     DateTime?
+  condicionLaboral String? // nombrado, contratado
 
-  creadoEn      DateTime @default(now())
-  actualizadoEn DateTime @updatedAt
+  creadoEn       DateTime @default(now())
+  actualizadoEn  DateTime @updatedAt
   actualizadoPor Int? // ID del usuario que hizo la última actualización
 
   @@map("profesor")
@@ -258,8 +276,8 @@ model Apoderado {
   // Relación con alumnos (muchos a muchos)
   alumnos ApoderadoAlumno[]
 
-  creadoEn      DateTime @default(now())
-  actualizadoEn DateTime @updatedAt
+  creadoEn       DateTime @default(now())
+  actualizadoEn  DateTime @updatedAt
   actualizadoPor Int? // ID del usuario que hizo la última actualización
 
   @@map("apoderado")
@@ -285,8 +303,8 @@ model Administrativo {
   fechaIngreso     DateTime?
   condicionLaboral String? // nombrado, contratado
 
-  creadoEn      DateTime @default(now())
-  actualizadoEn DateTime @updatedAt
+  creadoEn       DateTime @default(now())
+  actualizadoEn  DateTime @updatedAt
   actualizadoPor Int? // ID del usuario que hizo la última actualización
 
   // Relación con permisos
@@ -327,29 +345,29 @@ model Director {
 
 // Modelo PermisosAdministrativo - Sistema de permisos para personal administrativo
 model PermisosAdministrativo {
-  id                              Int      @id @default(autoincrement())
-  administrativoId                Int      @unique
-  
+  id               Int @id @default(autoincrement())
+  administrativoId Int @unique
+
   // Permisos específicos
-  puedeRegistrarProfesores        Boolean  @default(false)
-  puedeRegistrarApoderados        Boolean  @default(false)
-  puedeRegistrarAdministrativos   Boolean  @default(false)
-  puedeRegistrarAlumnos           Boolean  @default(false)
-  puedeGestionarSalones           Boolean  @default(false)
-  
+  puedeRegistrarProfesores      Boolean @default(false)
+  puedeRegistrarApoderados      Boolean @default(false)
+  puedeRegistrarAdministrativos Boolean @default(false)
+  puedeRegistrarAlumnos         Boolean @default(false)
+  puedeGestionarSalones         Boolean @default(false)
+
   // Auditoría - Quién otorgó los permisos
-  otorgadoPor                     Int?
-  otorgadoEn                      DateTime @default(now())
-  
+  otorgadoPor Int?
+  otorgadoEn  DateTime @default(now())
+
   // Auditoría - Última actualización
-  actualizadoPor                  Int?
-  actualizadoEn                   DateTime @updatedAt
-  
+  actualizadoPor Int?
+  actualizadoEn  DateTime @updatedAt
+
   // Relaciones
-  administrativo                  Administrativo @relation(fields: [administrativoId], references: [id], onDelete: Cascade)
-  usuarioOtorgador                Usuario? @relation("PermisosOtorgados", fields: [otorgadoPor], references: [id])
-  usuarioActualizador             Usuario? @relation("PermisosActualizados", fields: [actualizadoPor], references: [id])
-  
+  administrativo      Administrativo @relation(fields: [administrativoId], references: [id], onDelete: Cascade)
+  usuarioOtorgador    Usuario?       @relation("PermisosOtorgados", fields: [otorgadoPor], references: [id])
+  usuarioActualizador Usuario?       @relation("PermisosActualizados", fields: [actualizadoPor], references: [id])
+
   @@map("permisos_administrativo")
 }
 
@@ -361,80 +379,78 @@ enum SexoAlumno {
 
 // Modelo Alumno - Estudiantes del colegio
 model Alumno {
-  id                Int        @id @default(autoincrement())
-  colegioId         Int        // Scope por colegio
-  
+  id        Int @id @default(autoincrement())
+  colegioId Int // Scope por colegio
+
   // Identificación personal
-  dni               String?    @unique
-  nombres           String
-  apellidos         String
-  fechaNacimiento   DateTime?
-  sexo              SexoAlumno?
-  nacionalidad      String?    @default("Peruana")
-  
+  dni             String?     @unique
+  nombres         String
+  apellidos       String
+  fechaNacimiento DateTime?
+  sexo            SexoAlumno?
+  nacionalidad    String?     @default("Peruana")
+
   // Contacto y residencia
-  direccion         String?
-  distrito          String?
-  numeroContacto    String?
-  
+  direccion      String?
+  distrito       String?
+  numeroContacto String?
+
   // Información académica básica
-  activo            Boolean    @default(true)
-  
+  activo Boolean @default(true)
+
   // Auditoría
-  creadoPor         Int        // Usuario que registró al alumno
-  creadoEn          DateTime   @default(now())
-  actualizadoEn     DateTime   @updatedAt
-  
+  creadoPor     Int // Usuario que registró al alumno
+  creadoEn      DateTime @default(now())
+  actualizadoEn DateTime @updatedAt
+
   // Relaciones
-  colegio           Colegio    @relation(fields: [colegioId], references: [id], onDelete: Cascade)
-  creadorUser       Usuario    @relation("AlumnoCreador", fields: [creadoPor], references: [id])
-  
+  colegio     Colegio @relation(fields: [colegioId], references: [id], onDelete: Cascade)
+  creadorUser Usuario @relation("AlumnoCreador", fields: [creadoPor], references: [id])
+
   // Relación con apoderados (muchos a muchos)
-  apoderados        ApoderadoAlumno[]
-  
+  apoderados ApoderadoAlumno[]
+
   // Relación con salones (muchos a muchos)
-  salones           AlumnoSalon[]
-  
+  salones AlumnoSalon[]
+
   // Relación con cursos (muchos a muchos) - NUEVO
-  cursos            AlumnoCurso[]
-  
+  cursos AlumnoCurso[]
+
   // Índices para optimización
   @@index([colegioId])
   @@index([dni])
   @@index([activo])
-  
   @@map("alumno")
 }
 
 // Modelo ApoderadoAlumno - Tabla intermedia para relación muchos a muchos
 model ApoderadoAlumno {
-  id           Int       @id @default(autoincrement())
-  apoderadoId  Int       // FK al apoderado
-  alumnoId     Int       // FK al alumno
-  
+  id          Int @id @default(autoincrement())
+  apoderadoId Int // FK al apoderado
+  alumnoId    Int // FK al alumno
+
   // Información específica de la relación
-  parentesco   String    // padre, madre, tío, hermano, tutor legal, abuelo, etc.
-  esPrincipal  Boolean   @default(false) // Apoderado principal del alumno
-  activo       Boolean   @default(true)  // Para soft delete de relaciones
-  
+  parentesco  String // padre, madre, tío, hermano, tutor legal, abuelo, etc.
+  esPrincipal Boolean @default(false) // Apoderado principal del alumno
+  activo      Boolean @default(true) // Para soft delete de relaciones
+
   // Auditoría completa
-  creadoPor    Int       // Usuario que creó la relación (director/administrativo)
-  creadoEn     DateTime  @default(now())
-  actualizadoEn DateTime @updatedAt
-  actualizadoPor Int?    // Usuario que hizo la última actualización
-  
+  creadoPor      Int // Usuario que creó la relación (director/administrativo)
+  creadoEn       DateTime @default(now())
+  actualizadoEn  DateTime @updatedAt
+  actualizadoPor Int? // Usuario que hizo la última actualización
+
   // Relaciones
-  apoderado    Apoderado @relation(fields: [apoderadoId], references: [id], onDelete: Cascade)
-  alumno       Alumno    @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
-  creador      Usuario   @relation("RelacionCreador", fields: [creadoPor], references: [id])
-  
+  apoderado Apoderado @relation(fields: [apoderadoId], references: [id], onDelete: Cascade)
+  alumno    Alumno    @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
+  creador   Usuario   @relation("RelacionCreador", fields: [creadoPor], references: [id])
+
   // Índices únicos y de optimización
   @@unique([apoderadoId, alumnoId]) // Un apoderado no puede tener relación duplicada con el mismo alumno
   @@index([apoderadoId])
   @@index([alumnoId])
   @@index([activo])
   @@index([esPrincipal])
-  
   @@map("apoderado_alumno")
 }
 
@@ -444,25 +460,25 @@ model ApoderadoAlumno {
 
 // Modelo Curso - Cursos creados por el Owner (Matemática, Comunicación, etc.)
 model Curso {
-  id          Int            @id @default(autoincrement())
-  nombre      String         // "Matemática", "Comunicación", "Personal Social"
-  descripcion String?        // Descripción opcional del curso
-  nivel       NivelEducativo // INICIAL, PRIMARIA, SECUNDARIA
-  color       String?        // Color para UI (ej: "#3B82F6")
-  activo      Boolean        @default(true)
-  creadoPor   Int            // Owner que creó el curso
-  creadoEn    DateTime       @default(now())
-  actualizadoEn DateTime     @updatedAt
+  id            Int            @id @default(autoincrement())
+  nombre        String // "Matemática", "Comunicación", "Personal Social"
+  descripcion   String? // Descripción opcional del curso
+  nivel         NivelEducativo // INICIAL, PRIMARIA, SECUNDARIA
+  color         String? // Color para UI (ej: "#3B82F6")
+  activo        Boolean        @default(true)
+  creadoPor     Int // Owner que creó el curso
+  creadoEn      DateTime       @default(now())
+  actualizadoEn DateTime       @updatedAt
 
   // Relaciones
   competencias Competencia[]
   creador      Usuario       @relation("CursoCreador", fields: [creadoPor], references: [id])
-  
+
   // Relación con salones (muchos a muchos) - NUEVO
-  salones      SalonCurso[]
-  
+  salones SalonCurso[]
+
   // Relación con alumnos (muchos a muchos) - NUEVO
-  alumnos      AlumnoCurso[]
+  alumnos AlumnoCurso[]
 
   // Constraints e índices
   @@unique([nombre, nivel]) // No duplicar "Matemática - PRIMARIA"
@@ -470,19 +486,18 @@ model Curso {
   @@index([activo])
   @@index([creadoPor])
   @@index([nivel, activo]) // Búsquedas optimizadas por nivel activo
-  
   @@map("curso")
 }
 
 // Modelo Competencia - Competencias de cada curso
 model Competencia {
-  id          Int      @id @default(autoincrement())
-  cursoId     Int
-  nombre      String   // "Domina números y operaciones", "Desarrolla lógica matemática"
-  orden       Int      // Para ordenar competencias (1, 2, 3, ...)
-  activo      Boolean  @default(true)
-  creadoPor   Int      // Owner que creó la competencia
-  creadoEn    DateTime @default(now())
+  id            Int      @id @default(autoincrement())
+  cursoId       Int
+  nombre        String // "Domina números y operaciones", "Desarrolla lógica matemática"
+  orden         Int // Para ordenar competencias (1, 2, 3, ...)
+  activo        Boolean  @default(true)
+  creadoPor     Int // Owner que creó la competencia
+  creadoEn      DateTime @default(now())
   actualizadoEn DateTime @updatedAt
 
   // Relaciones
@@ -495,7 +510,6 @@ model Competencia {
   @@index([activo])
   @@index([creadoPor])
   @@index([cursoId, orden, activo]) // Ordenamiento eficiente
-  
   @@map("competencia")
 }
 
@@ -507,9 +521,9 @@ model Competencia {
 model AlumnoSalon {
   id              Int      @id @default(autoincrement())
   alumnoId        Int      @unique // Un alumno = Un registro único
-  salonId         Int      // Salón actual del alumno
+  salonId         Int // Salón actual del alumno
   fechaAsignacion DateTime @default(now()) // Cuándo se asignó al salón
-  asignadoPor     Int      // Usuario que hizo la asignación
+  asignadoPor     Int // Usuario que hizo la asignación
   creadoEn        DateTime @default(now())
   actualizadoEn   DateTime @updatedAt
 
@@ -522,7 +536,6 @@ model AlumnoSalon {
   @@index([salonId]) // Consultas rápidas de alumnos por salón
   @@index([alumnoId]) // Redundante por @unique pero explícito
   @@index([fechaAsignacion])
-  
   @@map("alumno_salon")
 }
 
@@ -532,48 +545,47 @@ model AlumnoSalon {
 
 // Modelo SalonCurso - Relación muchos a muchos entre Salón y Curso
 model SalonCurso {
-  id               Int       @id @default(autoincrement())
-  salonId          Int       // FK al salón
-  cursoId          Int       // FK al curso
-  
+  id      Int @id @default(autoincrement())
+  salonId Int // FK al salón
+  cursoId Int // FK al curso
+
   // Auditoría y control
-  activo           Boolean   @default(true)
-  asignadoEn       DateTime  @default(now())
-  asignadoPor      Int?      // Usuario que asignó (puede ser automático)
-  
+  activo      Boolean  @default(true)
+  asignadoEn  DateTime @default(now())
+  asignadoPor Int? // Usuario que asignó (puede ser automático)
+
   // Relaciones
-  salon            Salon     @relation(fields: [salonId], references: [id], onDelete: Cascade)
-  curso            Curso     @relation(fields: [cursoId], references: [id], onDelete: Cascade)
-  asignador        Usuario?  @relation("SalonCursoAsignador", fields: [asignadoPor], references: [id])
-  
+  salon     Salon    @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  curso     Curso    @relation(fields: [cursoId], references: [id], onDelete: Cascade)
+  asignador Usuario? @relation("SalonCursoAsignador", fields: [asignadoPor], references: [id])
+
   // Constraints
   @@unique([salonId, cursoId]) // Un curso no puede estar duplicado en el mismo salón
   @@index([salonId])
   @@index([cursoId])
   @@index([salonId, activo]) // Consultas de cursos por salón
   @@index([cursoId, activo]) // Consultas de salones por curso
-  
   @@map("salon_curso")
 }
 
 // Modelo AlumnoCurso - Relación muchos a muchos entre Alumno y Curso
 model AlumnoCurso {
-  id               Int       @id @default(autoincrement())
-  alumnoId         Int       // FK al alumno
-  cursoId          Int       // FK al curso
-  salonId          Int?      // FK al salón (referencia de dónde viene la asignación)
-  
+  id       Int  @id @default(autoincrement())
+  alumnoId Int // FK al alumno
+  cursoId  Int // FK al curso
+  salonId  Int? // FK al salón (referencia de dónde viene la asignación)
+
   // Auditoría y control
-  activo           Boolean   @default(true)
-  asignadoEn       DateTime  @default(now())
-  asignadoPor      Int?      // Usuario que asignó (puede ser automático)
-  
+  activo      Boolean  @default(true)
+  asignadoEn  DateTime @default(now())
+  asignadoPor Int? // Usuario que asignó (puede ser automático)
+
   // Relaciones
-  alumno           Alumno    @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
-  curso            Curso     @relation(fields: [cursoId], references: [id], onDelete: Cascade)
-  salon            Salon?    @relation(fields: [salonId], references: [id], onDelete: SetNull)
-  asignador        Usuario?  @relation("AlumnoCursoAsignador", fields: [asignadoPor], references: [id])
-  
+  alumno    Alumno   @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
+  curso     Curso    @relation(fields: [cursoId], references: [id], onDelete: Cascade)
+  salon     Salon?   @relation(fields: [salonId], references: [id], onDelete: SetNull)
+  asignador Usuario? @relation("AlumnoCursoAsignador", fields: [asignadoPor], references: [id])
+
   // Constraints
   @@unique([alumnoId, cursoId]) // Un alumno no puede tener el mismo curso duplicado
   @@index([alumnoId])
@@ -582,6 +594,5 @@ model AlumnoCurso {
   @@index([alumnoId, activo]) // Consultas de cursos por alumno
   @@index([cursoId, activo]) // Consultas de alumnos por curso
   @@index([salonId, activo]) // Consultas por salón de origen
-  
   @@map("alumno_curso")
 }

@@ -267,9 +267,13 @@ export class SalonCursosService {
         salon: {
           select: {
             id: true,
-            nivel: true,
             grado: true,
-            seccion: true
+            seccion: true,
+            colegioNivel: {
+              include: {
+                nivel: true
+              }
+            }
           }
         }
       },
