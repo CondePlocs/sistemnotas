@@ -1,16 +1,21 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   CursoFormData, 
   CompetenciaFormData, 
-  NivelEducativo, 
   COLORES_CURSO, 
-  NIVELES_EDUCATIVOS,
   validarCursoFormData 
 } from '@/types/curso';
 import SelectorCompetencias from './SelectorCompetencias';
 import ColorSelector from './ColorSelector';
+
+// Interface para niveles desde la API
+interface Nivel {
+  id: number;
+  nombre: string;
+  activo: boolean;
+}
 
 interface FormularioCursoProps {
   onSuccess?: (curso: any) => void;
@@ -27,20 +32,56 @@ export default function FormularioCurso({
 }: FormularioCursoProps) {
   const [loading, setLoading] = useState(false);
   const [errores, setErrores] = useState<string[]>([]);
+  const [niveles, setNiveles] = useState<Nivel[]>([]);
+  const [loadingNiveles, setLoadingNiveles] = useState(true);
   const [formData, setFormData] = useState<CursoFormData>({
     nombre: cursoInicial?.nombre || '',
     descripcion: cursoInicial?.descripcion || '',
-    nivel: cursoInicial?.nivel || NivelEducativo.PRIMARIA,
+    nivelId: cursoInicial?.nivelId || 0,
     color: cursoInicial?.color || COLORES_CURSO[0].valor,
     competencias: cursoInicial?.competencias || []
   });
 
+  // Cargar niveles desde la API
+  useEffect(() => {
+    const cargarNiveles = async () => {
+      try {
+        const response = await fetch('/api/ubicacion/niveles', {
+          credentials: 'include'
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setNiveles(data.filter((nivel: Nivel) => nivel.activo));
+          
+          // Si no hay nivelId seleccionado, seleccionar el primero
+          if (formData.nivelId === 0 && data.length > 0) {
+            setFormData(prev => ({
+              ...prev,
+              nivelId: data[0].id
+            }));
+          }
+        }
+      } catch (error) {
+        console.error('Error al cargar niveles:', error);
+        setErrores(['Error al cargar los niveles educativos']);
+      } finally {
+        setLoadingNiveles(false);
+      }
+    };
+
+    cargarNiveles();
+  }, []);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     
+    // Convertir nivelId a número
+    const finalValue = name === 'nivelId' ? parseInt(value, 10) : value;
+    
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: finalValue
     }));
     
     // Limpiar errores cuando el usuario empiece a corregir
@@ -173,19 +214,34 @@ export default function FormularioCurso({
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Nivel Educativo *
               </label>
-              <select
-                name="nivel"
-                value={formData.nivel}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                required
-              >
-                {NIVELES_EDUCATIVOS.map(nivel => (
-                  <option key={nivel.valor} value={nivel.valor}>
-                    {nivel.label} ({nivel.descripcion})
+              {loadingNiveles ? (
+                <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50">
+                  <span className="text-gray-500">Cargando niveles...</span>
+                </div>
+              ) : (
+                <select
+                  name="nivelId"
+                  value={formData.nivelId}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                  disabled={niveles.length === 0}
+                >
+                  <option value={0} disabled>
+                    Selecciona un nivel educativo
                   </option>
-                ))}
-              </select>
+                  {niveles.map((nivel) => (
+                    <option key={nivel.id} value={nivel.id}>
+                      {nivel.nombre}
+                    </option>
+                  ))}
+                </select>
+              )}
+              {!loadingNiveles && niveles.length === 0 && (
+                <p className="text-sm text-red-600 mt-1">
+                  No se pudieron cargar los niveles educativos
+                </p>
+              )}
             </div>
 
             {/* Descripción */}

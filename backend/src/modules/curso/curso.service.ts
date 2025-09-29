@@ -33,13 +33,13 @@ export class CursoService {
     const cursoExistente = await this.prisma.curso.findFirst({
       where: {
         nombre: crearCursoDto.nombre,
-        nivel: crearCursoDto.nivel,
+        nivelId: crearCursoDto.nivelId,
         activo: true
       }
     });
 
     if (cursoExistente) {
-      throw new ConflictException(`Ya existe un curso "${crearCursoDto.nombre}" para el nivel ${crearCursoDto.nivel}`);
+      throw new ConflictException(`Ya existe un curso "${crearCursoDto.nombre}" para el nivel especificado`);
     }
 
     // Crear curso con competencias en transacción
@@ -49,7 +49,7 @@ export class CursoService {
         data: {
           nombre: crearCursoDto.nombre,
           descripcion: crearCursoDto.descripcion,
-          nivel: crearCursoDto.nivel,
+          nivelId: crearCursoDto.nivelId,
           color: crearCursoDto.color || '#3B82F6', // Azul por defecto
           creadoPor: usuarioId
         }
@@ -102,6 +102,12 @@ export class CursoService {
     return await this.prisma.curso.findMany({
       where: { activo: true },
       include: {
+        nivel: {
+          select: {
+            id: true,
+            nombre: true
+          }
+        },
         competencias: {
           where: { activo: true },
           orderBy: { orden: 'asc' }
@@ -116,7 +122,7 @@ export class CursoService {
         }
       },
       orderBy: [
-        { nivel: 'asc' },
+        { nivel: { nombre: 'asc' } },
         { nombre: 'asc' }
       ]
     });
@@ -148,6 +154,12 @@ export class CursoService {
     const curso = await this.prisma.curso.findUnique({
       where: { id: cursoId },
       include: {
+        nivel: {
+          select: {
+            id: true,
+            nombre: true
+          }
+        },
         competencias: {
           where: { activo: true },
           orderBy: { orden: 'asc' }
@@ -202,22 +214,22 @@ export class CursoService {
       throw new NotFoundException('Curso no encontrado');
     }
 
-    // Si se actualiza nombre y nivel, verificar duplicados
-    if (actualizarCursoDto.nombre || actualizarCursoDto.nivel) {
+    // Si se actualiza nombre y nivelId, verificar duplicados
+    if (actualizarCursoDto.nombre || actualizarCursoDto.nivelId) {
       const nombreFinal = actualizarCursoDto.nombre || cursoExistente.nombre;
-      const nivelFinal = actualizarCursoDto.nivel || cursoExistente.nivel;
+      const nivelIdFinal = actualizarCursoDto.nivelId || cursoExistente.nivelId;
 
       const cursoDuplicado = await this.prisma.curso.findFirst({
         where: {
           nombre: nombreFinal,
-          nivel: nivelFinal,
+          nivelId: nivelIdFinal,
           activo: true,
           id: { not: cursoId }
         }
       });
 
       if (cursoDuplicado) {
-        throw new ConflictException(`Ya existe un curso "${nombreFinal}" para el nivel ${nivelFinal}`);
+        throw new ConflictException(`Ya existe un curso "${nombreFinal}" para el nivel especificado`);
       }
     }
 
@@ -326,7 +338,7 @@ export class CursoService {
 
       // Cursos por nivel
       this.prisma.curso.groupBy({
-        by: ['nivel'],
+        by: ['nivelId'],
         where: { activo: true },
         _count: { id: true }
       }),
@@ -341,7 +353,7 @@ export class CursoService {
       totalCursos,
       competenciasTotales,
       cursosPorNivel: cursosPorNivel.map(item => ({
-        nivel: item.nivel,
+        nivelId: item.nivelId,
         cantidad: item._count.id
       }))
     };

@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEnum, IsArray, ValidateNested, MinLength, MaxLength, IsBoolean } from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsArray, ValidateNested, MinLength, MaxLength, IsBoolean, IsInt, IsPositive } from 'class-validator';
 import { Type } from 'class-transformer';
 import { NivelEducativo } from './crear-curso.dto';
 
@@ -23,8 +23,9 @@ export class ActualizarCursoDto {
   descripcion?: string;
 
   @IsOptional()
-  @IsEnum(NivelEducativo, { message: 'Nivel educativo inválido' })
-  nivel?: NivelEducativo;
+  @IsInt({ message: 'El nivelId debe ser un número entero' })
+  @IsPositive({ message: 'El nivelId debe ser un número positivo' })
+  nivelId?: number;
 
   @IsOptional()
   @IsString()

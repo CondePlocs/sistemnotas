@@ -21,13 +21,20 @@ export class SalonCursosService {
       
       const cursosDelNivel = await this.prisma.curso.findMany({
         where: {
-          nivel: nivel,
+          nivel: {
+            nombre: nivel
+          },
           activo: true
         },
         select: {
           id: true,
           nombre: true,
-          nivel: true
+          nivel: {
+            select: {
+              id: true,
+              nombre: true
+            }
+          }
         }
       });
 
@@ -78,7 +85,12 @@ export class SalonCursosService {
                   select: {
                     id: true,
                     nombre: true,
-                    nivel: true,
+                    nivel: {
+                      select: {
+                        id: true,
+                        nombre: true
+                      }
+                    },
                     color: true
                   }
                 }
@@ -131,7 +143,12 @@ export class SalonCursosService {
             select: {
               id: true,
               nombre: true,
-              nivel: true,
+              nivel: {
+              select: {
+                id: true,
+                nombre: true
+              }
+            },
               color: true
             }
           }
@@ -176,7 +193,12 @@ export class SalonCursosService {
                   select: {
                     id: true,
                     nombre: true,
-                    nivel: true,
+                    nivel: {
+                      select: {
+                        id: true,
+                        nombre: true
+                      }
+                    },
                     color: true
                   }
                 }
@@ -218,7 +240,12 @@ export class SalonCursosService {
           select: {
             id: true,
             nombre: true,
-            nivel: true,
+            nivel: {
+              select: {
+                id: true,
+                nombre: true
+              }
+            },
             color: true,
             competencias: {
               where: { activo: true },
@@ -252,8 +279,12 @@ export class SalonCursosService {
           select: {
             id: true,
             nombre: true,
-            
-            nivel: true,
+            nivel: {
+              select: {
+                id: true,
+                nombre: true
+              }
+            },
             color: true,
             competencias: {
               where: { activo: true },
@@ -271,7 +302,12 @@ export class SalonCursosService {
             seccion: true,
             colegioNivel: {
               include: {
-                nivel: true
+                nivel: {
+                  select: {
+                    id: true,
+                    nombre: true
+                  }
+                }
               }
             }
           }

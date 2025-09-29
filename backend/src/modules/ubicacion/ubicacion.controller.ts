@@ -26,4 +26,10 @@ export class UbicacionController {
   async obtenerUgeles() {
     return this.ubicacionService.obtenerUgeles();
   }
+
+  @Get('niveles')
+  @Roles('OWNER', 'DIRECTOR', 'ADMINISTRATIVO')
+  async obtenerNiveles() {
+    return this.ubicacionService.obtenerNiveles();
+  }
 }

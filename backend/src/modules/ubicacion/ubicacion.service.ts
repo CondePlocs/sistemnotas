@@ -29,4 +29,11 @@ export class UbicacionService {
       orderBy: { nombre: 'asc' },
     });
   }
+
+  async obtenerNiveles() {
+    return this.prisma.nivel.findMany({
+      where: { activo: true },
+      orderBy: { nombre: 'asc' },
+    });
+  }
 }

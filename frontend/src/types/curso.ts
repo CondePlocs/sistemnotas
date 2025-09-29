@@ -19,7 +19,7 @@ export interface Curso {
   id: number;
   nombre: string;
   descripcion?: string;
-  nivel: NivelEducativo;
+  nivelId: number;
   color?: string;
   activo: boolean;
   creadoPor: number;
@@ -27,6 +27,10 @@ export interface Curso {
   actualizadoEn: string;
   
   // Relaciones
+  nivel?: {
+    id: number;
+    nombre: string;
+  };
   competencias?: Competencia[];
   creador?: {
     id: number;
@@ -64,7 +68,7 @@ export interface Competencia {
 export interface CursoFormData {
   nombre: string;
   descripcion?: string;
-  nivel: NivelEducativo;
+  nivelId: number;
   color?: string;
   competencias: CompetenciaFormData[];
 }
@@ -106,7 +110,7 @@ export interface CursosListResponse {
   estadisticas?: {
     total: number;
     porNivel: {
-      nivel: NivelEducativo;
+      nivelId: number;
       cantidad: number;
     }[];
   };
@@ -276,7 +280,7 @@ export const validarCursoFormData = (data: CursoFormData): string[] => {
     errores.push('El nombre del curso debe tener al menos 3 caracteres');
   }
   
-  if (!data.nivel) {
+  if (!data.nivelId || data.nivelId === 0) {
     errores.push('Debe seleccionar un nivel educativo');
   }
   
@@ -322,7 +326,10 @@ export interface SalonCurso {
   curso: {
     id: number;
     nombre: string;
-    nivel: NivelEducativo;
+    nivel: {
+      id: number;
+      nombre: string;
+    };
     color?: string;
     competencias?: {
       id: number;
@@ -345,7 +352,10 @@ export interface AlumnoCurso {
   curso: {
     id: number;
     nombre: string;
-    nivel: NivelEducativo;
+    nivel: {
+      id: number;
+      nombre: string;
+    };
     color?: string;
     competencias?: {
       id: number;
@@ -354,7 +364,12 @@ export interface AlumnoCurso {
   };
   salon?: {
     id: number;
-    nivel: NivelEducativo;
+    colegioNivel: {
+      nivel: {
+        id: number;
+        nombre: string;
+      };
+    };
     grado: string;
     seccion: string;
   };

@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEnum, IsArray, ValidateNested, MinLength, MaxLength } from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsArray, ValidateNested, MinLength, MaxLength, IsInt, IsPositive } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export enum NivelEducativo {
@@ -25,8 +25,9 @@ export class CrearCursoDto {
   @MaxLength(500, { message: 'La descripción no puede exceder 500 caracteres' })
   descripcion?: string;
 
-  @IsEnum(NivelEducativo, { message: 'Nivel educativo inválido' })
-  nivel: NivelEducativo;
+  @IsInt({ message: 'El nivelId debe ser un número entero' })
+  @IsPositive({ message: 'El nivelId debe ser un número positivo' })
+  nivelId: number;
 
   @IsOptional()
   @IsString()
