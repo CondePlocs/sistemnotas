@@ -28,6 +28,7 @@ model Usuario {
   permisosOtorgados         PermisosAdministrativo[] @relation("PermisosOtorgados")
   salonesCreados            Salon[]                  @relation("SalonCreador")
   salonCursosAsignados      SalonCurso[]             @relation("SalonCursoAsignador")
+  periodosAcademicosCreados PeriodoAcademico[]       @relation("PeriodoAcademicoCreador")
   creados                   UsuarioRol[]             @relation("CreadoPor")
   roles                     UsuarioRol[]             @relation("UsuarioRoles")
 
@@ -96,6 +97,7 @@ model Colegio {
   alumnos           Alumno[]
   ugel              UGEL?          @relation(fields: [ugelId], references: [id])
   nivelesPermitidos ColegioNivel[]
+  periodosAcademicos PeriodoAcademico[]
   salones           Salon[]
   usuariosRol       UsuarioRol[]
 
@@ -397,4 +399,39 @@ enum NivelEducativo {
 enum SexoAlumno {
   masculino
   femenino
+}
+
+enum TipoPeriodo {
+  BIMESTRE
+  TRIMESTRE
+  SEMESTRE
+}
+
+model PeriodoAcademico {
+  id              Int         @id @default(autoincrement())
+  colegioId       Int
+  nombre          String      // "Primer Período", "Segundo Período"
+  tipo            TipoPeriodo // BIMESTRE, TRIMESTRE, SEMESTRE
+  anioAcademico   Int         // 2025, 2026
+  orden           Int         // 1, 2, 3, 4
+  fechaInicio     DateTime    @db.Date
+  fechaFin        DateTime    @db.Date
+  activo          Boolean     @default(false)
+  
+  // Auditoría
+  creadoPor       Int
+  creadoEn        DateTime    @default(now())
+  actualizadoEn   DateTime    @updatedAt
+
+  // Relaciones
+  colegio         Colegio     @relation(fields: [colegioId], references: [id], onDelete: Cascade)
+  creador         Usuario     @relation("PeriodoAcademicoCreador", fields: [creadoPor], references: [id])
+
+  // Índices y constraints
+  @@unique([colegioId, anioAcademico, orden])
+  @@index([colegioId])
+  @@index([anioAcademico])
+  @@index([activo])
+  @@index([colegioId, activo])
+  @@map("periodo_academico")
 }

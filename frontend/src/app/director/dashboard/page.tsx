@@ -188,6 +188,27 @@ function DirectorDashboardContent() {
               Dar Permisos
             </Link>
           </div>
+
+          {/* Card: Períodos Académicos */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="flex items-center mb-4">
+              <div className="bg-indigo-100 p-3 rounded-full">
+                <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h3 className="ml-3 text-lg font-semibold text-gray-900">Períodos Académicos</h3>
+            </div>
+            <p className="text-gray-600 mb-4">
+              Gestionar bimestres, trimestres y semestres del año académico.
+            </p>
+            <Link 
+              href="/director/periodos-academicos"
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md transition-colors inline-block text-center"
+            >
+              Gestionar Períodos
+            </Link>
+          </div>
         </div>
 
         {/* Stats Section */}
