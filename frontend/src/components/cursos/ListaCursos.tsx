@@ -1,20 +1,18 @@
 'use client';
 
 import React from 'react';
-import { SalonCurso, AlumnoCurso, obtenerColorCurso } from '@/types/curso';
+import { SalonCurso, obtenerColorCurso } from '@/types/curso';
 
 interface ListaCursosProps {
-  cursos: SalonCurso[] | AlumnoCurso[];
-  tipo: 'salon' | 'alumno';
+  cursos: SalonCurso[];
   loading?: boolean;
   titulo?: string;
   mostrarCompetencias?: boolean;
-  onCursoClick?: (curso: SalonCurso | AlumnoCurso) => void;
+  onCursoClick?: (curso: SalonCurso) => void;
 }
 
 export default function ListaCursos({
   cursos,
-  tipo,
   loading = false,
   titulo,
   mostrarCompetencias = true,
@@ -52,19 +50,15 @@ export default function ListaCursos({
             </svg>
           </div>
           <h4 className="text-lg font-medium text-gray-900 mb-2">
-            {tipo === 'salon' ? 'Sin cursos asignados' : 'Sin cursos matriculados'}
+            Sin cursos asignados
           </h4>
           <p className="text-gray-500">
-            {tipo === 'salon' 
-              ? 'Este salón aún no tiene cursos asignados automáticamente.'
-              : 'Este alumno aún no está matriculado en ningún curso.'
-            }
+            Este salón aún no tiene cursos asignados.
           </p>
         </div>
       </div>
     );
   }
-
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
       {titulo && (
@@ -98,14 +92,6 @@ export default function ListaCursos({
               </h4>
             </div>
 
-            {/* Información adicional para alumnos */}
-            {tipo === 'alumno' && 'salon' in curso && curso.salon && (
-              <div className="mb-3">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                  {curso.salon.grado} {curso.salon.seccion}
-                </span>
-              </div>
-            )}
 
             {/* Competencias */}
             {mostrarCompetencias && curso.curso.competencias && curso.curso.competencias.length > 0 && (
@@ -154,10 +140,7 @@ export default function ListaCursos({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span>
-              {tipo === 'salon' 
-                ? 'Cursos asignados automáticamente por nivel educativo'
-                : 'Cursos heredados del salón asignado'
-              }
+              Cursos asignados automáticamente por nivel educativo
             </span>
           </div>
           <div className="flex items-center">

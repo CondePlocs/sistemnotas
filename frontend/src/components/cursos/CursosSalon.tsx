@@ -107,7 +107,6 @@ export default function CursosSalon({ salonId, salon, onRefresh }: CursosSalonPr
       {/* Lista de cursos */}
       <ListaCursos
         cursos={cursos}
-        tipo="salon"
         loading={loading}
         mostrarCompetencias={true}
         onCursoClick={(curso) => {

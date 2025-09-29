@@ -1,59 +1,45 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import CursosAlumno from '@/components/cursos/CursosAlumno';
 
 function CursosAlumnoPageContent() {
   const params = useParams();
-  const router = useRouter();
-  const alumnoId = parseInt(params.id as string);
-  // En una implementación real, estos datos vendrían de una API
-  // Por ahora usamos datos de ejemplo
-  const alumno = {
-    id: alumnoId,
-    nombres: 'Juan Carlos',
-    apellidos: 'Pérez García'
-  };
+  const { user } = useAuth();
+  const alumnoId = params.id as string;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center py-4">
-            <button
-              onClick={() => router.back()}
-              className="mr-4 p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">
+            Cursos del Alumno
+          </h1>
+          <p className="mt-2 text-sm text-gray-600">
+            Visualiza los cursos asignados al alumno ID: {alumnoId}
+          </p>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="text-center py-12">
+            <div className="mx-auto h-12 w-12 text-gray-400">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
               </svg>
-            </button>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Cursos del Alumno
-              </h1>
-              <p className="text-sm text-gray-600">
-                Visualiza los cursos asignados automáticamente al alumno
-              </p>
             </div>
+            <h3 className="mt-2 text-sm font-medium text-gray-900">
+              Funcionalidad en desarrollo
+            </h3>
+            <p className="mt-1 text-sm text-gray-500">
+              La visualización de cursos por alumno estará disponible próximamente.
+            </p>
+            <p className="mt-2 text-xs text-blue-600">
+              Nota: Los alumnos heredan automáticamente los cursos de su salón asignado.
+            </p>
           </div>
         </div>
-      </header>
-
-      {/* Contenido principal */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <CursosAlumno
-          alumnoId={alumnoId}
-          alumno={alumno}
-          onRefresh={() => {
-            console.log('Refrescando datos...');
-          }}
-        />
-      </main>
+      </div>
     </div>
   );
 }

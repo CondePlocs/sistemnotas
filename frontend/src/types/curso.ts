@@ -338,42 +338,6 @@ export interface SalonCurso {
   };
 }
 
-// Curso asignado a un alumno
-export interface AlumnoCurso {
-  id: number;
-  alumnoId: number;
-  cursoId: number;
-  salonId?: number;
-  activo: boolean;
-  asignadoEn: string;
-  asignadoPor?: number;
-  
-  // Relaciones
-  curso: {
-    id: number;
-    nombre: string;
-    nivel: {
-      id: number;
-      nombre: string;
-    };
-    color?: string;
-    competencias?: {
-      id: number;
-      nombre: string;
-    }[];
-  };
-  salon?: {
-    id: number;
-    colegioNivel: {
-      nivel: {
-        id: number;
-        nombre: string;
-      };
-    };
-    grado: string;
-    seccion: string;
-  };
-}
 
 // Respuesta de asignación automática de cursos a salón
 export interface AsignacionCursosSalonResponse {
@@ -388,18 +352,6 @@ export interface AsignacionCursosSalonResponse {
   mensaje: string;
 }
 
-// Respuesta de asignación automática de cursos a alumno
-export interface AsignacionCursosAlumnoResponse {
-  success: boolean;
-  cursosAsignados: number;
-  cursos: {
-    id: number;
-    nombre: string;
-    nivel: NivelEducativo;
-    color?: string;
-  }[];
-  mensaje: string;
-}
 
 // Props para componente de lista de cursos de salón
 export interface CursosSalonProps {
@@ -413,16 +365,6 @@ export interface CursosSalonProps {
   onRefresh?: () => void;
 }
 
-// Props para componente de lista de cursos de alumno
-export interface CursosAlumnoProps {
-  alumnoId: number;
-  alumno: {
-    id: number;
-    nombres: string;
-    apellidos: string;
-  };
-  onRefresh?: () => void;
-}
 
 // Estadísticas de cursos automáticos
 export interface EstadisticasCursosAutomaticos {

@@ -108,7 +108,7 @@ function CursosSalonPageContent() {
 
 export default function CursosSalonPage() {
   return (
-    <ProtectedRoute requiredRole="DIRECTOR">
+    <ProtectedRoute requiredRole={["DIRECTOR", "ADMINISTRATIVO"]}>
       <CursosSalonPageContent />
     </ProtectedRoute>
   );

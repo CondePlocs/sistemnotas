@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: string;
+  requiredRole?: string | string[];
   redirectTo?: string;
 }
 
@@ -18,6 +18,14 @@ export default function ProtectedRoute({
   const { user, loading, hasRole, isAuthenticated } = useAuth();
   const router = useRouter();
 
+  // Función para verificar si tiene alguno de los roles requeridos
+  const hasAnyRole = (roles: string | string[]): boolean => {
+    if (typeof roles === 'string') {
+      return hasRole(roles);
+    }
+    return roles.some(role => hasRole(role));
+  };
+
   useEffect(() => {
     if (loading) return; // Esperar a que termine de cargar
 
@@ -28,7 +36,7 @@ export default function ProtectedRoute({
     }
 
     // Si requiere un rol específico y no lo tiene
-    if (requiredRole && !hasRole(requiredRole)) {
+    if (requiredRole && !hasAnyRole(requiredRole)) {
       // Redirigir según el rol que tenga
       if (hasRole('OWNER')) {
         router.push('/owner/dashboard');
@@ -65,7 +73,7 @@ export default function ProtectedRoute({
   }
 
   // Si requiere rol y no lo tiene, no mostrar nada (se está redirigiendo)
-  if (requiredRole && !hasRole(requiredRole)) {
+  if (requiredRole && !hasAnyRole(requiredRole)) {
     return null;
   }
 

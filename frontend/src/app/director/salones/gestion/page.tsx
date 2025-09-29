@@ -75,7 +75,7 @@ function GestionSalonesPageContent() {
 
   // Filtrar salones
   const salonesFiltrados = estado.salones.filter(salon => {
-    const cumpleFiltroNivel = estado.filtroNivel === 'TODOS' || salon.nivel === estado.filtroNivel;
+    const cumpleFiltroNivel = estado.filtroNivel === 'TODOS' || salon.colegioNivel?.nivel?.nombre === estado.filtroNivel;
     const cumpleBusqueda = estado.busqueda === '' || 
       salon.grado.toLowerCase().includes(estado.busqueda.toLowerCase()) ||
       salon.seccion.toLowerCase().includes(estado.busqueda.toLowerCase());
@@ -85,10 +85,11 @@ function GestionSalonesPageContent() {
 
   // Agrupar salones por nivel
   const salonesPorNivel = salonesFiltrados.reduce((acc, salon) => {
-    if (!acc[salon.nivel]) {
-      acc[salon.nivel] = [];
+    const nivelNombre = salon.colegioNivel?.nivel?.nombre || 'SIN_NIVEL';
+    if (!acc[nivelNombre]) {
+      acc[nivelNombre] = [];
     }
-    acc[salon.nivel].push(salon);
+    acc[nivelNombre].push(salon);
     return acc;
   }, {} as Record<string, Salon[]>);
 
@@ -271,7 +272,7 @@ function GestionSalonesPageContent() {
 
 export default function GestionSalonesPage() {
   return (
-    <ProtectedRoute requiredRole="DIRECTOR">
+    <ProtectedRoute requiredRole={["DIRECTOR", "ADMINISTRATIVO"]}>
       <GestionSalonesPageContent />
     </ProtectedRoute>
   );

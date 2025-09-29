@@ -42,13 +42,6 @@ export class SalonAlumnosService {
         if (asignacionExistente) {
           // DELETE + CREATE: Eliminar registro anterior, limpiar cursos y crear nuevo
           
-          // 1. Eliminar cursos del salón anterior
-          await tx.alumnoCurso.deleteMany({
-            where: {
-              alumnoId: alumnoDto.alumnoId,
-              salonId: asignacionExistente.salon.id
-            }
-          });
           
           // 2. Eliminar asignación anterior
           await tx.alumnoSalon.delete({
@@ -108,18 +101,8 @@ export class SalonAlumnosService {
       };
     });
 
-    // 5. Asignar cursos automáticamente a cada alumno
-    for (const asignacion of resultadoAsignacion.asignaciones) {
-      try {
-        await this.salonCursosService.asignarCursosAutomaticamenteAAlumno(
-          asignacion.alumnoId,
-          asignarAlumnosDto.salonId,
-          usuarioId
-        );
-      } catch (error) {
-        console.log(`⚠️ Error asignando cursos al alumno ${asignacion.alumnoId}:`, error);
-      }
-    }
+    // 5. Los alumnos ya están asignados al salón
+    // Los cursos se pueden obtener dinámicamente desde salon_curso cuando sea necesario
 
     return {
       message: `Se asignaron ${resultadoAsignacion.totalAsignados} alumnos al salón ${salon.grado} - ${salon.seccion}`,
@@ -225,31 +208,16 @@ export class SalonAlumnosService {
 
     // 4. Eliminar la asignación Y los cursos en una transacción
     const resultado = await this.prisma.$transaction(async (tx) => {
-      // 4.1. Contar cursos que se van a eliminar (para logging)
-      const cursosAEliminar = await tx.alumnoCurso.count({
-        where: {
-          alumnoId: removerAlumnoDto.alumnoId,
-          salonId: asignacion.salon.id
-        }
-      });
-
-      // 4.2. Eliminar cursos del alumno específicos de este salón
-      await tx.alumnoCurso.deleteMany({
-        where: {
-          alumnoId: removerAlumnoDto.alumnoId,
-          salonId: asignacion.salon.id
-        }
-      });
 
       // 4.3. Eliminar la asignación alumno-salón
       await tx.alumnoSalon.delete({
         where: { alumnoId: removerAlumnoDto.alumnoId }
       });
 
-      return { cursosEliminados: cursosAEliminar };
+      return { cursosEliminados: 0 };
     });
 
-    console.log(`✅ Alumno ${removerAlumnoDto.alumnoId} removido del salón ${asignacion.salon.id}. Cursos eliminados: ${resultado.cursosEliminados}`);
+    console.log(`✅ Alumno ${removerAlumnoDto.alumnoId} removido del salón ${asignacion.salon.id}`);
 
     return {
       message: `${asignacion.alumno.nombres} ${asignacion.alumno.apellidos} fue removido del salón ${asignacion.salon.grado} - ${asignacion.salon.seccion}`,

@@ -281,7 +281,7 @@ function GestionSalonesContent() {
 
 export default function GestionSalones() {
   return (
-    <ProtectedRoute requiredRole="DIRECTOR">
+    <ProtectedRoute requiredRole={["DIRECTOR", "ADMINISTRATIVO"]}>
       <GestionSalonesContent />
     </ProtectedRoute>
   );

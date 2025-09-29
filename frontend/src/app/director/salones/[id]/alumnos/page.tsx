@@ -401,7 +401,7 @@ function AlumnosPorSalonPageContent() {
 
 export default function AlumnosPorSalonPage() {
   return (
-    <ProtectedRoute requiredRole="DIRECTOR">
+    <ProtectedRoute requiredRole={["DIRECTOR", "ADMINISTRATIVO"]}>
       <AlumnosPorSalonPageContent />
     </ProtectedRoute>
   );

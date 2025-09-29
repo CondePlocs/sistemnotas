@@ -140,9 +140,7 @@ export class SalonController {
       colegioId: usuario.colegio_id,
       activo: true,
       // Excluir alumnos que ya están asignados a un salón
-      salones: {
-        none: {}
-      }
+      salon: null
     };
 
     // Filtro por búsqueda (nombre, apellido o DNI)
