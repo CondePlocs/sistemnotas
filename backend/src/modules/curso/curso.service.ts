@@ -1,9 +1,11 @@
-import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../providers/prisma.service';
 import { CrearCursoDto, ActualizarCursoDto, NivelEducativo } from './dto';
 
 @Injectable()
 export class CursoService {
+  private readonly logger = new Logger(CursoService.name);
+
   constructor(private prisma: PrismaService) {}
 
   // Crear curso con competencias
@@ -43,7 +45,7 @@ export class CursoService {
     }
 
     // Crear curso con competencias en transacción
-    return await this.prisma.$transaction(async (tx) => {
+    const resultado = await this.prisma.$transaction(async (tx) => {
       // Crear curso
       const curso = await tx.curso.create({
         data: {
@@ -52,6 +54,14 @@ export class CursoService {
           nivelId: crearCursoDto.nivelId,
           color: crearCursoDto.color || '#3B82F6', // Azul por defecto
           creadoPor: usuarioId
+        },
+        include: {
+          nivel: {
+            select: {
+              id: true,
+              nombre: true
+            }
+          }
         }
       });
 
@@ -74,6 +84,16 @@ export class CursoService {
         competencias
       };
     });
+
+    // NUEVA FUNCIONALIDAD: Asignar automáticamente a salones existentes del mismo nivel
+    try {
+      await this.asignarCursoASalonesExistentes(resultado.id, resultado.nivel.nombre as NivelEducativo, usuarioId);
+    } catch (error) {
+      this.logger.error(`Error al asignar curso ${resultado.id} a salones existentes:`, error);
+      // No fallar la operación principal, solo loguear el error
+    }
+
+    return resultado;
   }
 
   // Obtener todos los cursos (solo para owners)
@@ -357,5 +377,114 @@ export class CursoService {
         cantidad: item._count.id
       }))
     };
+  }
+
+  /**
+   * Asigna un curso recién creado a todos los salones existentes del mismo nivel educativo
+   * Se ejecuta automáticamente cuando se crea un nuevo curso
+   */
+  private async asignarCursoASalonesExistentes(cursoId: number, nivel: NivelEducativo, usuarioId: number) {
+    this.logger.log(`🎯 Iniciando asignación automática del curso ${cursoId} a salones existentes del nivel: ${nivel}`);
+
+    try {
+      // 1. Buscar todos los salones activos del mismo nivel educativo
+      const salonesDelNivel = await this.prisma.salon.findMany({
+        where: {
+          colegioNivel: {
+            nivel: {
+              nombre: nivel
+            }
+          }
+        },
+        select: {
+          id: true,
+          grado: true,
+          seccion: true,
+          colegio: {
+            select: {
+              id: true,
+              nombre: true
+            }
+          },
+          colegioNivel: {
+            select: {
+              nivel: {
+                select: {
+                  nombre: true
+                }
+              }
+            }
+          }
+        }
+      });
+
+      this.logger.log(`📚 Salones encontrados del nivel ${nivel}: ${salonesDelNivel.length}`);
+
+      if (salonesDelNivel.length === 0) {
+        this.logger.log(`ℹ️ No hay salones existentes para el nivel ${nivel}`);
+        return {
+          success: true,
+          salonesActualizados: 0,
+          mensaje: `No hay salones existentes para el nivel ${nivel}`
+        };
+      }
+
+      // 2. Asignar el curso a cada salón (en lote usando transacción)
+      const asignaciones = await this.prisma.$transaction(async (tx) => {
+        const resultados: any[] = [];
+
+        for (const salon of salonesDelNivel) {
+          this.logger.log(`🔄 Procesando salón: ${salon.grado}° ${salon.seccion} - ${salon.colegio.nombre}`);
+          
+          // Verificar si ya existe la asignación
+          const existeAsignacion = await tx.salonCurso.findUnique({
+            where: {
+              salonId_cursoId: {
+                salonId: salon.id,
+                cursoId: cursoId
+              }
+            }
+          });
+
+          if (existeAsignacion) {
+            this.logger.warn(`⚠️ Ya existe asignación del curso en salón ${salon.grado}° ${salon.seccion}`);
+          } else {
+            this.logger.log(`✅ Creando nueva asignación para salón ${salon.grado}° ${salon.seccion}`);
+            
+            const asignacion = await tx.salonCurso.create({
+              data: {
+                salonId: salon.id,
+                cursoId: cursoId,
+                activo: true,
+                asignadoPor: usuarioId,
+              }
+            });
+            
+            this.logger.log(`🎉 Asignación creada exitosamente para salón ${salon.id}`);
+            resultados.push({
+              salonId: salon.id,
+              salon: `${salon.grado}° ${salon.seccion}`,
+              colegio: salon.colegio.nombre,
+              asignacionId: asignacion.id
+            });
+          }
+        }
+
+        return resultados;
+      });
+
+      this.logger.log(`✨ Asignación automática completada: ${asignaciones.length} salones actualizados`);
+
+      return {
+        success: true,
+        salonesActualizados: asignaciones.length,
+        salones: asignaciones,
+        mensaje: `Curso asignado automáticamente a ${asignaciones.length} salones del nivel ${nivel}`
+      };
+
+    } catch (error) {
+      this.logger.error(`❌ Error en asignación automática del curso ${cursoId}:`, error);
+      throw new Error(`Error en asignación automática del curso ${cursoId}: ${error.message}`);
+    }
   }
 }
