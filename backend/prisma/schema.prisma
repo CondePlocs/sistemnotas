@@ -29,6 +29,7 @@ model Usuario {
   salonesCreados            Salon[]                  @relation("SalonCreador")
   salonCursosAsignados      SalonCurso[]             @relation("SalonCursoAsignador")
   periodosAcademicosCreados PeriodoAcademico[]       @relation("PeriodoAcademicoCreador")
+  profesorAsignacionesCreadas ProfesorAsignacion[]   @relation("ProfesorAsignacionCreador")
   creados                   UsuarioRol[]             @relation("CreadoPor")
   roles                     UsuarioRol[]             @relation("UsuarioRoles")
 
@@ -147,6 +148,7 @@ model Salon {
   colegio        Colegio       @relation(fields: [colegioId], references: [id], onDelete: Cascade)
   creadorUser    Usuario       @relation("SalonCreador", fields: [creadoPor], references: [id])
   cursos         SalonCurso[]
+  profesorAsignaciones ProfesorAsignacion[]
 
   @@unique([colegioId, colegioNivelId, grado, seccion], map: "salon_colegioid_colegionivelid_grado_seccion_key")
   @@index([colegioId])
@@ -171,6 +173,7 @@ model Profesor {
   actualizadoEn     DateTime   @updatedAt
   actualizadoPor    Int?
   usuarioRol        UsuarioRol @relation(fields: [usuarioRolId], references: [id], onDelete: Cascade)
+  asignaciones      ProfesorAsignacion[]
 
   @@map("profesor")
 }
@@ -318,6 +321,7 @@ model Curso {
   creador       Usuario       @relation("CursoCreador", fields: [creadoPor], references: [id])
   nivel         Nivel         @relation(fields: [nivelId], references: [id])
   salones       SalonCurso[]
+  profesorAsignaciones ProfesorAsignacion[]
 
   @@unique([nombre, nivelId])
   @@index([nivelId])
@@ -434,4 +438,31 @@ model PeriodoAcademico {
   @@index([activo])
   @@index([colegioId, activo])
   @@map("periodo_academico")
+}
+
+model ProfesorAsignacion {
+  id          Int      @id @default(autoincrement())
+  profesorId  Int
+  salonId     Int
+  cursoId     Int
+  activo      Boolean  @default(true)
+  
+  // Auditoría
+  asignadoPor Int
+  asignadoEn  DateTime @default(now())
+  actualizadoEn DateTime @updatedAt
+
+  // Relaciones
+  profesor    Profesor @relation(fields: [profesorId], references: [id], onDelete: Cascade)
+  salon       Salon    @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  curso       Curso    @relation(fields: [cursoId], references: [id], onDelete: Cascade)
+  asignador   Usuario  @relation("ProfesorAsignacionCreador", fields: [asignadoPor], references: [id])
+
+  // Índices y constraints
+  @@index([profesorId])
+  @@index([salonId])
+  @@index([cursoId])
+  @@index([activo])
+  @@index([profesorId, activo])
+  @@map("profesor_asignacion")
 }

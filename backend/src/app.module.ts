@@ -14,6 +14,7 @@ import { SalonModule } from './modules/salon/salon.module';
 import { AlumnoModule } from './modules/alumno/alumno.module';
 import { CursoModule } from './modules/curso/curso.module';
 import { PeriodoAcademicoModule } from './modules/periodo-academico/periodo-academico.module';
+import { ProfesorAsignacionModule } from './modules/profesor-asignacion/profesor-asignacion.module';
 import { PrismaModule } from './providers/prisma.module';
 
 @Module({
@@ -31,7 +32,8 @@ import { PrismaModule } from './providers/prisma.module';
     SalonModule,
     AlumnoModule,
     CursoModule,
-    PeriodoAcademicoModule
+    PeriodoAcademicoModule,
+    ProfesorAsignacionModule
   ],
   controllers: [AppController],
   providers: [AppService],

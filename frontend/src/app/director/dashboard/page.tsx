@@ -209,6 +209,27 @@ function DirectorDashboardContent() {
               Gestionar Períodos
             </Link>
           </div>
+
+          {/* Card: Asignar Profesores */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="flex items-center mb-4">
+              <div className="bg-teal-100 p-3 rounded-full">
+                <svg className="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                </svg>
+              </div>
+              <h3 className="ml-3 text-lg font-semibold text-gray-900">Asignar Profesores</h3>
+            </div>
+            <p className="text-gray-600 mb-4">
+              Asignar profesores a cursos específicos en los salones del colegio.
+            </p>
+            <Link 
+              href="/director/asignaciones-profesor"
+              className="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium py-2 px-4 rounded-md transition-colors inline-block text-center"
+            >
+              Gestionar Asignaciones
+            </Link>
+          </div>
         </div>
 
         {/* Stats Section */}
