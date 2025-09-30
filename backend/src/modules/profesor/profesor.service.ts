@@ -225,35 +225,42 @@ export class ProfesorService {
     const directorInfo = await this.prisma.usuarioRol.findFirst({
       where: {
         usuario_id: directorUserId,
-        rol: { nombre: 'DIRECTOR' }
+        rol: {
+          nombre: 'DIRECTOR'
+        }
       }
     });
 
     if (!directorInfo) {
-      throw new ForbiddenException('Solo directores pueden ver profesores');
+      throw new ForbiddenException('Solo los directores pueden ver profesores');
     }
 
-    const profesor = await this.prisma.profesor.findUnique({
-      where: { id },
+    const profesor = await this.prisma.profesor.findFirst({
+      where: {
+        id: id,
+        usuarioRol: {
+          colegio_id: directorInfo.colegio_id
+        }
+      },
       include: {
         usuarioRol: {
           include: {
             usuario: {
               select: {
                 id: true,
-                email: true,
-                dni: true,
                 nombres: true,
                 apellidos: true,
+                email: true,
                 telefono: true,
+                dni: true,
                 estado: true,
-                creado_en: true,
+                creado_en: true
               }
             },
-            rol: true,
             colegio: {
-              include: {
-                ugel: { include: { dre: true } }
+              select: {
+                id: true,
+                nombre: true
               }
             }
           }
@@ -265,11 +272,53 @@ export class ProfesorService {
       throw new NotFoundException('Profesor no encontrado');
     }
 
-    // Verificar que el profesor pertenece al colegio del director
-    if (profesor.usuarioRol.colegio_id !== directorInfo.colegio_id) {
-      throw new ForbiddenException('No tienes acceso a este profesor');
+    return {
+      success: true,
+      profesor
+    };
+  }
+
+  // Obtener profesor por ID de usuario (para que el profesor vea su propia información)
+  async obtenerProfesorPorUsuario(usuarioId: number) {
+    const profesor = await this.prisma.profesor.findFirst({
+      where: {
+        usuarioRol: {
+          usuario_id: usuarioId
+        }
+      },
+      include: {
+        usuarioRol: {
+          include: {
+            usuario: {
+              select: {
+                id: true,
+                nombres: true,
+                apellidos: true,
+                email: true,
+                telefono: true,
+                dni: true,
+                estado: true,
+                creado_en: true
+              }
+            },
+            colegio: {
+              select: {
+                id: true,
+                nombre: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!profesor) {
+      throw new NotFoundException('Profesor no encontrado para este usuario');
     }
 
-    return profesor;
+    return {
+      success: true,
+      profesor
+    };
   }
 }

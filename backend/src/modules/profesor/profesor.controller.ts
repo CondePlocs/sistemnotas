@@ -1,9 +1,9 @@
-import { Controller, Get, Post, Body, Param, ParseIntPipe, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, ParseIntPipe, UseGuards, Req, ForbiddenException } from '@nestjs/common';
 import { ProfesorService } from './profesor.service';
-import { CreateProfesorDto } from './dto/create-profesor.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { CreateProfesorDto } from './dto/create-profesor.dto';
 
 @Controller('api/profesores')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -22,6 +22,18 @@ export class ProfesorController {
   async obtenerProfesores(@Req() request: any) {
     const directorUserId = request.user.id;
     return this.profesorService.obtenerProfesores(directorUserId);
+  }
+
+  @Get('by-user/:userId')
+  @Roles('PROFESOR', 'DIRECTOR')
+  async obtenerProfesorPorUsuario(@Param('userId', ParseIntPipe) userId: number, @Req() request: any) {
+    // Si es profesor, solo puede ver su propia información
+    if (request.user.roles?.some((r: any) => r.rol === 'PROFESOR')) {
+      if (request.user.id !== userId) {
+        throw new ForbiddenException('Solo puedes ver tu propia información');
+      }
+    }
+    return this.profesorService.obtenerProfesorPorUsuario(userId);
   }
 
   @Get(':id')
