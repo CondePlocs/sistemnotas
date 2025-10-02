@@ -104,17 +104,3 @@ export interface CreateEvaluacionDto {
   profesorAsignacionId: number;
   periodoId: number;
 }
-
-// Tipos para compatibilidad con componentes existentes
-export interface DatosEvaluacion {
-  curso: {
-    nombre: string;
-    salon: string;
-    nivel: string;
-    periodo: string;
-  };
-  competencias: Competencia[];
-  tareas: Evaluacion[]; // Renombramos tareas por evaluaciones
-  alumnos: Alumno[];
-  notas: any[]; // Por ahora vacío, se implementará después
-}

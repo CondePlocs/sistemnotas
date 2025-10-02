@@ -1,15 +1,23 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { DatosEvaluacion } from '@/types/evaluaciones';
+import { ContextoTrabajo, CreateEvaluacionDto, Evaluacion } from '@/types/evaluaciones';
 import TablaEvaluaciones from './TablaEvaluaciones';
 import VistaMobile from './VistaMobile';
 
 interface SistemaEvaluacionesProps {
-  datos: DatosEvaluacion;
+  contexto: ContextoTrabajo;
+  onCrearEvaluacion: (data: CreateEvaluacionDto) => Promise<Evaluacion>;
+  asignacionId: number;
+  periodoId: number;
 }
 
-export default function SistemaEvaluaciones({ datos }: SistemaEvaluacionesProps) {
+export default function SistemaEvaluaciones({ 
+  contexto, 
+  onCrearEvaluacion,
+  asignacionId,
+  periodoId
+}: SistemaEvaluacionesProps) {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -24,14 +32,22 @@ export default function SistemaEvaluaciones({ datos }: SistemaEvaluacionesProps)
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4">
-      <div className="max-w-7xl mx-auto">
-        {isMobile ? (
-          <VistaMobile datos={datos} />
-        ) : (
-          <TablaEvaluaciones datos={datos} />
-        )}
-      </div>
+    <div className="max-w-7xl mx-auto">
+      {isMobile ? (
+        <VistaMobile 
+          contexto={contexto}
+          onCrearEvaluacion={onCrearEvaluacion}
+          asignacionId={asignacionId}
+          periodoId={periodoId}
+        />
+      ) : (
+        <TablaEvaluaciones 
+          contexto={contexto}
+          onCrearEvaluacion={onCrearEvaluacion}
+          asignacionId={asignacionId}
+          periodoId={periodoId}
+        />
+      )}
     </div>
   );
 }

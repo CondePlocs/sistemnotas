@@ -1,21 +1,37 @@
 "use client";
 
 import { useState } from 'react';
-import { DatosEvaluacion, Nota } from '@/types/evaluaciones';
-import { PlusIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
+import { ContextoTrabajo, CreateEvaluacionDto, Evaluacion } from '@/types/evaluaciones';
+import { PlusIcon, ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import ModalCrearEvaluacion from '../modals/ModalCrearEvaluacion';
 
-interface VistaMobileProps {
-  datos: DatosEvaluacion;
+interface VistaMobileRealProps {
+  contexto: ContextoTrabajo;
+  onCrearEvaluacion: (data: CreateEvaluacionDto) => Promise<Evaluacion>;
+  asignacionId: number;
+  periodoId: number;
 }
 
-export default function VistaMobile({ datos }: VistaMobileProps) {
-  const [notas, setNotas] = useState<Nota[]>(datos.notas);
-  const [competenciaExpandida, setCompetenciaExpandida] = useState<number | null>(null);
-  const [alumnosExpandidos, setAlumnosExpandidos] = useState(false);
+export default function VistaMobileReal({ 
+  contexto, 
+  onCrearEvaluacion,
+  asignacionId,
+  periodoId
+}: VistaMobileRealProps) {
+  const [notas, setNotas] = useState<any[]>([]);
+  const [editando, setEditando] = useState<string | null>(null);
+  const [modalCrearAbierto, setModalCrearAbierto] = useState(false);
+  const [competenciaSeleccionada, setCompetenciaSeleccionada] = useState<number | null>(null);
+  const [alumnoExpandido, setAlumnoExpandido] = useState<number | null>(null);
 
-  // Obtener nota de un alumno para una tarea específica
-  const obtenerNota = (alumnoId: number, tareaId: number): number | null => {
-    const nota = notas.find(n => n.alumnoId === alumnoId && n.tareaId === tareaId);
+  // Obtener evaluaciones por competencia
+  const obtenerEvaluacionesPorCompetencia = (competenciaId: number) => {
+    return contexto.evaluaciones.filter(e => e.competenciaId === competenciaId);
+  };
+
+  // Obtener nota de un alumno para una evaluación específica
+  const obtenerNota = (alumnoId: number, evaluacionId: number): number | null => {
+    const nota = notas.find(n => n.alumnoId === alumnoId && n.evaluacionId === evaluacionId);
     return nota?.valor || null;
   };
 
@@ -27,192 +43,169 @@ export default function VistaMobile({ datos }: VistaMobileProps) {
     return Math.round((suma / notasAlumno.length) * 10) / 10;
   };
 
-  // Calcular promedio por competencia
-  const calcularPromedioCompetencia = (competenciaId: number): number => {
-    const tareasCompetencia = datos.tareas.filter(t => t.competenciaId === competenciaId);
-    const notasCompetencia = notas.filter(n => 
-      tareasCompetencia.some(t => t.id === n.tareaId) && n.valor !== null
-    );
-    if (notasCompetencia.length === 0) return 0;
-    const suma = notasCompetencia.reduce((acc, nota) => acc + (nota.valor || 0), 0);
-    return Math.round((suma / notasCompetencia.length) * 10) / 10;
-  };
-
   // Actualizar nota
-  const actualizarNota = (alumnoId: number, tareaId: number, valor: number) => {
+  const actualizarNota = (alumnoId: number, evaluacionId: number, valor: number) => {
     setNotas(prev => {
-      const existe = prev.find(n => n.alumnoId === alumnoId && n.tareaId === tareaId);
+      const existe = prev.find(n => n.alumnoId === alumnoId && n.evaluacionId === evaluacionId);
       if (existe) {
         return prev.map(n => 
-          n.alumnoId === alumnoId && n.tareaId === tareaId 
+          n.alumnoId === alumnoId && n.evaluacionId === evaluacionId 
             ? { ...n, valor } 
             : n
         );
       } else {
-        return [...prev, { alumnoId, tareaId, valor }];
+        return [...prev, { alumnoId, evaluacionId, valor }];
       }
     });
   };
 
+  // Manejar creación de nueva evaluación
+  const handleCrearEvaluacion = (competenciaId: number) => {
+    setCompetenciaSeleccionada(competenciaId);
+    setModalCrearAbierto(true);
+  };
+
   // Obtener color de rendimiento
   const getColorNota = (valor: number | null): string => {
-    if (valor === null) return 'text-gray-400';
-    if (valor >= 18) return 'text-green-600 font-semibold';
-    if (valor >= 14) return 'text-yellow-600 font-semibold';
-    return 'text-red-600 font-semibold';
+    if (valor === null) return 'bg-gray-100 text-gray-400';
+    if (valor >= 18) return 'bg-green-100 text-green-800';
+    if (valor >= 14) return 'bg-yellow-100 text-yellow-800';
+    return 'bg-red-100 text-red-800';
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-      {/* Header */}
-      <div className="bg-gray-50 px-4 py-4 border-b">
-        <h2 className="text-lg font-semibold text-gray-900">
-          📚 {datos.curso.nombre} - {datos.curso.salon} {datos.curso.nivel}
-        </h2>
-        <p className="text-sm text-gray-600">🗓️ {datos.curso.periodo}</p>
-        <p className="text-sm text-gray-500">👥 {datos.alumnos.length} alumnos registrados</p>
-      </div>
+    <>
+      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+        {/* Header */}
+        <div className="bg-gray-50 px-4 py-3 border-b">
+          <h2 className="text-lg font-semibold text-gray-900">
+            📚 {contexto.asignacion.curso}
+          </h2>
+          <p className="text-sm text-gray-600">
+            {contexto.asignacion.salon} | {contexto.periodo.nombre}
+          </p>
+          <div className="text-xs text-gray-500 mt-1">
+            {contexto.alumnos.length} estudiantes • {contexto.competencias.length} competencias
+          </div>
+        </div>
 
-      {/* Resumen por Competencias */}
-      <div className="p-4 space-y-4">
-        <h3 className="text-md font-medium text-gray-900">📊 RESUMEN POR COMPETENCIAS</h3>
-        
-        {datos.competencias.map(competencia => {
-          const tareasCompetencia = datos.tareas.filter(t => t.competenciaId === competencia.id);
-          const promedio = calcularPromedioCompetencia(competencia.id);
-          
-          return (
-            <div key={competencia.id} className="border rounded-lg overflow-hidden">
-              <div className={`p-3 ${competencia.color} text-white`}>
-                <div className="flex justify-between items-center">
-                  <div className="flex-1">
-                    <h4 className="font-medium">{competencia.nombre}</h4>
-                    <p className="text-sm opacity-90">
-                      {tareasCompetencia.length} tareas | Promedio: {promedio.toFixed(1)}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => alert(`Crear nueva tarea para ${competencia.nombre}`)}
-                      className="bg-white bg-opacity-20 p-1 rounded"
-                    >
-                      <PlusIcon className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => setCompetenciaExpandida(
-                        competenciaExpandida === competencia.id ? null : competencia.id
-                      )}
-                      className="bg-white bg-opacity-20 p-1 rounded"
-                    >
-                      {competenciaExpandida === competencia.id ? 
-                        <ChevronUpIcon className="w-4 h-4" /> : 
-                        <ChevronDownIcon className="w-4 h-4" />
-                      }
-                    </button>
-                  </div>
+        {/* Lista de alumnos */}
+        <div className="divide-y divide-gray-200">
+          {contexto.alumnos.map((alumno) => (
+            <div key={alumno.id} className="p-4">
+              {/* Header del alumno */}
+              <div 
+                className="flex items-center justify-between cursor-pointer"
+                onClick={() => setAlumnoExpandido(
+                  alumnoExpandido === alumno.id ? null : alumno.id
+                )}
+              >
+                <div className="flex-1">
+                  <h3 className="font-medium text-gray-900">
+                    {alumno.nombres} {alumno.apellidos}
+                  </h3>
+                  {alumno.dni && (
+                    <p className="text-xs text-gray-500">DNI: {alumno.dni}</p>
+                  )}
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    calcularPromedio(alumno.id) >= 18 ? 'bg-green-100 text-green-800' :
+                    calcularPromedio(alumno.id) >= 14 ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-red-100 text-red-800'
+                  }`}>
+                    {calcularPromedio(alumno.id).toFixed(1)}
+                  </span>
+                  {alumnoExpandido === alumno.id ? (
+                    <ChevronDownIcon className="h-5 w-5 text-gray-400" />
+                  ) : (
+                    <ChevronRightIcon className="h-5 w-5 text-gray-400" />
+                  )}
                 </div>
               </div>
 
-              {/* Detalle de la competencia expandida */}
-              {competenciaExpandida === competencia.id && (
-                <div className="p-3 bg-gray-50">
-                  <div className="space-y-3">
-                    {datos.alumnos.map(alumno => {
-                      const notasAlumno = tareasCompetencia.map(tarea => ({
-                        tarea,
-                        nota: obtenerNota(alumno.id, tarea.id)
-                      }));
-                      
-                      return (
-                        <div key={alumno.id} className="bg-white p-3 rounded border">
-                          <div className="flex justify-between items-center mb-2">
-                            <span className="font-medium text-gray-900">
-                              👤 {alumno.nombres} {alumno.apellidos}
-                            </span>
-                            <span className={`text-sm ${getColorNota(calcularPromedio(alumno.id))}`}>
-                              Promedio: {calcularPromedio(alumno.id).toFixed(1)}
-                            </span>
-                          </div>
-                          
-                          <div className="grid grid-cols-2 gap-2">
-                            {notasAlumno.map(({ tarea, nota }) => (
-                              <div key={tarea.id} className="flex justify-between items-center text-sm">
-                                <span className="text-gray-600">{tarea.nombre}:</span>
-                                <input
-                                  type="number"
-                                  min="0"
-                                  max="20"
-                                  value={nota || ''}
-                                  onChange={(e) => {
-                                    const valor = parseFloat(e.target.value);
-                                    if (!isNaN(valor)) {
-                                      actualizarNota(alumno.id, tarea.id, valor);
-                                    }
-                                  }}
-                                  className={`w-16 text-center border rounded px-1 py-1 ${getColorNota(nota)}`}
-                                  placeholder="-"
-                                />
-                              </div>
-                            ))}
-                          </div>
+              {/* Evaluaciones expandidas */}
+              {alumnoExpandido === alumno.id && (
+                <div className="mt-4 space-y-4">
+                  {contexto.competencias.map((competencia) => {
+                    const evaluacionesCompetencia = obtenerEvaluacionesPorCompetencia(competencia.id);
+                    return (
+                      <div key={competencia.id} className="bg-gray-50 rounded-lg p-3">
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="text-sm font-medium text-gray-900">
+                            {competencia.nombre}
+                          </h4>
+                          <button
+                            onClick={() => handleCrearEvaluacion(competencia.id)}
+                            className="text-gray-400 hover:text-blue-600 transition-colors p-1"
+                            title="Agregar evaluación"
+                          >
+                            <PlusIcon className="w-4 h-4" />
+                          </button>
                         </div>
-                      );
-                    })}
-                  </div>
+                        
+                        <div className="grid grid-cols-2 gap-2">
+                          {evaluacionesCompetencia.map((evaluacion) => {
+                            const nota = obtenerNota(alumno.id, evaluacion.id);
+                            const key = `${alumno.id}-${evaluacion.id}`;
+                            return (
+                              <div key={evaluacion.id} className="text-center">
+                                <div className="text-xs text-gray-600 mb-1">
+                                  {evaluacion.nombre}
+                                </div>
+                                {editando === key ? (
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    max="20"
+                                    value={nota || ''}
+                                    onChange={(e) => {
+                                      const valor = parseFloat(e.target.value);
+                                      if (!isNaN(valor)) {
+                                        actualizarNota(alumno.id, evaluacion.id, valor);
+                                      }
+                                    }}
+                                    onBlur={() => setEditando(null)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') setEditando(null);
+                                    }}
+                                    className="w-full text-center text-sm border rounded px-2 py-1"
+                                    autoFocus
+                                  />
+                                ) : (
+                                  <button
+                                    onClick={() => setEditando(key)}
+                                    className={`w-full h-8 text-sm rounded transition-colors ${getColorNota(nota)}`}
+                                  >
+                                    {nota || '-'}
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
-          );
-        })}
+          ))}
+        </div>
       </div>
 
-      {/* Sección de Alumnos */}
-      <div className="border-t">
-        <button
-          onClick={() => setAlumnosExpandidos(!alumnosExpandidos)}
-          className="w-full p-4 flex justify-between items-center bg-gray-50 hover:bg-gray-100 transition-colors"
-        >
-          <span className="font-medium text-gray-900">👥 ALUMNOS ({datos.alumnos.length})</span>
-          {alumnosExpandidos ? 
-            <ChevronUpIcon className="w-5 h-5 text-gray-500" /> : 
-            <ChevronDownIcon className="w-5 h-5 text-gray-500" />
-          }
-        </button>
-
-        {alumnosExpandidos && (
-          <div className="p-4 space-y-3">
-            {datos.alumnos.map(alumno => {
-              const promedio = calcularPromedio(alumno.id);
-              return (
-                <div key={alumno.id} className="flex justify-between items-center p-3 bg-gray-50 rounded">
-                  <div>
-                    <span className="font-medium text-gray-900">
-                      {alumno.nombres} {alumno.apellidos}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`text-sm ${getColorNota(promedio)}`}>
-                      {promedio.toFixed(1)}
-                    </span>
-                    {promedio >= 18 && <span>⭐</span>}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* Botón Nueva Tarea Global */}
-      <div className="p-4 border-t bg-gray-50">
-        <button
-          onClick={() => alert('Crear nueva tarea global')}
-          className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-        >
-          <PlusIcon className="w-5 h-5" />
-          Nueva Tarea Global
-        </button>
-      </div>
-    </div>
+      {/* Modal para crear nueva evaluación */}
+      <ModalCrearEvaluacion
+        isOpen={modalCrearAbierto}
+        onClose={() => {
+          setModalCrearAbierto(false);
+          setCompetenciaSeleccionada(null);
+        }}
+        competenciaId={competenciaSeleccionada}
+        asignacionId={asignacionId}
+        periodoId={periodoId}
+        onCrearEvaluacion={onCrearEvaluacion}
+      />
+    </>
   );
 }

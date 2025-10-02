@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { ContextoTrabajo, CreateEvaluacionDto, Evaluacion } from '@/types/evaluaciones';
 import { evaluacionesAPI } from '@/lib/api/evaluaciones';
-import SistemaEvaluacionesReal from '@/components/evaluaciones/SistemaEvaluacionesReal';
+import SistemaEvaluaciones from '@/components/evaluaciones/SistemaEvaluaciones';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 
@@ -153,7 +153,7 @@ export default function ProfesorEvaluacionesPage() {
 
         {/* Contenido principal */}
         <div className="p-4">
-          <SistemaEvaluacionesReal
+          <SistemaEvaluaciones
             contexto={contexto}
             onCrearEvaluacion={handleCrearEvaluacion}
             asignacionId={parseInt(asignacionId!)}
