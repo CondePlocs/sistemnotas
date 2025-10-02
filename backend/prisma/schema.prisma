@@ -31,6 +31,7 @@ model Usuario {
   periodosAcademicosCreados PeriodoAcademico[]       @relation("PeriodoAcademicoCreador")
   profesorAsignacionesCreadas ProfesorAsignacion[]   @relation("ProfesorAsignacionCreador")
   evaluacionesCreadas       Evaluacion[]             @relation("EvaluacionCreador")
+  notasRegistradas          RegistroNota[]           @relation("NotasRegistradas")
   creados                   UsuarioRol[]             @relation("CreadoPor")
   roles                     UsuarioRol[]             @relation("UsuarioRoles")
 
@@ -278,6 +279,7 @@ model Alumno {
   creadorUser     Usuario           @relation("AlumnoCreador", fields: [creadoPor], references: [id])
   salon           AlumnoSalon?
   apoderados      ApoderadoAlumno[]
+  notas           RegistroNota[]
 
   @@index([colegioId])
   @@index([dni])
@@ -489,6 +491,7 @@ model Evaluacion {
   profesorAsignacion    ProfesorAsignacion @relation(fields: [profesorAsignacionId], references: [id], onDelete: Cascade)
   periodo               PeriodoAcademico   @relation(fields: [periodoId], references: [id], onDelete: Cascade)
   creador               Usuario            @relation("EvaluacionCreador", fields: [creadoPor], references: [id])
+  notas                 RegistroNota[]
 
   // Índices optimizados
   @@index([competenciaId])
@@ -499,4 +502,29 @@ model Evaluacion {
   @@index([profesorAsignacionId, periodoId])
   @@index([competenciaId, profesorAsignacionId])
   @@map("evaluacion")
+}
+
+model RegistroNota {
+  id            Int      @id @default(autoincrement())
+  alumnoId      Int
+  evaluacionId  Int
+  nota          String   // 'AD', 'A', 'B', 'C'
+  registradoPor Int
+  creadoEn      DateTime @default(now())
+  actualizadoEn DateTime @updatedAt
+
+  // Relaciones
+  alumno      Alumno     @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
+  evaluacion  Evaluacion @relation(fields: [evaluacionId], references: [id], onDelete: Cascade)
+  registrador Usuario    @relation("NotasRegistradas", fields: [registradoPor], references: [id])
+
+  // Constraint único: Un alumno solo puede tener una nota por evaluación
+  @@unique([alumnoId, evaluacionId])
+  
+  // Índices optimizados
+  @@index([alumnoId])
+  @@index([evaluacionId])
+  @@index([registradoPor])
+  @@index([alumnoId, evaluacionId])
+  @@map("registro_nota")
 }

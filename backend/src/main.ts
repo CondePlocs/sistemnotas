@@ -4,7 +4,9 @@ import { corsConfig } from './config/cors.config';
 import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: ['log', 'error', 'warn']
+  });
   
   // Middleware para cookies
   app.use(cookieParser());

@@ -24,6 +24,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!user) {
       throw new UnauthorizedException();
     }
-    return user;
+    
+    // Agregar información del colegio desde el payload
+    // Para usuarios con un solo rol, tomar el primer colegio
+    const primerRol = payload.roles?.[0];
+    const colegioId = primerRol?.colegio_id || null;
+    
+    return {
+      ...user,
+      colegioId: colegioId,
+      roles: payload.roles
+    };
   }
 }
