@@ -1,6 +1,6 @@
 "use client";
 
-import { ProfesorAsignacion } from '@/types/profesor-asignacion';
+import { ProfesorAsignacion } from '@/types/evaluaciones';
 import { 
   BookOpenIcon, 
   BuildingOfficeIcon, 
@@ -11,9 +11,10 @@ import {
 
 interface AsignacionCardProps {
   asignacion: ProfesorAsignacion;
+  onRegistrarNotas?: (asignacion: ProfesorAsignacion) => void;
 }
 
-export default function AsignacionCard({ asignacion }: AsignacionCardProps) {
+export default function AsignacionCard({ asignacion, onRegistrarNotas }: AsignacionCardProps) {
   const { salon, curso } = asignacion;
   const nivel = salon.colegioNivel.nivel.nombre;
   
@@ -110,17 +111,26 @@ export default function AsignacionCard({ asignacion }: AsignacionCardProps) {
               Activo
             </span>
             
-            {/* Botón de acción */}
-            <button 
-              className="text-sm font-medium hover:underline transition-colors"
-              style={{ color: cursoColor }}
-              onClick={() => {
-                // TODO: Navegar a vista detallada del curso/salón
-                console.log('Ver detalles de asignación:', asignacion.id);
-              }}
-            >
-              Ver detalles →
-            </button>
+            {/* Botones de acción */}
+            <div className="flex items-center gap-2">
+              <button 
+                className="text-sm font-medium hover:underline transition-colors"
+                style={{ color: cursoColor }}
+                onClick={() => {
+                  // TODO: Navegar a vista detallada del curso/salón
+                  console.log('Ver detalles de asignación:', asignacion.id);
+                }}
+              >
+                Ver detalles
+              </button>
+              <span className="text-gray-300">|</span>
+              <button 
+                className="bg-blue-600 text-white text-sm font-medium px-3 py-1.5 rounded-md hover:bg-blue-700 transition-colors"
+                onClick={() => onRegistrarNotas?.(asignacion)}
+              >
+                Registrar Notas
+              </button>
+            </div>
           </div>
         </div>
       </div>

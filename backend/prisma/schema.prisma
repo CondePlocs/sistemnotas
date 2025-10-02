@@ -30,6 +30,7 @@ model Usuario {
   salonCursosAsignados      SalonCurso[]             @relation("SalonCursoAsignador")
   periodosAcademicosCreados PeriodoAcademico[]       @relation("PeriodoAcademicoCreador")
   profesorAsignacionesCreadas ProfesorAsignacion[]   @relation("ProfesorAsignacionCreador")
+  evaluacionesCreadas       Evaluacion[]             @relation("EvaluacionCreador")
   creados                   UsuarioRol[]             @relation("CreadoPor")
   roles                     UsuarioRol[]             @relation("UsuarioRoles")
 
@@ -332,16 +333,17 @@ model Curso {
 }
 
 model Competencia {
-  id            Int      @id @default(autoincrement())
+  id            Int          @id @default(autoincrement())
   cursoId       Int
   nombre        String
   orden         Int
-  activo        Boolean  @default(true)
+  activo        Boolean      @default(true)
   creadoPor     Int
-  creadoEn      DateTime @default(now())
-  actualizadoEn DateTime @updatedAt
-  creador       Usuario  @relation("CompetenciaCreador", fields: [creadoPor], references: [id])
-  curso         Curso    @relation(fields: [cursoId], references: [id], onDelete: Cascade)
+  creadoEn      DateTime     @default(now())
+  actualizadoEn DateTime     @updatedAt
+  creador       Usuario      @relation("CompetenciaCreador", fields: [creadoPor], references: [id])
+  curso         Curso        @relation(fields: [cursoId], references: [id], onDelete: Cascade)
+  evaluaciones  Evaluacion[]
 
   @@unique([cursoId, orden])
   @@index([cursoId])
@@ -412,24 +414,25 @@ enum TipoPeriodo {
 }
 
 model PeriodoAcademico {
-  id              Int         @id @default(autoincrement())
+  id              Int          @id @default(autoincrement())
   colegioId       Int
-  nombre          String      // "Primer Período", "Segundo Período"
-  tipo            TipoPeriodo // BIMESTRE, TRIMESTRE, SEMESTRE
-  anioAcademico   Int         // 2025, 2026
-  orden           Int         // 1, 2, 3, 4
-  fechaInicio     DateTime    @db.Date
-  fechaFin        DateTime    @db.Date
-  activo          Boolean     @default(false)
+  nombre          String       // "Primer Período", "Segundo Período"
+  tipo            TipoPeriodo  // BIMESTRE, TRIMESTRE, SEMESTRE
+  anioAcademico   Int          // 2025, 2026
+  orden           Int          // 1, 2, 3, 4
+  fechaInicio     DateTime     @db.Date
+  fechaFin        DateTime     @db.Date
+  activo          Boolean      @default(false)
   
   // Auditoría
   creadoPor       Int
-  creadoEn        DateTime    @default(now())
-  actualizadoEn   DateTime    @updatedAt
+  creadoEn        DateTime     @default(now())
+  actualizadoEn   DateTime     @updatedAt
 
   // Relaciones
-  colegio         Colegio     @relation(fields: [colegioId], references: [id], onDelete: Cascade)
-  creador         Usuario     @relation("PeriodoAcademicoCreador", fields: [creadoPor], references: [id])
+  colegio         Colegio      @relation(fields: [colegioId], references: [id], onDelete: Cascade)
+  creador         Usuario      @relation("PeriodoAcademicoCreador", fields: [creadoPor], references: [id])
+  evaluaciones    Evaluacion[]
 
   // Índices y constraints
   @@unique([colegioId, anioAcademico, orden])
@@ -457,6 +460,7 @@ model ProfesorAsignacion {
   salon       Salon    @relation(fields: [salonId], references: [id], onDelete: Cascade)
   curso       Curso    @relation(fields: [cursoId], references: [id], onDelete: Cascade)
   asignador   Usuario  @relation("ProfesorAsignacionCreador", fields: [asignadoPor], references: [id])
+  evaluaciones Evaluacion[]
 
   // Índices y constraints
   @@index([profesorId])
@@ -465,4 +469,34 @@ model ProfesorAsignacion {
   @@index([activo])
   @@index([profesorId, activo])
   @@map("profesor_asignacion")
+}
+
+model Evaluacion {
+  id                    Int                @id @default(autoincrement())
+  competenciaId         Int
+  profesorAsignacionId  Int
+  periodoId             Int
+  nombre                String
+  fechaEvaluacion       DateTime?          @db.Date
+  
+  // Auditoría
+  creadoPor             Int
+  creadoEn              DateTime           @default(now())
+  actualizadoEn         DateTime           @updatedAt
+
+  // Relaciones
+  competencia           Competencia        @relation(fields: [competenciaId], references: [id], onDelete: Cascade)
+  profesorAsignacion    ProfesorAsignacion @relation(fields: [profesorAsignacionId], references: [id], onDelete: Cascade)
+  periodo               PeriodoAcademico   @relation(fields: [periodoId], references: [id], onDelete: Cascade)
+  creador               Usuario            @relation("EvaluacionCreador", fields: [creadoPor], references: [id])
+
+  // Índices optimizados
+  @@index([competenciaId])
+  @@index([profesorAsignacionId])
+  @@index([periodoId])
+  @@index([creadoPor])
+  @@index([fechaEvaluacion])
+  @@index([profesorAsignacionId, periodoId])
+  @@index([competenciaId, profesorAsignacionId])
+  @@map("evaluacion")
 }

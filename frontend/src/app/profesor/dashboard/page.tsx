@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import { ProfesorAsignacion } from '@/types/profesor-asignacion';
+import { ProfesorAsignacion, PeriodoAcademico } from '@/types/evaluaciones';
 import AsignacionCard from '@/components/profesor/AsignacionCard';
 import LoadingCard from '@/components/profesor/LoadingCard';
+import ModalSeleccionPeriodo from '@/components/modals/ModalSeleccionPeriodo';
 import { AcademicCapIcon, BookOpenIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline';
 
 interface AsignacionesResponse {
@@ -18,9 +20,14 @@ interface AsignacionesResponse {
 
 export default function ProfesorDashboard() {
   const { user } = useAuth();
+  const router = useRouter();
   const [asignaciones, setAsignaciones] = useState<ProfesorAsignacion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Estado para el modal de selección de período
+  const [modalPeriodoAbierto, setModalPeriodoAbierto] = useState(false);
+  const [asignacionSeleccionada, setAsignacionSeleccionada] = useState<ProfesorAsignacion | null>(null);
 
   // Obtener el ID del profesor desde el usuario autenticado
   const getProfesorId = async () => {
@@ -77,6 +84,23 @@ export default function ProfesorDashboard() {
       cargarAsignaciones();
     }
   }, [user]);
+
+  // Manejar click en "Registrar Notas"
+  const handleRegistrarNotas = (asignacion: ProfesorAsignacion) => {
+    // Asegurar que colegioId esté disponible desde salon.colegioId
+    const asignacionConColegio = {
+      ...asignacion,
+      colegioId: asignacion.salon.colegioId
+    };
+    setAsignacionSeleccionada(asignacionConColegio);
+    setModalPeriodoAbierto(true);
+  };
+
+  // Manejar selección de período
+  const handlePeriodoSeleccionado = (asignacion: ProfesorAsignacion, periodo: PeriodoAcademico) => {
+    // Navegar a la página de evaluaciones con los parámetros necesarios
+    router.push(`/profesor/evaluaciones?asignacionId=${asignacion.id}&periodoId=${periodo.id}`);
+  };
 
   // Agrupar asignaciones por nivel educativo
   const asignacionesPorNivel = asignaciones.reduce((acc, asignacion) => {
@@ -217,6 +241,7 @@ export default function ProfesorDashboard() {
                         <AsignacionCard
                           key={asignacion.id}
                           asignacion={asignacion}
+                          onRegistrarNotas={handleRegistrarNotas}
                         />
                       ))}
                     </div>
@@ -226,6 +251,17 @@ export default function ProfesorDashboard() {
             </div>
           )}
         </div>
+
+        {/* Modal de selección de período */}
+        <ModalSeleccionPeriodo
+          isOpen={modalPeriodoAbierto}
+          onClose={() => {
+            setModalPeriodoAbierto(false);
+            setAsignacionSeleccionada(null);
+          }}
+          asignacion={asignacionSeleccionada}
+          onPeriodoSeleccionado={handlePeriodoSeleccionado}
+        />
       </div>
     </ProtectedRoute>
   );
