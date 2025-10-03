@@ -10,16 +10,16 @@ import { CrearProfesorAsignacionDto, ActualizarProfesorAsignacionDto } from './d
 export class ProfesorAsignacionController {
   constructor(private readonly profesorAsignacionService: ProfesorAsignacionService) {}
 
-  // Crear nueva asignación (solo DIRECTOR)
+  // Crear nueva asignación (DIRECTOR y ADMINISTRATIVO con permisos)
   @Post()
-  @Roles('DIRECTOR')
+  @Roles('DIRECTOR', 'ADMINISTRATIVO')
   async crear(@Body() createDto: CrearProfesorAsignacionDto, @Req() req: any) {
     return this.profesorAsignacionService.crear(createDto, req.user.id);
   }
 
-  // Obtener todas las asignaciones del colegio (solo DIRECTOR)
+  // Obtener todas las asignaciones del colegio (DIRECTOR y ADMINISTRATIVO con permisos)
   @Get()
-  @Roles('DIRECTOR')
+  @Roles('DIRECTOR', 'ADMINISTRATIVO')
   async obtenerTodas(
     @Req() req: any,
     @Query('profesorId') profesorId?: string,
@@ -37,16 +37,16 @@ export class ProfesorAsignacionController {
     return this.profesorAsignacionService.obtenerPorDirector(req.user.id, filtros);
   }
 
-  // Obtener asignación por ID (solo DIRECTOR)
+  // Obtener asignación por ID (DIRECTOR y ADMINISTRATIVO con permisos)
   @Get(':id')
-  @Roles('DIRECTOR')
+  @Roles('DIRECTOR', 'ADMINISTRATIVO')
   async obtenerPorId(@Param('id') id: string, @Req() req: any) {
     return this.profesorAsignacionService.obtenerPorId(parseInt(id), req.user.id);
   }
 
-  // Actualizar asignación (solo DIRECTOR)
+  // Actualizar asignación (DIRECTOR y ADMINISTRATIVO con permisos)
   @Put(':id')
-  @Roles('DIRECTOR')
+  @Roles('DIRECTOR', 'ADMINISTRATIVO')
   async actualizar(
     @Param('id') id: string,
     @Body() updateDto: ActualizarProfesorAsignacionDto,
@@ -55,16 +55,16 @@ export class ProfesorAsignacionController {
     return this.profesorAsignacionService.actualizar(parseInt(id), updateDto, req.user.id);
   }
 
-  // Activar asignación (solo DIRECTOR)
+  // Activar asignación (DIRECTOR y ADMINISTRATIVO con permisos)
   @Put(':id/activar')
-  @Roles('DIRECTOR')
+  @Roles('DIRECTOR', 'ADMINISTRATIVO')
   async activar(@Param('id') id: string, @Req() req: any) {
     return this.profesorAsignacionService.cambiarEstado(parseInt(id), true, req.user.id);
   }
 
-  // Desactivar asignación (solo DIRECTOR)
+  // Desactivar asignación (DIRECTOR y ADMINISTRATIVO con permisos)
   @Put(':id/desactivar')
-  @Roles('DIRECTOR')
+  @Roles('DIRECTOR', 'ADMINISTRATIVO')
   async desactivar(@Param('id') id: string, @Req() req: any) {
     return this.profesorAsignacionService.cambiarEstado(parseInt(id), false, req.user.id);
   }

@@ -253,6 +253,7 @@ model PermisosAdministrativo {
   actualizadoEn                 DateTime       @updatedAt
   puedeRegistrarAlumnos         Boolean        @default(false)
   puedeGestionarSalones         Boolean        @default(false)
+  puedeAsignarProfesores        Boolean        @default(false)
   usuarioActualizador           Usuario?       @relation("PermisosActualizados", fields: [actualizadoPor], references: [id])
   administrativo                Administrativo @relation(fields: [administrativoId], references: [id], onDelete: Cascade)
   usuarioOtorgador              Usuario?       @relation("PermisosOtorgados", fields: [otorgadoPor], references: [id])

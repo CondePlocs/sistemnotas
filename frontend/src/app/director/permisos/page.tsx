@@ -30,6 +30,7 @@ interface Administrativo {
     puedeRegistrarAdministrativos: boolean;
     puedeRegistrarAlumnos: boolean;
     puedeGestionarSalones: boolean;
+    puedeAsignarProfesores: boolean;
   };
 }
 
@@ -39,6 +40,7 @@ interface Permisos {
   registrarAdministrativos: boolean;
   registrarAlumnos: boolean;
   gestionarSalones: boolean;
+  asignarProfesores: boolean;
 }
 
 function PermisosContent() {
@@ -79,6 +81,7 @@ function PermisosContent() {
           registrarAdministrativos: admin.permisos?.puedeRegistrarAdministrativos || false,
           registrarAlumnos: admin.permisos?.puedeRegistrarAlumnos || false,
           gestionarSalones: admin.permisos?.puedeGestionarSalones || false,
+          asignarProfesores: admin.permisos?.puedeAsignarProfesores || false,
         };
       });
       setPermisos(permisosIniciales);
@@ -114,6 +117,7 @@ function PermisosContent() {
         puedeRegistrarAdministrativos: permisos.registrarAdministrativos,
         puedeRegistrarAlumnos: permisos.registrarAlumnos,
         puedeGestionarSalones: permisos.gestionarSalones,
+        puedeAsignarProfesores: permisos.asignarProfesores,
       }));
 
       const response = await fetch('http://localhost:3001/api/permisos/batch', {
@@ -224,6 +228,9 @@ function PermisosContent() {
                     <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Gestionar Salones
                     </th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Asignar Profesores
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -298,6 +305,14 @@ function PermisosContent() {
                           type="checkbox"
                           checked={permisos[admin.id]?.gestionarSalones || false}
                           onChange={(e) => handlePermisoChange(admin.id, 'gestionarSalones', e.target.checked)}
+                          className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                        />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <input
+                          type="checkbox"
+                          checked={permisos[admin.id]?.asignarProfesores || false}
+                          onChange={(e) => handlePermisoChange(admin.id, 'asignarProfesores', e.target.checked)}
                           className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                         />
                       </td>

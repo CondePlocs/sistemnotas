@@ -11,6 +11,7 @@ interface PermisosAdministrativo {
   puedeRegistrarAdministrativos: boolean;
   puedeRegistrarAlumnos: boolean;
   puedeGestionarSalones: boolean;
+  puedeAsignarProfesores: boolean;
 }
 
 interface AdministrativoInfo {
@@ -36,10 +37,14 @@ function AdministrativoDashboardContent() {
   const { user } = useAuth();
 
   useEffect(() => {
-    cargarDatosAdministrativo();
-  }, []);
+    if (user) {
+      cargarDatosAdministrativo();
+    }
+  }, [user]); // Solo ejecutar cuando user cambie
 
   const cargarDatosAdministrativo = async () => {
+    if (loading === false) return; // Evitar llamadas múltiples
+    
     try {
       // Obtener información del administrativo actual
       const response = await fetch('http://localhost:3001/auth/me', {
@@ -137,6 +142,7 @@ function AdministrativoDashboardContent() {
             puedeRegistrarAdministrativos: false,
             puedeRegistrarAlumnos: false,
             puedeGestionarSalones: false,
+            puedeAsignarProfesores: false,
           });
         }
       } else {
@@ -147,6 +153,7 @@ function AdministrativoDashboardContent() {
           puedeRegistrarAdministrativos: false,
           puedeRegistrarAlumnos: false,
           puedeGestionarSalones: false,
+          puedeAsignarProfesores: false,
         });
       }
 
@@ -241,7 +248,7 @@ function AdministrativoDashboardContent() {
               
               {permisos?.puedeRegistrarProfesores ? (
                 <button
-                  onClick={() => navegarA('/administrativo/profesores/crear')}
+                  onClick={() => navegarA('/director/profesores/nuevo')}
                   className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md text-sm font-medium transition-colors"
                 >
                   Acceder
@@ -279,7 +286,7 @@ function AdministrativoDashboardContent() {
               
               {permisos?.puedeRegistrarApoderados ? (
                 <button
-                  onClick={() => navegarA('/administrativo/apoderados/crear')}
+                  onClick={() => navegarA('/director/apoderados/nuevo')}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm font-medium transition-colors"
                 >
                   Acceder
@@ -317,7 +324,7 @@ function AdministrativoDashboardContent() {
               
               {permisos?.puedeRegistrarAdministrativos ? (
                 <button
-                  onClick={() => navegarA('/administrativo/administrativos/crear')}
+                  onClick={() => navegarA('/director/administrativos/nuevo')}
                   className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-md text-sm font-medium transition-colors"
                 >
                   Acceder
@@ -354,7 +361,7 @@ function AdministrativoDashboardContent() {
               
               {permisos?.puedeRegistrarAlumnos ? (
                 <button
-                  onClick={() => navegarA('/administrativo/alumnos/crear')}
+                  onClick={() => navegarA('/director/alumnos/nuevo')}
                   className="w-full bg-orange-600 hover:bg-orange-700 text-white py-2 px-4 rounded-md text-sm font-medium transition-colors"
                 >
                   Acceder
@@ -404,10 +411,48 @@ function AdministrativoDashboardContent() {
               )}
             </div>
           </div>
+
+          {/* Card Asignar Profesores */}
+          <div className={`bg-white rounded-lg shadow-md border-2 transition-all duration-200 ${
+            permisos?.puedeAsignarProfesores 
+              ? 'border-purple-200 hover:border-purple-300 hover:shadow-lg cursor-pointer' 
+              : 'border-gray-200 opacity-50 cursor-not-allowed'
+          }`}>
+            <div className="p-6">
+              <div className="flex items-center mb-4">
+                <div className={`p-3 rounded-full ${
+                  permisos?.puedeAsignarProfesores ? 'bg-purple-100' : 'bg-gray-100'
+                }`}>
+                  <svg className={`w-6 h-6 ${
+                    permisos?.puedeAsignarProfesores ? 'text-purple-600' : 'text-gray-400'
+                  }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                  </svg>
+                </div>
+                <div className="ml-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Asignar Profesores</h3>
+                  <p className="text-sm text-gray-600">Gestionar asignaciones de profesores</p>
+                </div>
+              </div>
+              
+              {permisos?.puedeAsignarProfesores ? (
+                <button
+                  onClick={() => navegarA('/director/asignaciones-profesor')}
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-md text-sm font-medium transition-colors"
+                >
+                  Acceder
+                </button>
+              ) : (
+                <div className="w-full bg-gray-100 text-gray-500 py-2 px-4 rounded-md text-sm font-medium text-center">
+                  Sin Permisos
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Mensaje si no tiene permisos */}
-        {permisos && !permisos.puedeRegistrarProfesores && !permisos.puedeRegistrarApoderados && !permisos.puedeRegistrarAdministrativos && !permisos.puedeRegistrarAlumnos && !permisos.puedeGestionarSalones && (
+        {permisos && !permisos.puedeRegistrarProfesores && !permisos.puedeRegistrarApoderados && !permisos.puedeRegistrarAdministrativos && !permisos.puedeRegistrarAlumnos && !permisos.puedeGestionarSalones && !permisos.puedeAsignarProfesores && (
           <div className="mt-8 bg-yellow-50 border border-yellow-200 rounded-lg p-6">
             <div className="flex items-center">
               <svg className="w-6 h-6 text-yellow-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

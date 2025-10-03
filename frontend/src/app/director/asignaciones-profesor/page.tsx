@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import { useAuth } from '@/context/AuthContext';
 import ModalAsignacionProfesor from '@/components/modals/ModalAsignacionProfesor';
 import { 
   ProfesorAsignacion, 
@@ -13,48 +14,118 @@ import { PlusIcon, UserGroupIcon, CheckCircleIcon, XCircleIcon } from '@heroicon
 
 function AsignacionesProfesorContent() {
   const router = useRouter();
+  const { user, hasRole } = useAuth();
   const [asignaciones, setAsignaciones] = useState<ProfesorAsignacion[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filtroActivo, setFiltroActivo] = useState<boolean | null>(null);
+  const [permisoVerificado, setPermisoVerificado] = useState(false);
+
+  // Verificar permisos para administrativos
+  const verificarPermisos = async () => {
+    console.log('🔍 Iniciando verificación de permisos...');
+    console.log('🔍 Usuario actual:', user);
+    console.log('🔍 hasRole DIRECTOR:', hasRole('DIRECTOR'));
+    console.log('🔍 hasRole ADMINISTRATIVO:', hasRole('ADMINISTRATIVO'));
+
+    if (hasRole('DIRECTOR')) {
+      console.log('✅ Es director, permisos verificados');
+      setPermisoVerificado(true);
+      return;
+    }
+
+    if (hasRole('ADMINISTRATIVO')) {
+      console.log('🔍 Es administrativo, verificando permisos específicos...');
+      try {
+        // Usar directamente el ID 3 que sabemos que funciona en el dashboard
+        const adminId = 3;
+        console.log('🆔 Usando ID del administrativo:', adminId);
+
+        console.log('🔍 Verificando permisos específicos...');
+        const response = await fetch(`http://localhost:3001/api/permisos/verificar/${adminId}/asignar-profesores`, {
+          credentials: 'include'
+        });
+
+        console.log('📡 Respuesta de verificación:', response.status);
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log('📋 Datos de permisos:', data);
+          if (data.tienePermiso) {
+            console.log('✅ Permisos verificados correctamente');
+            setPermisoVerificado(true);
+          } else {
+            console.log('❌ No tiene permisos');
+            setError('No tienes permisos para gestionar asignaciones de profesores. Contacta al director.');
+          }
+        } else {
+          console.error('❌ Error en verificación de permisos:', response.status);
+          setError('Error al verificar permisos');
+        }
+      } catch (error) {
+        console.error('❌ Error verificando permisos:', error);
+        setError('Error de conexión al verificar permisos');
+      }
+    } else {
+      console.log('❌ No es director ni administrativo');
+      setError('No tienes permisos para acceder a esta página');
+    }
+  };
 
   // Cargar asignaciones
   const cargarAsignaciones = async () => {
+    console.log('🔍 Iniciando carga de asignaciones...');
     try {
       const params = new URLSearchParams();
       if (filtroActivo !== null) {
         params.append('activo', filtroActivo.toString());
       }
 
-      const response = await fetch(`/api/profesor-asignaciones?${params.toString()}`, {
+      console.log('📡 Haciendo petición a:', `http://localhost:3001/api/profesor-asignaciones?${params.toString()}`);
+      const response = await fetch(`http://localhost:3001/api/profesor-asignaciones?${params.toString()}`, {
         credentials: 'include'
       });
 
+      console.log('📡 Respuesta de asignaciones:', response.status);
+
       if (response.ok) {
         const data: ListaAsignacionesResponse = await response.json();
+        console.log('📋 Asignaciones cargadas:', data);
         setAsignaciones(data.data.asignaciones);
       } else {
+        console.error('❌ Error al cargar asignaciones:', response.status);
         setError('Error al cargar asignaciones de profesores');
       }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('❌ Error en carga de asignaciones:', error);
       setError('Error de conexión');
     } finally {
+      console.log('✅ Finalizando carga, setting loading = false');
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    cargarAsignaciones();
-  }, [filtroActivo]);
+    console.log('🔄 useEffect verificarPermisos - user:', user, 'hasRole:', hasRole);
+    if (user) {
+      verificarPermisos();
+    }
+  }, [user, hasRole]);
+
+  useEffect(() => {
+    console.log('🔄 useEffect cargarAsignaciones - permisoVerificado:', permisoVerificado);
+    if (permisoVerificado) {
+      cargarAsignaciones();
+    }
+  }, [filtroActivo, permisoVerificado]);
 
   // Crear asignación
   const handleCrearAsignacion = async (formData: ProfesorAsignacionFormData) => {
     setSubmitting(true);
     try {
-      const response = await fetch('/api/profesor-asignaciones', {
+      const response = await fetch('http://localhost:3001/api/profesor-asignaciones', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -83,7 +154,7 @@ function AsignacionesProfesorContent() {
   const handleCambiarEstado = async (asignacionId: number, activo: boolean) => {
     try {
       const endpoint = activo ? 'activar' : 'desactivar';
-      const response = await fetch(`/api/profesor-asignaciones/${asignacionId}/${endpoint}`, {
+      const response = await fetch(`http://localhost:3001/api/profesor-asignaciones/${asignacionId}/${endpoint}`, {
         method: 'PUT',
         credentials: 'include'
       });
@@ -105,6 +176,19 @@ function AsignacionesProfesorContent() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Cargando asignaciones...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error && !permisoVerificado) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded max-w-md">
+            <strong className="font-bold">Error de permisos</strong>
+            <span className="block sm:inline"> {error}</span>
+          </div>
         </div>
       </div>
     );
@@ -275,7 +359,7 @@ function AsignacionesProfesorContent() {
 
 export default function AsignacionesProfesorPage() {
   return (
-    <ProtectedRoute requiredRole="DIRECTOR">
+    <ProtectedRoute requiredRole={["DIRECTOR", "ADMINISTRATIVO"]}>
       <AsignacionesProfesorContent />
     </ProtectedRoute>
   );

@@ -6,6 +6,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import FormularioAlumno from '@/components/forms/FormularioAlumno';
 import { AlumnoFormData } from '@/types/alumno';
 import { useAuth } from '@/context/AuthContext';
+import { usePermissionCheck } from '@/hooks/usePermissionCheck';
 
 function NuevoAlumnoDirectorContent() {
   const [loading, setLoading] = useState(false);
@@ -13,6 +14,25 @@ function NuevoAlumnoDirectorContent() {
   const [success, setSuccess] = useState('');
   const router = useRouter();
   const { user } = useAuth();
+  
+  const { permisoVerificado, loading: permissionLoading } = usePermissionCheck({
+    permissionType: 'alumnos'
+  });
+
+  if (permissionLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Verificando permisos...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!permisoVerificado) {
+    return null;
+  }
 
   const handleSubmit = async (formData: AlumnoFormData) => {
     setLoading(true);
@@ -153,7 +173,7 @@ function NuevoAlumnoDirectorContent() {
 
 export default function NuevoAlumnoDirector() {
   return (
-    <ProtectedRoute requiredRole="DIRECTOR">
+    <ProtectedRoute requiredRole={["DIRECTOR", "ADMINISTRATIVO"]}>
       <NuevoAlumnoDirectorContent />
     </ProtectedRoute>
   );

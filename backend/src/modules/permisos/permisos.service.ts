@@ -52,6 +52,7 @@ export class PermisosService {
             puedeRegistrarAdministrativos: permisoDto.puedeRegistrarAdministrativos ?? false,
             puedeRegistrarAlumnos: permisoDto.puedeRegistrarAlumnos ?? false,
             puedeGestionarSalones: permisoDto.puedeGestionarSalones ?? false,
+            puedeAsignarProfesores: permisoDto.puedeAsignarProfesores ?? false,
             otorgadoPor: directorUserId,
             otorgadoEn: new Date(),
           },
@@ -61,6 +62,7 @@ export class PermisosService {
             puedeRegistrarAdministrativos: permisoDto.puedeRegistrarAdministrativos ?? undefined,
             puedeRegistrarAlumnos: permisoDto.puedeRegistrarAlumnos ?? undefined,
             puedeGestionarSalones: permisoDto.puedeGestionarSalones ?? undefined,
+            puedeAsignarProfesores: permisoDto.puedeAsignarProfesores ?? undefined,
             actualizadoPor: directorUserId,
             actualizadoEn: new Date(),
           },
@@ -204,13 +206,14 @@ export class PermisosService {
         puedeRegistrarAdministrativos: false,
         puedeRegistrarAlumnos: false,
         puedeGestionarSalones: false,
+        puedeAsignarProfesores: false,
       };
     }
 
     return permisos;
   }
 
-  async verificarPermiso(administrativoId: number, tipoPermiso: 'profesores' | 'apoderados' | 'administrativos' | 'alumnos' | 'salones'): Promise<boolean> {
+  async verificarPermiso(administrativoId: number, tipoPermiso: 'profesores' | 'apoderados' | 'administrativos' | 'alumnos' | 'salones' | 'asignar-profesores'): Promise<boolean> {
     const permisos = await this.prisma.permisosAdministrativo.findUnique({
       where: {
         administrativoId: administrativoId
@@ -232,6 +235,8 @@ export class PermisosService {
         return permisos.puedeRegistrarAlumnos;
       case 'salones':
         return permisos.puedeGestionarSalones;
+      case 'asignar-profesores':
+        return permisos.puedeAsignarProfesores;
       default:
         return false;
     }

@@ -6,9 +6,10 @@ import { CrearProfesorAsignacionDto, ActualizarProfesorAsignacionDto } from './d
 export class ProfesorAsignacionService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // Verificar que el usuario sea DIRECTOR y obtener su colegioId
-  private async verificarDirectorYColegio(usuarioId: number) {
-    const usuarioRol = await this.prisma.usuarioRol.findFirst({
+  // Verificar que el usuario sea DIRECTOR o ADMINISTRATIVO con permisos y obtener su colegioId
+  private async verificarPermisoYColegio(usuarioId: number) {
+    // Buscar si es DIRECTOR
+    const directorRol = await this.prisma.usuarioRol.findFirst({
       where: {
         usuario_id: usuarioId,
         rol: {
@@ -17,16 +18,37 @@ export class ProfesorAsignacionService {
       }
     });
 
-    if (!usuarioRol || !usuarioRol.colegio_id) {
-      throw new ForbiddenException('Solo los directores pueden gestionar asignaciones de profesores');
+    if (directorRol && directorRol.colegio_id) {
+      return directorRol.colegio_id;
     }
 
-    return usuarioRol.colegio_id;
+    // Buscar si es ADMINISTRATIVO con permisos
+    const administrativoRol = await this.prisma.usuarioRol.findFirst({
+      where: {
+        usuario_id: usuarioId,
+        rol: {
+          nombre: 'ADMINISTRATIVO'
+        }
+      },
+      include: {
+        administrativo: {
+          include: {
+            permisos: true
+          }
+        }
+      }
+    });
+
+    if (administrativoRol && administrativoRol.colegio_id && administrativoRol.administrativo?.permisos?.puedeAsignarProfesores) {
+      return administrativoRol.colegio_id;
+    }
+
+    throw new ForbiddenException('No tienes permisos para gestionar asignaciones de profesores');
   }
 
   // Crear nueva asignación
   async crear(createDto: CrearProfesorAsignacionDto, usuarioId: number) {
-    const colegioId = await this.verificarDirectorYColegio(usuarioId);
+    const colegioId = await this.verificarPermisoYColegio(usuarioId);
 
     // Verificar que el profesor pertenece al colegio
     const profesor = await this.prisma.profesor.findFirst({
@@ -183,7 +205,7 @@ export class ProfesorAsignacionService {
 
   // Obtener asignaciones por director (su colegio)
   async obtenerPorDirector(usuarioId: number, filtros?: { profesorId?: number; salonId?: number; cursoId?: number; activo?: boolean }) {
-    const colegioId = await this.verificarDirectorYColegio(usuarioId);
+    const colegioId = await this.verificarPermisoYColegio(usuarioId);
 
     const asignaciones = await this.prisma.profesorAsignacion.findMany({
       where: {
@@ -247,7 +269,7 @@ export class ProfesorAsignacionService {
 
   // Obtener asignación por ID
   async obtenerPorId(id: number, usuarioId: number) {
-    const colegioId = await this.verificarDirectorYColegio(usuarioId);
+    const colegioId = await this.verificarPermisoYColegio(usuarioId);
 
     const asignacion = await this.prisma.profesorAsignacion.findFirst({
       where: {
@@ -304,7 +326,7 @@ export class ProfesorAsignacionService {
 
   // Actualizar asignación
   async actualizar(id: number, updateDto: ActualizarProfesorAsignacionDto, usuarioId: number) {
-    const colegioId = await this.verificarDirectorYColegio(usuarioId);
+    const colegioId = await this.verificarPermisoYColegio(usuarioId);
 
     // Verificar que la asignación existe y pertenece al colegio
     const asignacionExistente = await this.prisma.profesorAsignacion.findFirst({
@@ -371,7 +393,7 @@ export class ProfesorAsignacionService {
 
   // Activar asignación (con validación de duplicados)
   async activarAsignacion(id: number, usuarioId: number) {
-    const colegioId = await this.verificarDirectorYColegio(usuarioId);
+    const colegioId = await this.verificarPermisoYColegio(usuarioId);
 
     // Obtener la asignación que queremos activar
     const asignacion = await this.prisma.profesorAsignacion.findFirst({

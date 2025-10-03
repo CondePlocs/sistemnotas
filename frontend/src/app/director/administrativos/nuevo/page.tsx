@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/context/AuthContext';
+import { usePermissionCheck } from '@/hooks/usePermissionCheck';
 
 interface AdministrativoFormData {
   // Datos básicos del usuario
@@ -34,6 +35,25 @@ function NuevoAdministrativoContent() {
   });
   const router = useRouter();
   const { user } = useAuth();
+  
+  const { permisoVerificado, loading: permissionLoading } = usePermissionCheck({
+    permissionType: 'administrativos'
+  });
+
+  if (permissionLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Verificando permisos...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!permisoVerificado) {
+    return null;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -353,7 +373,7 @@ function NuevoAdministrativoContent() {
 
 export default function NuevoAdministrativo() {
   return (
-    <ProtectedRoute requiredRole="DIRECTOR">
+    <ProtectedRoute requiredRole={["DIRECTOR", "ADMINISTRATIVO"]}>
       <NuevoAdministrativoContent />
     </ProtectedRoute>
   );
