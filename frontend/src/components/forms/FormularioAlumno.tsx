@@ -18,6 +18,7 @@ export default function FormularioAlumno({
 }: FormularioAlumnoProps) {
   const [formData, setFormData] = useState<AlumnoFormData>({
     dni: initialData.dni || '',
+    codigoAlumno: initialData.codigoAlumno || '',
     nombres: initialData.nombres || '',
     apellidos: initialData.apellidos || '',
     fechaNacimiento: initialData.fechaNacimiento || '',
@@ -127,6 +128,30 @@ export default function FormularioAlumno({
                 disabled={loading}
               />
               {errors.dni && <p className="mt-1 text-sm text-red-600">{errors.dni}</p>}
+            </div>
+
+            {/* Código de Alumno */}
+            <div>
+              <label htmlFor="codigoAlumno" className="block text-sm font-medium text-gray-700 mb-1">
+                Código de Alumno (Opcional)
+              </label>
+              <input
+                type="text"
+                id="codigoAlumno"
+                name="codigoAlumno"
+                value={formData.codigoAlumno}
+                onChange={handleChange}
+                maxLength={20}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.codigoAlumno ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="EST2024001 o ALU-001-2024"
+                disabled={loading}
+              />
+              {errors.codigoAlumno && <p className="mt-1 text-sm text-red-600">{errors.codigoAlumno}</p>}
+              <p className="mt-1 text-xs text-gray-500">
+                Código para integración con SIAGIE u otros sistemas
+              </p>
             </div>
 
             {/* Nombres */}

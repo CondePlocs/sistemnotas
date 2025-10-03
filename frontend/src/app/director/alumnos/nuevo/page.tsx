@@ -28,6 +28,7 @@ function NuevoAlumnoDirectorContent() {
         credentials: 'include',
         body: JSON.stringify({
           dni: formData.dni || null,
+          codigoAlumno: formData.codigoAlumno || null,
           nombres: formData.nombres,
           apellidos: formData.apellidos,
           fechaNacimiento: formData.fechaNacimiento || null,
@@ -137,6 +138,7 @@ function NuevoAlumnoDirectorContent() {
                 <ul className="list-disc list-inside space-y-1">
                   <li>Los campos marcados con (*) son obligatorios</li>
                   <li>El DNI es opcional pero recomendado para identificación única</li>
+                  <li>El código de alumno es opcional y útil para integración con SIAGIE</li>
                   <li>La información académica (grado, sección) se asignará posteriormente</li>
                   <li>Todos los alumnos registrados pertenecerán a su colegio</li>
                 </ul>

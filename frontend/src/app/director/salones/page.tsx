@@ -124,7 +124,7 @@ function GestionSalonesContent() {
   };
 
   const handleSalonCreado = async (salonData: any) => {
-    console.log('Datos del salón:', salonData);
+    console.log('🚀 Datos del salón enviados desde frontend:', salonData);
     
     try {
       if (salonData.tipo === 'manual') {
@@ -138,7 +138,8 @@ function GestionSalonesContent() {
           body: JSON.stringify({
             nivel: salonData.nivel,
             grado: salonData.grado,
-            seccion: salonData.seccion
+            seccion: salonData.seccion,
+            turno: salonData.turno
           })
         });
 
@@ -161,7 +162,8 @@ function GestionSalonesContent() {
           body: JSON.stringify({
             nivel: salonData.nivel,
             grado: salonData.grado,
-            secciones: salonData.secciones
+            secciones: salonData.secciones,
+            turno: salonData.turno
           })
         });
 

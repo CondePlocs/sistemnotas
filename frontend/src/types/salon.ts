@@ -1,6 +1,13 @@
 import { NivelEducativo } from './colegio';
 import { ColegioNivel } from './nivel';
 
+// Enum para turnos de salón
+export enum Turno {
+  MAÑANA = 'MAÑANA',
+  TARDE = 'TARDE',
+  NOCHE = 'NOCHE'
+}
+
 // Tipo base para un salón (actualizado)
 export interface Salon {
   id: number;
@@ -8,6 +15,7 @@ export interface Salon {
   colegioNivelId: number; // ← FK a colegio_nivel
   grado: string;
   seccion: string;
+  turno: Turno;
   activo: boolean;
   creadoPor: number;
   creadoEn: string;
@@ -27,6 +35,7 @@ export interface CrearSalonDto {
   nivel: NivelEducativo;
   grado: string;
   seccion: string;
+  turno?: Turno;
 }
 
 // Datos para creación masiva/automática
@@ -34,6 +43,7 @@ export interface CrearSalonesLoteDto {
   nivel: NivelEducativo;
   grado: string;
   secciones: string[]; // ['A', 'B', 'C', 'D']
+  turno?: Turno;
 }
 
 // Configuración de rango para creación automática

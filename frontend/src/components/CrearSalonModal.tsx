@@ -9,7 +9,8 @@ import {
   RANGOS_PREDEFINIDOS,
   LETRAS_SECCIONES,
   generarRangoSecciones,
-  validarRango
+  validarRango,
+  Turno
 } from '@/types/salon';
 
 interface CrearSalonModalProps {
@@ -50,6 +51,9 @@ const SUGERENCIAS_SECCIONES = {
 export default function CrearSalonModal({ nivel, onClose, onSubmit }: CrearSalonModalProps) {
   // Estado del modo de creación
   const [modo, setModo] = useState<ModoCreacion>('manual');
+  
+  // Estado para el turno (compartido entre ambos modos)
+  const [turno, setTurno] = useState<Turno>(Turno.MAÑANA);
   
   // Estados para modo manual
   const [formDataManual, setFormDataManual] = useState<CreacionManualForm>({
@@ -113,7 +117,8 @@ export default function CrearSalonModal({ nivel, onClose, onSubmit }: CrearSalon
         tipo: 'manual',
         nivel: formDataManual.nivel,
         grado: formDataManual.grado,
-        seccion: formDataManual.seccion
+        seccion: formDataManual.seccion,
+        turno: turno
       });
     } else {
       // Validar modo automático
@@ -127,7 +132,8 @@ export default function CrearSalonModal({ nivel, onClose, onSubmit }: CrearSalon
         tipo: 'automatico',
         nivel: formDataAutomatico.nivel,
         grado: formDataAutomatico.grado,
-        secciones: previewSalones
+        secciones: previewSalones,
+        turno: turno
       });
     }
   };
@@ -216,6 +222,60 @@ export default function CrearSalonModal({ nivel, onClose, onSubmit }: CrearSalon
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                 />
                 <span className="ml-2 text-sm text-gray-700">Automático (por rango) ✨</span>
+              </label>
+            </div>
+          </div>
+
+          {/* Selector de Turno */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              🕐 Turno del Salón
+            </label>
+            <div className="grid grid-cols-3 gap-3">
+              <label className="flex items-center justify-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                <input
+                  type="radio"
+                  name="turno"
+                  value={Turno.MAÑANA}
+                  checked={turno === Turno.MAÑANA}
+                  onChange={(e) => setTurno(e.target.value as Turno)}
+                  className="sr-only"
+                />
+                <div className={`text-center ${turno === Turno.MAÑANA ? 'text-blue-600 font-semibold' : 'text-gray-600'}`}>
+                  <div className="text-2xl mb-1">🌅</div>
+                  <div className="text-sm">Mañana</div>
+                  <div className="text-xs text-gray-500">7:00 - 12:00</div>
+                </div>
+              </label>
+              <label className="flex items-center justify-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                <input
+                  type="radio"
+                  name="turno"
+                  value={Turno.TARDE}
+                  checked={turno === Turno.TARDE}
+                  onChange={(e) => setTurno(e.target.value as Turno)}
+                  className="sr-only"
+                />
+                <div className={`text-center ${turno === Turno.TARDE ? 'text-orange-600 font-semibold' : 'text-gray-600'}`}>
+                  <div className="text-2xl mb-1">🌇</div>
+                  <div className="text-sm">Tarde</div>
+                  <div className="text-xs text-gray-500">13:00 - 18:00</div>
+                </div>
+              </label>
+              <label className="flex items-center justify-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                <input
+                  type="radio"
+                  name="turno"
+                  value={Turno.NOCHE}
+                  checked={turno === Turno.NOCHE}
+                  onChange={(e) => setTurno(e.target.value as Turno)}
+                  className="sr-only"
+                />
+                <div className={`text-center ${turno === Turno.NOCHE ? 'text-purple-600 font-semibold' : 'text-gray-600'}`}>
+                  <div className="text-2xl mb-1">🌙</div>
+                  <div className="text-sm">Noche</div>
+                  <div className="text-xs text-gray-500">19:00 - 22:00</div>
+                </div>
               </label>
             </div>
           </div>
@@ -321,6 +381,9 @@ export default function CrearSalonModal({ nivel, onClose, onSubmit }: CrearSalon
                   <div className="font-semibold text-gray-800">
                     {formDataManual.grado} - {formDataManual.seccion}
                   </div>
+                  <div className="text-sm text-gray-600 mt-1">
+                    Turno: <span className="font-medium">{turno}</span>
+                  </div>
                 </div>
               )}
             </div>
@@ -414,6 +477,9 @@ export default function CrearSalonModal({ nivel, onClose, onSubmit }: CrearSalon
                   <div className="text-sm text-gray-600 mb-2">Vista previa:</div>
                   <div className="text-sm text-gray-700 mb-2">
                     <strong>{formDataAutomatico.grado}</strong> - Secciones: {previewSalones.join(', ')}
+                  </div>
+                  <div className="text-sm text-gray-600 mb-2">
+                    Turno: <span className="font-medium">{turno}</span>
                   </div>
                   <div className="text-lg font-bold text-blue-600">
                     Total: {previewSalones.length} salones

@@ -1,5 +1,6 @@
-import { IsString, IsNotEmpty, IsEnum, IsArray, ArrayMinSize, ArrayMaxSize } from 'class-validator';
+import { IsString, IsNotEmpty, IsEnum, IsArray, ArrayMinSize, ArrayMaxSize, IsOptional } from 'class-validator';
 import { NivelEducativo } from '../../../types/salon.types';
+import { Turno } from '../../../../generated/prisma';
 
 export class CreateSalonesLoteDto {
   @IsEnum(NivelEducativo, { message: 'El nivel debe ser INICIAL, PRIMARIA o SECUNDARIA' })
@@ -15,4 +16,8 @@ export class CreateSalonesLoteDto {
   @IsString({ each: true, message: 'Cada sección debe ser un texto' })
   @IsNotEmpty({ each: true, message: 'Las secciones no pueden estar vacías' })
   secciones: string[];
+
+  @IsEnum(Turno, { message: 'El turno debe ser MAÑANA, TARDE o NOCHE' })
+  @IsOptional()
+  turno?: Turno;
 }

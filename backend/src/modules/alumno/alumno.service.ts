@@ -65,10 +65,22 @@ export class AlumnoService {
         }
       }
 
+      // Verificar código de alumno único si se proporciona
+      if (crearAlumnoDto.codigoAlumno) {
+        const alumnoExistente = await this.prisma.alumno.findUnique({
+          where: { codigoAlumno: crearAlumnoDto.codigoAlumno }
+        });
+
+        if (alumnoExistente) {
+          throw new ConflictException('Ya existe un alumno con este código');
+        }
+      }
+
       // Crear el alumno
       const alumno = await this.prisma.alumno.create({
         data: {
           dni: crearAlumnoDto.dni,
+          codigoAlumno: crearAlumnoDto.codigoAlumno,
           nombres: crearAlumnoDto.nombres,
           apellidos: crearAlumnoDto.apellidos,
           fechaNacimiento: crearAlumnoDto.fechaNacimiento 
@@ -316,11 +328,23 @@ export class AlumnoService {
         }
       }
 
+      // Verificar código de alumno único si se está actualizando
+      if (actualizarAlumnoDto.codigoAlumno && actualizarAlumnoDto.codigoAlumno !== alumnoExistente.data.codigoAlumno) {
+        const alumnoConCodigo = await this.prisma.alumno.findUnique({
+          where: { codigoAlumno: actualizarAlumnoDto.codigoAlumno }
+        });
+
+        if (alumnoConCodigo) {
+          throw new ConflictException('Ya existe un alumno con este código');
+        }
+      }
+
       // Actualizar alumno
       const alumnoActualizado = await this.prisma.alumno.update({
         where: { id },
         data: {
           dni: actualizarAlumnoDto.dni,
+          codigoAlumno: actualizarAlumnoDto.codigoAlumno,
           nombres: actualizarAlumnoDto.nombres,
           apellidos: actualizarAlumnoDto.apellidos,
           fechaNacimiento: actualizarAlumnoDto.fechaNacimiento 

@@ -17,6 +17,10 @@ export class UpdateSalonDto {
   seccion?: string;
 
   @IsOptional()
+  @IsEnum(['MAÑANA', 'TARDE', 'NOCHE'], { message: 'El turno debe ser MAÑANA, TARDE o NOCHE' })
+  turno?: 'MAÑANA' | 'TARDE' | 'NOCHE';
+
+  @IsOptional()
   @IsBoolean({ message: 'El estado activo debe ser verdadero o falso' })
   activo?: boolean;
 }

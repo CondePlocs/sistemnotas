@@ -140,6 +140,7 @@ model Salon {
   colegioId      Int
   grado          String
   seccion        String
+  turno          Turno         @default(MAÑANA)
   activo         Boolean       @default(true)
   creadoPor      Int
   creadoEn       DateTime      @default(now())
@@ -152,7 +153,7 @@ model Salon {
   cursos         SalonCurso[]
   profesorAsignaciones ProfesorAsignacion[]
 
-  @@unique([colegioId, colegioNivelId, grado, seccion], map: "salon_colegioid_colegionivelid_grado_seccion_key")
+  @@unique([colegioId, colegioNivelId, grado, seccion, turno], map: "salon_colegioid_colegionivelid_grado_seccion_turno_key")
   @@index([colegioId])
   @@index([creadoPor])
   @@map("salon")
@@ -263,6 +264,7 @@ model Alumno {
   id              Int               @id @default(autoincrement())
   colegioId       Int
   dni             String?           @unique
+  codigoAlumno    String?           @unique
   nombres         String
   apellidos       String
   fechaNacimiento DateTime?
@@ -283,6 +285,7 @@ model Alumno {
 
   @@index([colegioId])
   @@index([dni])
+  @@index([codigoAlumno])
   @@index([activo])
   @@map("alumno")
 }
@@ -413,6 +416,12 @@ enum TipoPeriodo {
   BIMESTRE
   TRIMESTRE
   SEMESTRE
+}
+
+enum Turno {
+  MAÑANA
+  TARDE
+  NOCHE
 }
 
 model PeriodoAcademico {

@@ -26,7 +26,8 @@ export class SalonService {
       director.colegioId, 
       colegioNivel.id, 
       createSalonDto.grado, 
-      createSalonDto.seccion
+      createSalonDto.seccion,
+      createSalonDto.turno || 'MAÑANA'
     );
 
     // 4. Crear el salón
@@ -36,6 +37,7 @@ export class SalonService {
         colegioNivelId: colegioNivel.id, // ← Usar FK a colegio_nivel
         grado: createSalonDto.grado,
         seccion: createSalonDto.seccion,
+        turno: (createSalonDto.turno || 'MAÑANA') as any,
         creadoPor: usuarioId,
       },
       include: {
@@ -99,7 +101,8 @@ export class SalonService {
         director.colegioId, 
         colegioNivel.id, 
         createSalonesLoteDto.grado, 
-        seccion
+        seccion,
+        createSalonesLoteDto.turno || 'MAÑANA'
       );
     }
 
@@ -114,6 +117,7 @@ export class SalonService {
             colegioNivelId: colegioNivel.id, // ← Usar FK
             grado: createSalonesLoteDto.grado,
             seccion: seccion,
+            turno: (createSalonesLoteDto.turno || 'MAÑANA') as any,
             creadoPor: usuarioId,
           },
           include: {
@@ -246,18 +250,20 @@ export class SalonService {
       throw new NotFoundException('Salón no encontrado o no pertenece a tu colegio');
     }
 
-    // 3. Si se está cambiando grado/sección, verificar duplicados
-    if (updateSalonDto.grado || updateSalonDto.seccion) {
+    // 3. Si se está cambiando grado/sección/turno, verificar duplicados
+    if (updateSalonDto.grado || updateSalonDto.seccion || updateSalonDto.turno) {
       const nuevoGrado = updateSalonDto.grado || salonExistente.grado;
       const nuevaSeccion = updateSalonDto.seccion || salonExistente.seccion;
+      const nuevoTurno = updateSalonDto.turno || salonExistente.turno;
       
       // Solo verificar si realmente cambió
-      if (nuevoGrado !== salonExistente.grado || nuevaSeccion !== salonExistente.seccion) {
+      if (nuevoGrado !== salonExistente.grado || nuevaSeccion !== salonExistente.seccion || nuevoTurno !== salonExistente.turno) {
         await this.verificarSalonDuplicado(
           director.colegioId,
           salonExistente.colegioNivelId,
           nuevoGrado,
           nuevaSeccion,
+          nuevoTurno,
           id // Excluir el salón actual
         );
       }
@@ -414,6 +420,7 @@ export class SalonService {
     colegioNivelId: number, 
     grado: string, 
     seccion: string,
+    turno: string,
     excluirId?: number
   ) {
     const salonExistente = await this.prisma.salon.findFirst({
@@ -422,13 +429,14 @@ export class SalonService {
         colegioNivelId, // ← Usar FK a colegio_nivel
         grado,
         seccion,
+        turno: turno as any, // Conversión temporal hasta que se regenere Prisma
         activo: true,
         ...(excluirId && { id: { not: excluirId } })
       }
     });
 
     if (salonExistente) {
-      throw new ConflictException(`Ya existe un salón "${grado} - ${seccion}" en tu colegio`);
+      throw new ConflictException(`Ya existe un salón "${grado} - ${seccion} (${turno})" en tu colegio`);
     }
   }
 

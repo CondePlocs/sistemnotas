@@ -13,6 +13,12 @@ export class CrearAlumnoDto {
   @Matches(/^\d{8}$/, { message: 'El DNI debe contener solo números' })
   dni?: string;
 
+  @IsOptional()
+  @IsString({ message: 'El código de alumno debe ser una cadena de texto' })
+  @Length(3, 20, { message: 'El código de alumno debe tener entre 3 y 20 caracteres' })
+  @Transform(({ value }) => value?.trim())
+  codigoAlumno?: string;
+
   @IsString({ message: 'Los nombres son obligatorios' })
   @Length(2, 100, { message: 'Los nombres deben tener entre 2 y 100 caracteres' })
   @Transform(({ value }) => value?.trim())

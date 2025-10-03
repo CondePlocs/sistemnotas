@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Salon } from '@/types/salon';
+import { Salon, Turno, SalonConNivel } from '@/types/salon';
 import { SalonConAlumnos } from '@/types/salon-alumnos';
 import { 
   UserGroupIcon, 
@@ -11,8 +11,8 @@ import {
 } from '@heroicons/react/24/outline';
 
 interface SalonCardProps {
-  salon: Salon;
-  onAsignarAlumnos: (salon: Salon) => void;
+  salon: SalonConNivel;
+  onAsignarAlumnos: (salon: SalonConNivel) => void;
   refreshTrigger?: number; // Para forzar actualización
 }
 
@@ -77,6 +77,19 @@ export default function SalonCard({ salon, onAsignarAlumnos, refreshTrigger }: S
     }
   };
 
+  const obtenerInfoTurno = (turno: Turno) => {
+    switch (turno) {
+      case Turno.MAÑANA:
+        return { icono: '🌅', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200' };
+      case Turno.TARDE:
+        return { icono: '🌇', color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-200' };
+      case Turno.NOCHE:
+        return { icono: '🌙', color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-200' };
+      default:
+        return { icono: '🕐', color: 'text-gray-600', bg: 'bg-gray-50', border: 'border-gray-200' };
+    }
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
       {/* Header del salón */}
@@ -87,6 +100,12 @@ export default function SalonCard({ salon, onAsignarAlumnos, refreshTrigger }: S
             <span className={`px-2 py-1 rounded-full text-xs font-medium border ${obtenerColorNivel(salon.nivel)}`}>
               {salon.nivel}
             </span>
+            {/* Indicador de turno */}
+            {salon.turno && (
+              <span className={`px-2 py-1 rounded-full text-xs font-medium border ${obtenerInfoTurno(salon.turno).bg} ${obtenerInfoTurno(salon.turno).color} ${obtenerInfoTurno(salon.turno).border}`}>
+                {obtenerInfoTurno(salon.turno).icono} {salon.turno}
+              </span>
+            )}
           </div>
           
           {datosAlumnos.cargando ? (
