@@ -41,7 +41,6 @@ export class SalonController {
   @Roles('DIRECTOR', 'ADMINISTRATIVO')
   @HttpCode(HttpStatus.CREATED)
   async crearSalon(@Body() createSalonDto: CreateSalonDto, @Request() req: any) {
-    console.log('🔍 Datos recibidos en crearSalon:', JSON.stringify(createSalonDto, null, 2));
     return this.salonService.crearSalon(createSalonDto, req.user.id);
   }
 
@@ -50,7 +49,6 @@ export class SalonController {
   @Roles('DIRECTOR')
   @HttpCode(HttpStatus.CREATED)
   async crearSalonesLote(@Body() createSalonesLoteDto: CreateSalonesLoteDto, @Request() req: any) {
-    console.log('🔍 Datos recibidos en crearSalonesLote:', JSON.stringify(createSalonesLoteDto, null, 2));
     return this.salonService.crearSalonesLote(createSalonesLoteDto, req.user.id);
   }
 

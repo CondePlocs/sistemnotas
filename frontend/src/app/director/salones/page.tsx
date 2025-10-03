@@ -124,7 +124,7 @@ function GestionSalonesContent() {
   };
 
   const handleSalonCreado = async (salonData: any) => {
-    console.log('🚀 Datos del salón enviados desde frontend:', salonData);
+    console.log('Datos del salón:', salonData);
     
     try {
       if (salonData.tipo === 'manual') {

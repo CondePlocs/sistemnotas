@@ -13,13 +13,30 @@ export class EvaluacionService {
    * Dashboard → Grupo → Período → Hoja de trabajo
    */
   async obtenerContextoTrabajo(profesorAsignacionId: number, periodoId: number, usuarioId: number) {
-    this.logger.log(`Obteniendo contexto de trabajo para profesorAsignacionId: ${profesorAsignacionId}, periodoId: ${periodoId}`);
+    this.logger.log(`Obteniendo contexto de trabajo para profesorAsignacionId: ${profesorAsignacionId}, periodoId: ${periodoId}, usuarioId: ${usuarioId}`);
 
-    // Verificar que la asignación existe
-    const asignacion = await this.prisma.profesorAsignacion.findUnique({
-      where: { id: profesorAsignacionId },
+    // 🔒 SEGURIDAD: Verificar que la asignación existe Y pertenece al profesor autenticado
+    const asignacion = await this.prisma.profesorAsignacion.findFirst({
+      where: { 
+        id: profesorAsignacionId,
+        profesor: {
+          usuarioRol: {
+            usuario: {
+              id: usuarioId // ← VALIDACIÓN CRÍTICA: Solo el profesor dueño puede acceder
+            }
+          }
+        }
+      },
       include: {
-        profesor: true,
+        profesor: {
+          include: {
+            usuarioRol: {
+              include: {
+                usuario: true
+              }
+            }
+          }
+        },
         salon: true,
         curso: {
           include: {
@@ -33,7 +50,7 @@ export class EvaluacionService {
     });
 
     if (!asignacion) {
-      throw new NotFoundException('Asignación de profesor no encontrada');
+      throw new ForbiddenException('No tienes permisos para acceder a esta asignación o la asignación no existe');
     }
 
     // Verificar que el período existe
@@ -144,15 +161,8 @@ export class EvaluacionService {
   async create(createEvaluacionDto: CreateEvaluacionDto, usuarioId: number) {
     this.logger.log(`Creando evaluación: ${JSON.stringify(createEvaluacionDto)}`);
 
-    // Verificar que la asignación existe
-    const asignacion = await this.prisma.profesorAsignacion.findUnique({
-      where: { id: createEvaluacionDto.profesorAsignacionId },
-      include: { salon: true }
-    });
-
-    if (!asignacion) {
-      throw new NotFoundException('Asignación de profesor no encontrada');
-    }
+    // 🔒 SEGURIDAD: Verificar que la asignación existe Y pertenece al profesor autenticado
+    const asignacion = await this.verificarAccesoAsignacion(createEvaluacionDto.profesorAsignacionId, usuarioId);
 
     // Verificar que el período existe
     const periodo = await this.prisma.periodoAcademico.findUnique({
@@ -206,7 +216,10 @@ export class EvaluacionService {
    * Obtiene todas las evaluaciones de un contexto específico
    */
   async findByContext(profesorAsignacionId: number, periodoId: number, usuarioId: number) {
-    this.logger.log(`Obteniendo evaluaciones para contexto: profesorAsignacionId=${profesorAsignacionId}, periodoId=${periodoId}`);
+    this.logger.log(`Obteniendo evaluaciones para contexto: profesorAsignacionId=${profesorAsignacionId}, periodoId=${periodoId}, usuarioId=${usuarioId}`);
+
+    // 🔒 SEGURIDAD: Verificar que el profesor tiene acceso a esta asignación
+    await this.verificarAccesoAsignacion(profesorAsignacionId, usuarioId);
 
     return await this.prisma.evaluacion.findMany({
       where: {
@@ -236,8 +249,19 @@ export class EvaluacionService {
   async findOne(id: number, usuarioId: number) {
     this.logger.log(`Obteniendo evaluación ID: ${id}`);
 
-    const evaluacion = await this.prisma.evaluacion.findUnique({
-      where: { id },
+    const evaluacion = await this.prisma.evaluacion.findFirst({
+      where: { 
+        id,
+        profesorAsignacion: {
+          profesor: {
+            usuarioRol: {
+              usuario: {
+                id: usuarioId // 🔒 SEGURIDAD: Solo el profesor dueño puede ver sus evaluaciones
+              }
+            }
+          }
+        }
+      },
       include: {
         competencia: true,
         profesorAsignacion: {
@@ -259,7 +283,7 @@ export class EvaluacionService {
     });
 
     if (!evaluacion) {
-      throw new NotFoundException('Evaluación no encontrada');
+      throw new ForbiddenException('No tienes permisos para acceder a esta evaluación o la evaluación no existe');
     }
 
     return evaluacion;
@@ -271,7 +295,7 @@ export class EvaluacionService {
   async update(id: number, updateEvaluacionDto: UpdateEvaluacionDto, usuarioId: number) {
     this.logger.log(`Actualizando evaluación ID: ${id}`);
 
-    // Verificar que la evaluación existe
+    // 🔒 SEGURIDAD: Verificar que la evaluación existe Y pertenece al profesor autenticado
     await this.findOne(id, usuarioId);
 
     const evaluacion = await this.prisma.evaluacion.update({
@@ -318,5 +342,45 @@ export class EvaluacionService {
 
     this.logger.log(`Evaluación eliminada exitosamente ID: ${id}`);
     return { message: 'Evaluación eliminada exitosamente' };
+  }
+
+  /**
+   * 🔒 MÉTODO DE SEGURIDAD: Verifica que el profesor tiene acceso a una asignación específica
+   */
+  private async verificarAccesoAsignacion(profesorAsignacionId: number, usuarioId: number) {
+    this.logger.log(`🔒 VERIFICANDO ACCESO: profesorAsignacionId=${profesorAsignacionId}, usuarioId=${usuarioId}`);
+    const asignacion = await this.prisma.profesorAsignacion.findFirst({
+      where: {
+        id: profesorAsignacionId,
+        profesor: {
+          usuarioRol: {
+            usuario: {
+              id: usuarioId
+            }
+          }
+        }
+      },
+      include: {
+        salon: true,
+        curso: true,
+        profesor: {
+          include: {
+            usuarioRol: {
+              include: {
+                usuario: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!asignacion) {
+      this.logger.error(`🚫 ACCESO DENEGADO: Usuario ${usuarioId} intentó acceder a asignación ${profesorAsignacionId}`);
+      throw new ForbiddenException('No tienes permisos para acceder a esta asignación o la asignación no existe');
+    }
+
+    this.logger.log(`✅ ACCESO AUTORIZADO: Usuario ${usuarioId} puede acceder a asignación ${profesorAsignacionId}`);
+    return asignacion;
   }
 }
