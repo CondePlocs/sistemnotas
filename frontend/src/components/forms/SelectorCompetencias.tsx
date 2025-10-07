@@ -325,7 +325,7 @@ function FormularioCompetencia({ competencia, onChange, errores, disabled }: For
           onChange={onChange}
           placeholder="Ej: Domina números y operaciones matemáticas"
           disabled={disabled}
-          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 text-[#333333] placeholder:text-[#999999]"
         />
       </div>
     </div>

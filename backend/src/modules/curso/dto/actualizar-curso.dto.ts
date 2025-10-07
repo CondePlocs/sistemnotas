@@ -4,10 +4,14 @@ import { NivelEducativo } from './crear-curso.dto';
 
 export class ActualizarCompetenciaDto {
   @IsOptional()
+  @IsInt()
+  @IsPositive()
+  id?: number;
+
   @IsString()
   @MinLength(5, { message: 'El nombre de la competencia debe tener al menos 5 caracteres' })
   @MaxLength(200, { message: 'El nombre de la competencia no puede exceder 200 caracteres' })
-  nombre?: string;
+  nombre: string;
 }
 
 export class ActualizarCursoDto {

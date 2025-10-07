@@ -73,8 +73,9 @@ export interface CursoFormData {
   competencias: CompetenciaFormData[];
 }
 
-// Datos para crear una competencia (en formulario)
+// Datos para crear/actualizar una competencia (en formulario)
 export interface CompetenciaFormData {
+  id?: number;  // Si tiene ID, es para actualizar; si no, es para crear
   nombre: string;
   // orden se asigna automáticamente
 }

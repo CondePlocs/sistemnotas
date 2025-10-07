@@ -253,33 +253,96 @@ export class CursoService {
       }
     }
 
-    // Actualizar solo campos básicos (sin competencias por ahora)
+    // Actualizar curso y competencias en transacción
     const { competencias, ...datosActualizar } = actualizarCursoDto;
     
-    return await this.prisma.curso.update({
-      where: { id: cursoId },
-      data: {
-        ...datosActualizar,
-        actualizadoEn: new Date()
-      },
-      include: {
-        competencias: {
-          where: { activo: true },
-          orderBy: { orden: 'asc' }
-        },
-        creador: {
-          select: {
-            id: true,
-            nombres: true,
-            apellidos: true,
-            email: true
+    return await this.prisma.$transaction(async (tx) => {
+      // 1. Actualizar datos básicos del curso
+      const cursoActualizado = await tx.curso.update({
+        where: { id: cursoId },
+        data: {
+          ...datosActualizar,
+          actualizadoEn: new Date()
+        }
+      });
+
+      // 2. Si se enviaron competencias, actualizarlas
+      if (competencias && competencias.length > 0) {
+        // Obtener competencias existentes
+        const competenciasExistentes = await tx.competencia.findMany({
+          where: { cursoId: cursoId, activo: true }
+        });
+
+        // Identificar competencias a eliminar (las que ya no están en la lista)
+        const idsEnviados = competencias
+          .filter(c => c.id)
+          .map(c => c.id!);
+        
+        const competenciasAEliminar = competenciasExistentes
+          .filter(c => !idsEnviados.includes(c.id));
+
+        // Eliminar competencias que ya no están
+        for (const comp of competenciasAEliminar) {
+          await tx.competencia.delete({
+            where: { id: comp.id }
+          });
+        }
+
+        // Actualizar o crear competencias
+        for (let i = 0; i < competencias.length; i++) {
+          const competenciaDto = competencias[i];
+          
+          // Validar que tenga nombre
+          if (!competenciaDto.nombre) {
+            continue; // Saltar competencias sin nombre
+          }
+          
+          if (competenciaDto.id) {
+            // Actualizar competencia existente
+            await tx.competencia.update({
+              where: { id: competenciaDto.id },
+              data: {
+                nombre: competenciaDto.nombre,
+                orden: i + 1,
+                actualizadoEn: new Date()
+              }
+            });
+          } else {
+            // Crear nueva competencia
+            await tx.competencia.create({
+              data: {
+                cursoId: cursoId,
+                nombre: competenciaDto.nombre,
+                orden: i + 1,
+                creadoPor: usuarioId
+              }
+            });
           }
         }
       }
+
+      // 3. Retornar curso actualizado con competencias
+      return await tx.curso.findUnique({
+        where: { id: cursoId },
+        include: {
+          competencias: {
+            where: { activo: true },
+            orderBy: { orden: 'asc' }
+          },
+          creador: {
+            select: {
+              id: true,
+              nombres: true,
+              apellidos: true,
+              email: true
+            }
+          }
+        }
+      });
     });
   }
 
-  // Eliminar curso (soft delete)
+  // Eliminar curso (hard delete - eliminación permanente)
   async eliminar(usuarioId: number, cursoId: number) {
     // Verificar que el usuario sea Owner
     const usuario = await this.prisma.usuario.findUnique({
@@ -311,18 +374,21 @@ export class CursoService {
       throw new NotFoundException('Curso no encontrado');
     }
 
-    // Soft delete del curso y sus competencias
+    // Hard delete del curso, sus competencias y relaciones en una transacción
     return await this.prisma.$transaction(async (tx) => {
-      // Desactivar competencias
-      await tx.competencia.updateMany({
-        where: { cursoId: cursoId },
-        data: { activo: false }
+      // 1. Eliminar relaciones salon_curso (cursos asignados a salones)
+      await tx.salonCurso.deleteMany({
+        where: { cursoId: cursoId }
       });
 
-      // Desactivar curso
-      return await tx.curso.update({
-        where: { id: cursoId },
-        data: { activo: false }
+      // 2. Eliminar competencias del curso
+      await tx.competencia.deleteMany({
+        where: { cursoId: cursoId }
+      });
+
+      // 3. Eliminar el curso
+      return await tx.curso.delete({
+        where: { id: cursoId }
       });
     });
   }

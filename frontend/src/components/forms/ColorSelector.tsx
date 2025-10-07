@@ -74,7 +74,7 @@ export default function ColorSelector({
   return (
     <div className="space-y-2">
       {/* Label */}
-      <label className="block text-sm font-medium text-gray-700">
+      <label className="block text-sm font-medium text-[#8D2C1D]">
         {label}
       </label>
 
@@ -85,53 +85,53 @@ export default function ColorSelector({
           onClick={() => !disabled && setIsOpen(!isOpen)}
           disabled={disabled}
           className={`
-            relative w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-pointer
-            focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500
-            ${disabled ? 'bg-gray-50 cursor-not-allowed' : 'hover:border-gray-400'}
+            relative w-full bg-white border-2 border-[#E9E1C9] rounded-xl shadow-md pl-4 pr-10 py-3 text-left cursor-pointer
+            focus:outline-none focus:ring-2 focus:ring-[#8D2C1D]/20 focus:border-[#8D2C1D] transition-all duration-200
+            ${disabled ? 'bg-gray-50 cursor-not-allowed' : 'hover:border-[#D96924] hover:shadow-lg'}
           `}
         >
           <div className="flex items-center space-x-3">
             {/* Preview del color */}
             <div 
-              className="w-6 h-6 rounded border border-gray-300 flex-shrink-0"
+              className="w-8 h-8 rounded-lg border-2 border-white shadow-md flex-shrink-0 ring-2 ring-[#E9E1C9]"
               style={{ backgroundColor: getColorPreview() }}
             />
             
             {/* Texto */}
-            <span className="block truncate text-gray-900">
+            <span className="block truncate text-[#333333] font-medium">
               {value && isValidHexColor(value) ? value.toUpperCase() : placeholder}
             </span>
 
             {/* Advertencia de contraste */}
             {hasContrastWarning && (
-              <ExclamationTriangleIcon className="w-4 h-4 text-yellow-500" />
+              <ExclamationTriangleIcon className="w-5 h-5 text-yellow-500" />
             )}
           </div>
 
           {/* Icono dropdown */}
-          <span className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-            <ChevronDownIcon className="w-5 h-5 text-gray-400" />
+          <span className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+            <ChevronDownIcon className={`w-5 h-5 text-[#8D2C1D] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
           </span>
         </button>
 
-        {/* Dropdown */}
+        {/* Dropdown - ABRE HACIA ARRIBA */}
         {isOpen && (
-          <div className="absolute z-50 mt-1 w-full bg-white shadow-lg max-h-96 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none">
+          <div className="absolute z-50 bottom-full mb-2 w-full bg-white shadow-2xl max-h-[450px] rounded-2xl py-2 text-base ring-2 ring-[#E9E1C9] overflow-auto focus:outline-none">
             
             {/* Tabs */}
             {showPresets && (
-              <div className="px-3 py-2 border-b border-gray-200">
-                <div className="flex flex-wrap gap-1">
+              <div className="px-4 py-3 border-b-2 border-[#E9E1C9] bg-gradient-to-r from-[#FCE0C1] to-[#E9E1C9]">
+                <div className="flex flex-wrap gap-2">
                   {tabs.map((tab) => (
                     <button
                       key={tab.key}
                       type="button"
                       onClick={() => setActiveTab(tab.key)}
                       className={`
-                        px-2 py-1 text-xs rounded-md transition-colors
+                        px-3 py-1.5 text-xs rounded-lg transition-all duration-200 font-medium
                         ${activeTab === tab.key 
-                          ? 'bg-blue-100 text-blue-700 font-medium' 
-                          : 'text-gray-600 hover:bg-gray-100'
+                          ? 'bg-[#8D2C1D] text-white shadow-md transform scale-105' 
+                          : 'bg-white text-[#666666] hover:bg-[#FCE0C1] hover:text-[#8D2C1D] border border-[#E9E1C9]'
                         }
                       `}
                     >
@@ -146,14 +146,14 @@ export default function ColorSelector({
                         setShowPicker(true);
                       }}
                       className={`
-                        px-2 py-1 text-xs rounded-md transition-colors flex items-center space-x-1
+                        px-3 py-1.5 text-xs rounded-lg transition-all duration-200 flex items-center gap-1.5 font-medium
                         ${activeTab === 'custom' 
-                          ? 'bg-purple-100 text-purple-700 font-medium' 
-                          : 'text-gray-600 hover:bg-gray-100'
+                          ? 'bg-[#D96924] text-white shadow-md transform scale-105' 
+                          : 'bg-white text-[#666666] hover:bg-[#FCE0C1] hover:text-[#D96924] border border-[#E9E1C9]'
                         }
                       `}
                     >
-                      <SwatchIcon className="w-3 h-3" />
+                      <SwatchIcon className="w-3.5 h-3.5" />
                       <span>Personalizado</span>
                     </button>
                   )}
@@ -174,34 +174,36 @@ export default function ColorSelector({
 
             {/* Paleta de Colores */}
             {!showPicker && activeTab !== 'custom' && (
-              <div className="p-3">
-                <div className="grid grid-cols-4 gap-2">
+              <div className="p-4">
+                <div className="grid grid-cols-4 gap-3">
                   {PALETA_COLORES_CURSO[activeTab].map((color) => (
                     <button
                       key={color.valor}
                       type="button"
                       onClick={() => handleColorSelect(color.valor)}
                       className={`
-                        group relative p-2 rounded-md border-2 transition-all hover:scale-105
+                        group relative p-2.5 rounded-xl border-2 transition-all duration-200 hover:scale-110 hover:shadow-lg
                         ${value === color.valor 
-                          ? 'border-gray-900 ring-2 ring-blue-500' 
-                          : 'border-gray-200 hover:border-gray-300'
+                          ? 'border-[#8D2C1D] ring-2 ring-[#8D2C1D]/30 shadow-md' 
+                          : 'border-[#E9E1C9] hover:border-[#D96924]'
                         }
                       `}
                       title={color.nombre}
                     >
                       <div 
-                        className="w-full h-8 rounded"
+                        className="w-full h-10 rounded-lg shadow-sm"
                         style={{ backgroundColor: color.valor }}
                       />
-                      <div className="mt-1 text-xs text-center text-gray-600 truncate">
+                      <div className="mt-2 text-xs text-center text-[#333333] font-medium truncate">
                         {color.nombre}
                       </div>
                       
                       {/* Checkmark para color seleccionado */}
                       {value === color.valor && (
-                        <div className="absolute top-1 right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center">
-                          <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                        <div className="absolute -top-1 -right-1 w-6 h-6 bg-[#8D2C1D] rounded-full flex items-center justify-center shadow-md">
+                          <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
                         </div>
                       )}
                     </button>
