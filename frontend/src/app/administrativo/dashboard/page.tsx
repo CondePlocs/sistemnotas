@@ -47,7 +47,7 @@ function AdministrativoDashboardContent() {
     
     try {
       // Obtener información del administrativo actual
-      const response = await fetch('http://localhost:3001/auth/me', {
+      const response = await fetch('http://localhost:3001/api/auth/me', {
         credentials: 'include',
       });
 

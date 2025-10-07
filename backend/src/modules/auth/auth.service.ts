@@ -97,4 +97,16 @@ export class AuthService {
       })),
     };
   }
+
+  async verifyPassword(userId: number, password: string): Promise<boolean> {
+    const user = await this.prisma.usuario.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return false;
+    }
+
+    return bcrypt.compare(password, user.password_hash);
+  }
 }

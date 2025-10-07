@@ -18,7 +18,7 @@ function RegistroOwnerContent() {
     try {
       console.log("Registrando Owner:", data);
       
-      const response = await fetch('http://localhost:3001/owner/register', {
+      const response = await fetch('http://localhost:3001/api/owner/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

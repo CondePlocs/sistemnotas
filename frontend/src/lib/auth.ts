@@ -28,7 +28,7 @@ export interface AuthResponse {
 // API calls con cookies automáticas
 export const authAPI = {
   async login(data: LoginData): Promise<AuthResponse> {
-    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+    const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -46,7 +46,7 @@ export const authAPI = {
   },
 
   async logout(): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/auth/logout`, {
+    const response = await fetch(`${API_BASE_URL}/api/auth/logout`, {
       method: 'POST',
       credentials: 'include',
     });
@@ -58,7 +58,7 @@ export const authAPI = {
 
   async checkAuth(): Promise<User | null> {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/me`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
         credentials: 'include',
       });
 

@@ -5,7 +5,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import type { CreateOwnerDto } from './dto/create-owner.dto';
 
-@Controller('owner')
+@Controller('api/owner')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class OwnerController {
   constructor(private readonly ownerService: OwnerService) {}

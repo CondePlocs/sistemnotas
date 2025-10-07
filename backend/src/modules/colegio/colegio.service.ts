@@ -150,4 +150,46 @@ export class ColegioService {
       nivelesPermitidos: niveles
     };
   }
+
+  // Método para obtener colegios sin director asignado
+  async obtenerColegiosSinDirector() {
+    // Obtener todos los colegios
+    const colegios = await this.prisma.colegio.findMany({
+      include: {
+        ugel: {
+          include: {
+            dre: true,
+          },
+        },
+        nivelesPermitidos: true,
+        usuariosRol: {
+          where: {
+            rol: {
+              nombre: 'DIRECTOR'
+            }
+          },
+          include: {
+            usuario: {
+              select: {
+                estado: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: { nombre: 'asc' },
+    });
+
+    // Filtrar colegios que no tienen director activo
+    return colegios.filter(colegio => {
+      const tieneDirectorActivo = colegio.usuariosRol.some(
+        usuarioRol => usuarioRol.usuario.estado === 'activo'
+      );
+      return !tieneDirectorActivo;
+    }).map(colegio => {
+      // Remover la relación usuariosRol del resultado
+      const { usuariosRol, ...colegioSinRoles } = colegio;
+      return colegioSinRoles;
+    });
+  }
 }

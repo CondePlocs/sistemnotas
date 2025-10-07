@@ -22,16 +22,23 @@ export class ColegioController {
     return this.colegioService.obtenerColegios();
   }
 
-  @Get(':id')
+  // Endpoint para obtener colegios sin director asignado (ANTES del :id)
+  @Get('sin-director')
   @Roles('OWNER')
-  async obtenerColegio(@Param('id', ParseIntPipe) id: number) {
-    return this.colegioService.obtenerColegio(id);
+  async obtenerColegiosSinDirector() {
+    return this.colegioService.obtenerColegiosSinDirector();
   }
 
-  // Endpoint para directores - Obtener niveles de SU colegio
+  // Endpoint para directores - Obtener niveles de SU colegio (ANTES del :id)
   @Get('mi-colegio/niveles')
   @Roles('DIRECTOR')
   async obtenerNivelesMiColegio(@Request() req: any) {
     return this.colegioService.obtenerNivelesPorDirector(req.user.id);
+  }
+
+  @Get(':id')
+  @Roles('OWNER')
+  async obtenerColegio(@Param('id', ParseIntPipe) id: number) {
+    return this.colegioService.obtenerColegio(id);
   }
 }

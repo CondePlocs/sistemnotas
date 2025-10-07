@@ -2,10 +2,10 @@
 
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from "@/context/AuthContext";
-import DashboardHeader from "@/components/dashboard/DashboardHeader";
-import DashboardFooter from "@/components/dashboard/DashboardFooter";
-import ActionCard from "@/components/dashboard/ActionCard";
-import StatCard from "@/components/dashboard/StatCard";
+import DashboardHeader from "@/components/layout/DashboardHeader";
+import DashboardFooter from "@/components/layout/DashboardFooter";
+import ActionCard from "@/components/layout/ActionCard";
+import StatCard from "@/components/layout/StatCard";
 
 function OwnerDashboardContent() {
   const { user, logout } = useAuth();
@@ -61,8 +61,8 @@ function OwnerDashboardContent() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               }
-              href="/owner/directores/nuevo"
-              buttonText="Registrar Director"
+              href="/owner/directores"
+              buttonText="Gestionar Directores"
               color="secondary"
             />
 

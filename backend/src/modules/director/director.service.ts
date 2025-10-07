@@ -225,4 +225,168 @@ export class DirectorService {
 
     return director;
   }
+
+  async actualizarDirector(id: number, updateDirectorDto: any) {
+    // Verificar que el director existe
+    const directorExistente = await this.prisma.director.findUnique({
+      where: { id },
+      include: {
+        usuarioRol: {
+          include: {
+            usuario: true
+          }
+        }
+      }
+    });
+
+    if (!directorExistente) {
+      throw new NotFoundException('Director no encontrado');
+    }
+
+    // Si se va a cambiar el colegio, verificar que no tenga ya un director
+    if (updateDirectorDto.colegioId && updateDirectorDto.colegioId !== directorExistente.usuarioRol.colegio_id) {
+      const directorEnNuevoColegio = await this.prisma.usuarioRol.findFirst({
+        where: {
+          colegio_id: updateDirectorDto.colegioId,
+          rol: {
+            nombre: 'DIRECTOR'
+          },
+          id: {
+            not: directorExistente.usuarioRolId
+          }
+        }
+      });
+
+      if (directorEnNuevoColegio) {
+        throw new ConflictException('El colegio ya tiene un director asignado');
+      }
+    }
+
+    // Verificar email único (si se está cambiando)
+    if (updateDirectorDto.email && updateDirectorDto.email !== directorExistente.usuarioRol.usuario.email) {
+      const existingEmail = await this.prisma.usuario.findUnique({
+        where: { email: updateDirectorDto.email }
+      });
+
+      if (existingEmail) {
+        throw new ConflictException('El email ya está registrado');
+      }
+    }
+
+    // Verificar DNI único (si se está cambiando)
+    if (updateDirectorDto.dni && updateDirectorDto.dni !== directorExistente.usuarioRol.usuario.dni) {
+      const existingDni = await this.prisma.usuario.findUnique({
+        where: { dni: updateDirectorDto.dni }
+      });
+
+      if (existingDni) {
+        throw new ConflictException('El DNI ya está registrado');
+      }
+    }
+
+    // Actualizar en transacción
+    await this.prisma.$transaction(async (prisma) => {
+      // 1. Actualizar Usuario
+      const usuarioData: any = {};
+      if (updateDirectorDto.email) usuarioData.email = updateDirectorDto.email;
+      if (updateDirectorDto.dni) usuarioData.dni = updateDirectorDto.dni;
+      if (updateDirectorDto.nombres) usuarioData.nombres = updateDirectorDto.nombres;
+      if (updateDirectorDto.apellidos) usuarioData.apellidos = updateDirectorDto.apellidos;
+      if (updateDirectorDto.telefono) usuarioData.telefono = updateDirectorDto.telefono;
+      
+      if (updateDirectorDto.password) {
+        usuarioData.password_hash = await bcrypt.hash(updateDirectorDto.password, 10);
+      }
+
+      if (Object.keys(usuarioData).length > 0) {
+        await prisma.usuario.update({
+          where: { id: directorExistente.usuarioRol.usuario_id },
+          data: usuarioData
+        });
+      }
+
+      // 2. Actualizar UsuarioRol (si cambia colegio)
+      if (updateDirectorDto.colegioId) {
+        await prisma.usuarioRol.update({
+          where: { id: directorExistente.usuarioRolId },
+          data: {
+            colegio_id: updateDirectorDto.colegioId
+          }
+        });
+      }
+
+      // 3. Actualizar Director
+      const directorData: any = {};
+      if (updateDirectorDto.fechaNacimiento) directorData.fechaNacimiento = new Date(updateDirectorDto.fechaNacimiento);
+      if (updateDirectorDto.sexo) directorData.sexo = updateDirectorDto.sexo;
+      if (updateDirectorDto.estadoCivil) directorData.estadoCivil = updateDirectorDto.estadoCivil;
+      if (updateDirectorDto.nacionalidad) directorData.nacionalidad = updateDirectorDto.nacionalidad;
+      if (updateDirectorDto.direccion) directorData.direccion = updateDirectorDto.direccion;
+      if (updateDirectorDto.gradoAcademico) directorData.gradoAcademico = updateDirectorDto.gradoAcademico;
+      if (updateDirectorDto.carrera) directorData.carrera = updateDirectorDto.carrera;
+      if (updateDirectorDto.especializacion) directorData.especializacion = updateDirectorDto.especializacion;
+      if (updateDirectorDto.institucionEgreso) directorData.institucionEgreso = updateDirectorDto.institucionEgreso;
+      if (updateDirectorDto.fechaInicio) directorData.fechaInicio = new Date(updateDirectorDto.fechaInicio);
+
+      if (Object.keys(directorData).length > 0) {
+        await prisma.director.update({
+          where: { id },
+          data: directorData
+        });
+      }
+    });
+
+    // Retornar director actualizado
+    return this.obtenerDirector(id);
+  }
+
+  async desactivarDirector(id: number) {
+    const director = await this.prisma.director.findUnique({
+      where: { id },
+      include: {
+        usuarioRol: {
+          include: {
+            usuario: true
+          }
+        }
+      }
+    });
+
+    if (!director) {
+      throw new NotFoundException('Director no encontrado');
+    }
+
+    // Desactivar usuario
+    await this.prisma.usuario.update({
+      where: { id: director.usuarioRol.usuario_id },
+      data: { estado: 'inactivo' }
+    });
+
+    return { message: 'Director desactivado exitosamente' };
+  }
+
+  async activarDirector(id: number) {
+    const director = await this.prisma.director.findUnique({
+      where: { id },
+      include: {
+        usuarioRol: {
+          include: {
+            usuario: true
+          }
+        }
+      }
+    });
+
+    if (!director) {
+      throw new NotFoundException('Director no encontrado');
+    }
+
+    // Activar usuario
+    await this.prisma.usuario.update({
+      where: { id: director.usuarioRol.usuario_id },
+      data: { estado: 'activo' }
+    });
+
+    return { message: 'Director activado exitosamente' };
+  }
 }
