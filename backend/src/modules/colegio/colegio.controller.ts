@@ -1,6 +1,7 @@
-import { Controller, Get, Post, Body, Param, UseGuards, ParseIntPipe, Request } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param, UseGuards, ParseIntPipe, Request } from '@nestjs/common';
 import { ColegioService } from './colegio.service';
 import { CreateColegioDto } from './dto/create-colegio.dto';
+import { UpdateColegioDto } from './dto/update-colegio.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -40,5 +41,14 @@ export class ColegioController {
   @Roles('OWNER')
   async obtenerColegio(@Param('id', ParseIntPipe) id: number) {
     return this.colegioService.obtenerColegio(id);
+  }
+
+  @Put(':id')
+  @Roles('OWNER')
+  async actualizarColegio(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateColegioDto: UpdateColegioDto
+  ) {
+    return this.colegioService.actualizarColegio(id, updateColegioDto);
   }
 }

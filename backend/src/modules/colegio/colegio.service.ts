@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../providers/prisma.service';
 import { CreateColegioDto } from './dto/create-colegio.dto';
+import { UpdateColegioDto } from './dto/update-colegio.dto';
 
 @Injectable()
 export class ColegioService {
@@ -79,7 +80,11 @@ export class ColegioService {
             dre: true,
           },
         },
-        nivelesPermitidos: true, // ← Incluir niveles permitidos
+        nivelesPermitidos: {
+          include: {
+            nivel: true // ← Incluir relación con tabla Nivel
+          }
+        },
       },
       orderBy: { nombre: 'asc' },
     });
@@ -94,7 +99,11 @@ export class ColegioService {
             dre: true,
           },
         },
-        nivelesPermitidos: true, // ← Incluir niveles permitidos
+        nivelesPermitidos: {
+          include: {
+            nivel: true // ← Incluir relación con tabla Nivel
+          }
+        },
       },
     });
 
@@ -161,7 +170,11 @@ export class ColegioService {
             dre: true,
           },
         },
-        nivelesPermitidos: true,
+        nivelesPermitidos: {
+          include: {
+            nivel: true // ← Incluir relación con tabla Nivel
+          }
+        },
         usuariosRol: {
           where: {
             rol: {
@@ -191,5 +204,92 @@ export class ColegioService {
       const { usuariosRol, ...colegioSinRoles } = colegio;
       return colegioSinRoles;
     });
+  }
+
+  async actualizarColegio(id: number, updateColegioDto: UpdateColegioDto) {
+    // Verificar que el colegio existe
+    const colegioExistente = await this.prisma.colegio.findUnique({
+      where: { id },
+      include: { nivelesPermitidos: { include: { nivel: true } } }
+    });
+
+    if (!colegioExistente) {
+      throw new NotFoundException('Colegio no encontrado');
+    }
+
+    // Si se actualiza la UGEL, verificar que existe
+    if (updateColegioDto.ugelId) {
+      const ugel = await this.prisma.uGEL.findUnique({
+        where: { id: updateColegioDto.ugelId },
+      });
+
+      if (!ugel) {
+        throw new NotFoundException('UGEL no encontrada');
+      }
+    }
+
+    // Actualizar en transacción
+    const resultado = await this.prisma.$transaction(async (prisma) => {
+      // 1. Actualizar datos básicos del colegio
+      const colegio = await prisma.colegio.update({
+        where: { id },
+        data: {
+          nombre: updateColegioDto.nombre,
+          codigoModular: updateColegioDto.codigoModular,
+          distrito: updateColegioDto.distrito,
+          direccion: updateColegioDto.direccion,
+          ugelId: updateColegioDto.ugelId,
+        },
+      });
+
+      // 2. Si se actualizan los niveles permitidos
+      if (updateColegioDto.nivelesPermitidos) {
+        // Eliminar niveles antiguos
+        await prisma.colegioNivel.deleteMany({
+          where: { colegioId: id }
+        });
+
+        // Crear nuevos niveles
+        await Promise.all(
+          updateColegioDto.nivelesPermitidos.map(async (nombreNivel) => {
+            const nivel = await prisma.nivel.findUnique({
+              where: { nombre: nombreNivel }
+            });
+            
+            if (!nivel) {
+              throw new NotFoundException(`Nivel educativo '${nombreNivel}' no encontrado`);
+            }
+
+            return prisma.colegioNivel.create({
+              data: {
+                colegioId: colegio.id,
+                nivelId: nivel.id,
+                puedeCrearSalones: true,
+                activo: true,
+              },
+            });
+          })
+        );
+      }
+
+      // 3. Retornar colegio actualizado con relaciones
+      return prisma.colegio.findUnique({
+        where: { id },
+        include: {
+          ugel: {
+            include: {
+              dre: true,
+            },
+          },
+          nivelesPermitidos: {
+            include: {
+              nivel: true
+            }
+          },
+        },
+      });
+    });
+
+    return resultado;
   }
 }
