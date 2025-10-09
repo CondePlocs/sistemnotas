@@ -52,7 +52,7 @@ function DirectorDashboardContent() {
               Registrar nuevos profesores para el colegio.
             </p>
             <Link 
-              href="/director/profesores/nuevo"
+              href="/director/profesores"
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors inline-block text-center"
             >
               Registrar Profesor

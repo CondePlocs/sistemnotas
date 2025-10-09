@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../providers/prisma.service';
 import { LoginDto } from './dto/login.dto';
@@ -108,5 +108,87 @@ export class AuthService {
     }
 
     return bcrypt.compare(password, user.password_hash);
+  }
+
+  async cambiarEstadoUsuario(userId: number, nuevoEstado: 'activo' | 'inactivo', currentUserId: number) {
+    // 1. Verificar permisos del usuario actual
+    let colegioId: number;
+
+    // Buscar si es director
+    const directorInfo = await this.prisma.usuarioRol.findFirst({
+      where: {
+        usuario_id: currentUserId,
+        rol: { nombre: 'DIRECTOR' }
+      }
+    });
+
+    if (directorInfo && directorInfo.colegio_id) {
+      colegioId = directorInfo.colegio_id;
+    } else {
+      // Buscar si es administrativo con permisos
+      const administrativoInfo = await this.prisma.administrativo.findFirst({
+        where: {
+          usuarioRol: {
+            usuario_id: currentUserId,
+            rol: { nombre: 'ADMINISTRATIVO' }
+          }
+        },
+        include: {
+          usuarioRol: true,
+          permisos: true
+        }
+      });
+
+      if (!administrativoInfo || !administrativoInfo.usuarioRol.colegio_id) {
+        throw new ForbiddenException('Solo directores y administrativos pueden cambiar el estado de usuarios');
+      }
+
+      // Para cambiar estado de profesores, necesita permisos de profesores
+      if (!administrativoInfo.permisos || !administrativoInfo.permisos.puedeRegistrarProfesores) {
+        throw new ForbiddenException('No tienes permisos para cambiar el estado de usuarios');
+      }
+
+      colegioId = administrativoInfo.usuarioRol.colegio_id;
+    }
+
+    // 2. Verificar que el usuario a cambiar existe y pertenece al mismo colegio
+    const usuarioACambiar = await this.prisma.usuarioRol.findFirst({
+      where: {
+        usuario_id: userId,
+        colegio_id: colegioId
+      },
+      include: {
+        usuario: true,
+        rol: true
+      }
+    });
+
+    if (!usuarioACambiar) {
+      throw new NotFoundException('Usuario no encontrado o no pertenece a tu colegio');
+    }
+
+    // 3. No permitir que se desactive a sí mismo
+    if (userId === currentUserId) {
+      throw new ForbiddenException('No puedes cambiar tu propio estado');
+    }
+
+    // 4. Actualizar el estado del usuario
+    const usuarioActualizado = await this.prisma.usuario.update({
+      where: { id: userId },
+      data: {
+        estado: nuevoEstado,
+        actualizado_en: new Date()
+      },
+      select: {
+        id: true,
+        email: true,
+        nombres: true,
+        apellidos: true,
+        estado: true,
+        actualizado_en: true
+      }
+    });
+
+    return usuarioActualizado;
   }
 }

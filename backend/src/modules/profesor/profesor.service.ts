@@ -1,6 +1,7 @@
 import { Injectable, ForbiddenException, ConflictException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../providers/prisma.service';
 import { CreateProfesorDto } from './dto/create-profesor.dto';
+import { UpdateProfesorDto } from './dto/update-profesor.dto';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -320,5 +321,141 @@ export class ProfesorService {
       success: true,
       profesor
     };
+  }
+
+  // Actualizar profesor
+  async actualizarProfesor(profesorId: number, updateProfesorDto: UpdateProfesorDto, userId: number) {
+    // 1. Verificar permisos (director o administrativo con permisos)
+    let colegioId: number;
+
+    // Buscar si es director
+    const directorInfo = await this.prisma.usuarioRol.findFirst({
+      where: {
+        usuario_id: userId,
+        rol: { nombre: 'DIRECTOR' }
+      }
+    });
+
+    if (directorInfo && directorInfo.colegio_id) {
+      colegioId = directorInfo.colegio_id;
+    } else {
+      // Buscar si es administrativo con permisos
+      const administrativoInfo = await this.prisma.administrativo.findFirst({
+        where: {
+          usuarioRol: {
+            usuario_id: userId,
+            rol: { nombre: 'ADMINISTRATIVO' }
+          }
+        },
+        include: {
+          usuarioRol: true,
+          permisos: true
+        }
+      });
+
+      if (!administrativoInfo || !administrativoInfo.usuarioRol.colegio_id) {
+        throw new ForbiddenException('Solo directores y administrativos pueden actualizar profesores');
+      }
+
+      if (!administrativoInfo.permisos || !administrativoInfo.permisos.puedeRegistrarProfesores) {
+        throw new ForbiddenException('No tienes permisos para actualizar profesores');
+      }
+
+      colegioId = administrativoInfo.usuarioRol.colegio_id;
+    }
+
+    // 2. Verificar que el profesor existe y pertenece al mismo colegio
+    const profesorExistente = await this.prisma.profesor.findFirst({
+      where: {
+        id: profesorId,
+        usuarioRol: {
+          colegio_id: colegioId
+        }
+      },
+      include: {
+        usuarioRol: {
+          include: {
+            usuario: true
+          }
+        }
+      }
+    });
+
+    if (!profesorExistente) {
+      throw new NotFoundException('Profesor no encontrado');
+    }
+
+    // 3. Verificar DNI único si se está actualizando
+    if (updateProfesorDto.dni && updateProfesorDto.dni !== profesorExistente.usuarioRol.usuario.dni) {
+      const existingDni = await this.prisma.usuario.findUnique({
+        where: { dni: updateProfesorDto.dni }
+      });
+
+      if (existingDni) {
+        throw new ConflictException('El DNI ya está registrado');
+      }
+    }
+
+    // 4. Actualizar en transacción
+    const { dni, nombres, apellidos, telefono, email, ...datosProfesor } = updateProfesorDto;
+
+    return await this.prisma.$transaction(async (prisma) => {
+      // Actualizar datos del usuario si se proporcionaron
+      if (dni || nombres || apellidos || telefono || email) {
+        await prisma.usuario.update({
+          where: { id: profesorExistente.usuarioRol.usuario.id },
+          data: {
+            ...(dni && { dni }),
+            ...(nombres && { nombres }),
+            ...(apellidos && { apellidos }),
+            ...(telefono && { telefono }),
+            ...(email && { email }),
+            actualizado_en: new Date()
+          }
+        });
+      }
+
+      // Actualizar datos del profesor
+      const profesorActualizado = await prisma.profesor.update({
+        where: { id: profesorId },
+        data: {
+          ...datosProfesor,
+          ...(datosProfesor.fechaNacimiento && { 
+            fechaNacimiento: new Date(datosProfesor.fechaNacimiento) 
+          }),
+          ...(datosProfesor.fechaIngreso && { 
+            fechaIngreso: new Date(datosProfesor.fechaIngreso) 
+          }),
+          actualizadoEn: new Date()
+        },
+        include: {
+          usuarioRol: {
+            include: {
+              usuario: {
+                select: {
+                  id: true,
+                  email: true,
+                  dni: true,
+                  nombres: true,
+                  apellidos: true,
+                  telefono: true,
+                  estado: true,
+                  creado_en: true,
+                  actualizado_en: true
+                }
+              },
+              rol: true,
+              colegio: {
+                include: {
+                  ugel: { include: { dre: true } }
+                }
+              }
+            }
+          }
+        }
+      });
+
+      return profesorActualizado;
+    });
   }
 }

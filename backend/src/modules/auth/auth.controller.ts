@@ -1,7 +1,9 @@
-import { Controller, Post, Body, Res, HttpCode, HttpStatus, UseGuards, Get, Req, UnauthorizedException } from '@nestjs/common';
+import { Controller, Post, Body, Res, HttpCode, HttpStatus, UseGuards, Get, Req, UnauthorizedException, Put, Param, ParseIntPipe } from '@nestjs/common';
 import type { Response, Request } from 'express';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { RolesGuard } from './guards/roles.guard';
+import { Roles } from './decorators/roles.decorator';
 import type { LoginDto } from './dto/login.dto';
 
 @Controller('api/auth')
@@ -76,6 +78,25 @@ export class AuthController {
     return {
       success: true,
       message: 'Contraseña correcta',
+    };
+  }
+
+  @Put('usuarios/:id/estado')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('DIRECTOR', 'ADMINISTRATIVO')
+  @HttpCode(HttpStatus.OK)
+  async cambiarEstadoUsuario(
+    @Param('id', ParseIntPipe) userId: number,
+    @Body() body: { estado: 'activo' | 'inactivo' },
+    @Req() request: Request,
+  ) {
+    const currentUser: any = request.user;
+    const result = await this.authService.cambiarEstadoUsuario(userId, body.estado, currentUser.id);
+    
+    return {
+      success: true,
+      message: `Usuario ${body.estado === 'activo' ? 'activado' : 'desactivado'} exitosamente`,
+      usuario: result
     };
   }
 }

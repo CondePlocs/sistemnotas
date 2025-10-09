@@ -1,9 +1,10 @@
-import { Controller, Get, Post, Body, Param, ParseIntPipe, UseGuards, Req, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, ParseIntPipe, UseGuards, Req, ForbiddenException, Put } from '@nestjs/common';
 import { ProfesorService } from './profesor.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CreateProfesorDto } from './dto/create-profesor.dto';
+import { UpdateProfesorDto } from './dto/update-profesor.dto';
 
 @Controller('api/profesores')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -37,9 +38,20 @@ export class ProfesorController {
   }
 
   @Get(':id')
-  @Roles('DIRECTOR')
+  @Roles('DIRECTOR', 'ADMINISTRATIVO')
   async obtenerProfesor(@Param('id', ParseIntPipe) id: number, @Req() request: any) {
     const directorUserId = request.user.id;
     return this.profesorService.obtenerProfesor(id, directorUserId);
+  }
+
+  @Put(':id')
+  @Roles('DIRECTOR', 'ADMINISTRATIVO')
+  async actualizarProfesor(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateProfesorDto: UpdateProfesorDto,
+    @Req() request: any
+  ) {
+    const userId = request.user.id;
+    return this.profesorService.actualizarProfesor(id, updateProfesorDto, userId);
   }
 }
