@@ -1,6 +1,6 @@
-import { Controller, Get, Post, Body, Param, ParseIntPipe, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param, ParseIntPipe, UseGuards, Req } from '@nestjs/common';
 import { AdministrativoService } from './administrativo.service';
-import { CreateAdministrativoDto } from './dto/create-administrativo.dto';
+import { CreateAdministrativoDto, UpdateAdministrativoDto } from './dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -34,9 +34,31 @@ export class AdministrativoController {
   }
 
   @Get(':id')
-  @Roles('DIRECTOR')
+  @Roles('DIRECTOR', 'ADMINISTRATIVO')
   async obtenerAdministrativo(@Param('id', ParseIntPipe) id: number, @Req() request: any) {
-    const directorUserId = request.user.id;
-    return this.administrativoService.obtenerAdministrativo(id, directorUserId);
+    const userId = request.user.id;
+    return this.administrativoService.obtenerAdministrativo(id, userId);
+  }
+
+  @Put(':id')
+  @Roles('DIRECTOR', 'ADMINISTRATIVO')
+  async actualizarAdministrativo(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateAdministrativoDto: UpdateAdministrativoDto,
+    @Req() request: any
+  ) {
+    const userId = request.user.id;
+    return this.administrativoService.actualizarAdministrativo(id, updateAdministrativoDto, userId);
+  }
+
+  @Put(':id/estado')
+  @Roles('DIRECTOR', 'ADMINISTRATIVO')
+  async cambiarEstadoAdministrativo(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: { estado: 'activo' | 'inactivo' },
+    @Req() request: any
+  ) {
+    const userId = request.user.id;
+    return this.administrativoService.cambiarEstadoAdministrativo(id, body.estado, userId);
   }
 }

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../providers/prisma.service';
-import { CreateApoderadoDto, RelacionApoderadoAlumnoDto, CrearRelacionesDto, ActualizarRelacionDto } from './dto';
+import { CreateApoderadoDto, UpdateApoderadoDto, RelacionApoderadoAlumnoDto, CrearRelacionesDto, ActualizarRelacionDto } from './dto';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -197,23 +197,33 @@ export class ApoderadoService {
     });
   }
 
-  async obtenerApoderados(directorUserId: number) {
-    // Solo mostrar apoderados del colegio del director
-    const directorInfo = await this.prisma.usuarioRol.findFirst({
-      where: {
-        usuario_id: directorUserId,
-        rol: { nombre: 'DIRECTOR' }
-      }
+  async obtenerApoderados(userId: number) {
+    // Verificar permisos y obtener colegio
+    const usuarioRol = await this.prisma.usuarioRol.findFirst({
+      where: { usuario_id: userId },
+      include: { rol: true }
     });
 
-    if (!directorInfo) {
-      throw new ForbiddenException('Solo directores pueden ver apoderados');
+    if (!usuarioRol || !usuarioRol.colegio_id) {
+      throw new ForbiddenException('Usuario no autorizado');
+    }
+
+    // Verificar permisos si es administrativo
+    if (usuarioRol.rol.nombre === 'ADMINISTRATIVO') {
+      const administrativo = await this.prisma.administrativo.findFirst({
+        where: { usuarioRol: { usuario_id: userId } },
+        include: { permisos: true }
+      });
+
+      if (!administrativo?.permisos?.puedeRegistrarApoderados) {
+        throw new ForbiddenException('No tienes permisos para ver apoderados');
+      }
     }
 
     return this.prisma.apoderado.findMany({
       where: {
         usuarioRol: {
-          colegio_id: directorInfo.colegio_id // ← Filtro por colegio del director
+          colegio_id: usuarioRol.colegio_id
         }
       },
       include: {
@@ -229,12 +239,37 @@ export class ApoderadoService {
                 telefono: true,
                 estado: true,
                 creado_en: true,
+                actualizado_en: true,
               }
             },
             rol: true,
             colegio: {
               include: {
                 ugel: { include: { dre: true } }
+              }
+            },
+            creadoPor: {
+              select: {
+                id: true,
+                nombres: true,
+                apellidos: true,
+                email: true,
+              }
+            }
+          }
+        },
+        alumnos: {
+          where: { activo: true },
+          include: {
+            alumno: {
+              select: {
+                id: true,
+                dni: true,
+                nombres: true,
+                apellidos: true,
+                fechaNacimiento: true,
+                sexo: true,
+                activo: true,
               }
             }
           }
@@ -715,12 +750,183 @@ export class ApoderadoService {
       success: true,
       message: 'Relación eliminada exitosamente'
     };
-    
+  }
 
-    // Placeholder hasta que se ejecute la migración
+  async actualizarApoderado(id: number, updateApoderadoDto: UpdateApoderadoDto, userId: number) {
+    // 1. Verificar permisos y obtener colegio
+    const usuarioRol = await this.prisma.usuarioRol.findFirst({
+      where: { usuario_id: userId },
+      include: { rol: true }
+    });
+
+    if (!usuarioRol || !usuarioRol.colegio_id) {
+      throw new ForbiddenException('Usuario no autorizado');
+    }
+
+    // 2. Verificar que el apoderado existe y pertenece al mismo colegio
+    const apoderado = await this.prisma.apoderado.findFirst({
+      where: { 
+        id,
+        usuarioRol: { colegio_id: usuarioRol.colegio_id }
+      },
+      include: {
+        usuarioRol: {
+          include: { usuario: true }
+        }
+      }
+    });
+
+    if (!apoderado) {
+      throw new NotFoundException('Apoderado no encontrado');
+    }
+
+    // 3. Verificar permisos si es administrativo
+    if (usuarioRol.rol.nombre === 'ADMINISTRATIVO') {
+      const administrativo = await this.prisma.administrativo.findFirst({
+        where: { usuarioRol: { usuario_id: userId } },
+        include: { permisos: true }
+      });
+
+      if (!administrativo?.permisos?.puedeRegistrarApoderados) {
+        throw new ForbiddenException('No tienes permisos para actualizar apoderados');
+      }
+    }
+
+    // 4. Verificar email único si se está cambiando
+    if (updateApoderadoDto.email && updateApoderadoDto.email !== apoderado.usuarioRol.usuario.email) {
+      const existingUser = await this.prisma.usuario.findUnique({
+        where: { email: updateApoderadoDto.email }
+      });
+
+      if (existingUser) {
+        throw new ConflictException('El email ya está registrado');
+      }
+    }
+
+    // 5. Verificar DNI único si se está cambiando
+    if (updateApoderadoDto.dni && updateApoderadoDto.dni !== apoderado.usuarioRol.usuario.dni) {
+      const existingDni = await this.prisma.usuario.findUnique({
+        where: { dni: updateApoderadoDto.dni }
+      });
+
+      if (existingDni) {
+        throw new ConflictException('El DNI ya está registrado');
+      }
+    }
+
+    // 6. Actualizar en transacción
+    const result = await this.prisma.$transaction(async (prisma) => {
+      // Actualizar datos de usuario si se proporcionan
+      const usuarioData: any = {};
+      if (updateApoderadoDto.email) usuarioData.email = updateApoderadoDto.email;
+      if (updateApoderadoDto.dni) usuarioData.dni = updateApoderadoDto.dni;
+      if (updateApoderadoDto.nombres) usuarioData.nombres = updateApoderadoDto.nombres;
+      if (updateApoderadoDto.apellidos) usuarioData.apellidos = updateApoderadoDto.apellidos;
+      if (updateApoderadoDto.telefono) usuarioData.telefono = updateApoderadoDto.telefono;
+
+      if (Object.keys(usuarioData).length > 0) {
+        usuarioData.actualizado_en = new Date();
+        await prisma.usuario.update({
+          where: { id: apoderado.usuarioRol.usuario.id },
+          data: usuarioData
+        });
+      }
+
+      // Actualizar datos específicos del apoderado
+      const apoderadoData: any = {};
+      if (updateApoderadoDto.fechaNacimiento) apoderadoData.fechaNacimiento = new Date(updateApoderadoDto.fechaNacimiento);
+      if (updateApoderadoDto.sexo) apoderadoData.sexo = updateApoderadoDto.sexo;
+      if (updateApoderadoDto.estadoCivil) apoderadoData.estadoCivil = updateApoderadoDto.estadoCivil;
+      if (updateApoderadoDto.nacionalidad) apoderadoData.nacionalidad = updateApoderadoDto.nacionalidad;
+      if (updateApoderadoDto.direccion) apoderadoData.direccion = updateApoderadoDto.direccion;
+      if (updateApoderadoDto.ocupacion) apoderadoData.ocupacion = updateApoderadoDto.ocupacion;
+      if (updateApoderadoDto.centroTrabajo) apoderadoData.centroTrabajo = updateApoderadoDto.centroTrabajo;
+      if (updateApoderadoDto.telefonoTrabajo) apoderadoData.telefonoTrabajo = updateApoderadoDto.telefonoTrabajo;
+
+      if (Object.keys(apoderadoData).length > 0) {
+        apoderadoData.actualizadoPor = userId;
+        apoderadoData.actualizadoEn = new Date();
+        await prisma.apoderado.update({
+          where: { id },
+          data: apoderadoData
+        });
+      }
+
+      // Obtener el apoderado actualizado
+      return await prisma.apoderado.findUnique({
+        where: { id },
+        include: {
+          usuarioRol: {
+            include: {
+              usuario: true,
+              colegio: true
+            }
+          },
+          alumnos: {
+            where: { activo: true },
+            include: {
+              alumno: true
+            }
+          }
+        }
+      });
+    });
+
+    return result;
+  }
+
+  async cambiarEstadoApoderado(id: number, estado: 'activo' | 'inactivo', userId: number) {
+    // 1. Verificar permisos
+    const usuarioRol = await this.prisma.usuarioRol.findFirst({
+      where: { usuario_id: userId },
+      include: { rol: true }
+    });
+
+    if (!usuarioRol || !usuarioRol.colegio_id) {
+      throw new ForbiddenException('Usuario no autorizado');
+    }
+
+    // 2. Verificar que el apoderado existe y pertenece al mismo colegio
+    const apoderado = await this.prisma.apoderado.findFirst({
+      where: { 
+        id,
+        usuarioRol: { colegio_id: usuarioRol.colegio_id }
+      },
+      include: {
+        usuarioRol: {
+          include: { usuario: true }
+        }
+      }
+    });
+
+    if (!apoderado) {
+      throw new NotFoundException('Apoderado no encontrado');
+    }
+
+    // 3. Verificar permisos si es administrativo
+    if (usuarioRol.rol.nombre === 'ADMINISTRATIVO') {
+      const administrativo = await this.prisma.administrativo.findFirst({
+        where: { usuarioRol: { usuario_id: userId } },
+        include: { permisos: true }
+      });
+
+      if (!administrativo?.permisos?.puedeRegistrarApoderados) {
+        throw new ForbiddenException('No tienes permisos para cambiar el estado de apoderados');
+      }
+    }
+
+    // 4. Actualizar estado del usuario
+    await this.prisma.usuario.update({
+      where: { id: apoderado.usuarioRol.usuario.id },
+      data: { 
+        estado,
+        actualizado_en: new Date()
+      }
+    });
+
     return {
       success: true,
-      message: 'Funcionalidad disponible después de la migración'
+      message: `Apoderado ${estado === 'activo' ? 'activado' : 'desactivado'} exitosamente`
     };
   }
 }

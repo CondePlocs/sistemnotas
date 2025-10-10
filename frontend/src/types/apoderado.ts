@@ -30,7 +30,7 @@ export interface AlumnoConParentesco {
 export interface ApoderadoFormData {
   // Datos básicos del usuario
   email: string;
-  password: string;
+  password?: string;
   dni?: string;
   nombres?: string;
   apellidos?: string;
@@ -49,6 +49,96 @@ export interface ApoderadoFormData {
   // Relaciones con alumnos
   alumnos: AlumnoConParentesco[];
 }
+
+export interface Apoderado {
+  id: number;
+  fechaNacimiento?: string;
+  sexo?: 'masculino' | 'femenino';
+  estadoCivil?: 'soltero' | 'casado' | 'divorciado' | 'viudo';
+  nacionalidad?: string;
+  direccion?: string;
+  ocupacion?: string;
+  centroTrabajo?: string;
+  telefonoTrabajo?: string;
+  creadoEn: string;
+  actualizadoEn?: string;
+  creadoPor?: number;
+  actualizadoPor?: number;
+  usuarioRol: {
+    id: number;
+    colegio_id: number;
+    hecho_por?: number;
+    hecho_en: string;
+    usuario: {
+      id: number;
+      email: string;
+      dni?: string;
+      nombres?: string;
+      apellidos?: string;
+      telefono?: string;
+      estado: 'activo' | 'inactivo';
+      creado_en: string;
+      actualizado_en?: string;
+    };
+    colegio: {
+      id: number;
+      nombre: string;
+    };
+    creadoPor?: {
+      id: number;
+      nombres?: string;
+      apellidos?: string;
+      email: string;
+    };
+  };
+  alumnos: RelacionApoderadoAlumno[];
+}
+
+export interface ApoderadoCardProps {
+  apoderado: Apoderado;
+  onEdit: (apoderado: Apoderado) => void;
+  onView: (apoderado: Apoderado) => void;
+  onToggleStatus: (apoderado: Apoderado) => void;
+}
+
+export interface ModalApoderadoProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+  apoderado?: Apoderado;
+}
+
+export interface ModalVerApoderadoProps {
+  isOpen: boolean;
+  onClose: () => void;
+  apoderado: Apoderado;
+}
+
+// Opciones para selects
+export const SEXO_OPTIONS = [
+  { value: 'masculino', label: 'Masculino' },
+  { value: 'femenino', label: 'Femenino' }
+];
+
+export const ESTADO_CIVIL_OPTIONS = [
+  { value: 'soltero', label: 'Soltero(a)' },
+  { value: 'casado', label: 'Casado(a)' },
+  { value: 'divorciado', label: 'Divorciado(a)' },
+  { value: 'viudo', label: 'Viudo(a)' }
+];
+
+export const PARENTESCO_OPTIONS = [
+  { value: 'padre', label: 'Padre' },
+  { value: 'madre', label: 'Madre' },
+  { value: 'tutor', label: 'Tutor' },
+  { value: 'abuelo', label: 'Abuelo' },
+  { value: 'abuela', label: 'Abuela' },
+  { value: 'tio', label: 'Tío' },
+  { value: 'tia', label: 'Tía' },
+  { value: 'hermano', label: 'Hermano' },
+  { value: 'hermana', label: 'Hermana' },
+  { value: 'otro', label: 'Otro' }
+];
 
 export const PARENTESCOS = [
   'padre',

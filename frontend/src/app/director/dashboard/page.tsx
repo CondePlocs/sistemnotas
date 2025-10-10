@@ -73,31 +73,31 @@ function DirectorDashboardContent() {
               Registrar padres de familia y apoderados.
             </p>
             <Link 
-              href="/director/apoderados/nuevo"
+              href="/director/apoderados"
               className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md transition-colors inline-block text-center"
             >
               Registrar Apoderado
             </Link>
           </div>
 
-          {/* Card: Registrar Administrativo */}
+          {/* Card: Gestionar Administrativos */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="flex items-center mb-4">
-              <div className="bg-purple-100 p-3 rounded-full">
-                <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-[#8D2C1D]/10 p-3 rounded-full">
+                <svg className="w-6 h-6 text-[#8D2C1D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
               </div>
               <h3 className="ml-3 text-lg font-semibold text-gray-900">Personal Administrativo</h3>
             </div>
             <p className="text-gray-600 mb-4">
-              Registrar personal administrativo del colegio.
+              Gestionar el personal administrativo del colegio.
             </p>
             <Link 
-              href="/director/administrativos/nuevo"
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-md transition-colors inline-block text-center"
+              href="/director/administrativos"
+              className="w-full bg-gradient-to-r from-[#8D2C1D] to-[#A0522D] hover:from-[#A0522D] hover:to-[#8D2C1D] text-white font-medium py-2 px-4 rounded-md transition-all duration-200 inline-block text-center"
             >
-              Registrar Administrativo
+              Gestionar Administrativos
             </Link>
           </div>
 

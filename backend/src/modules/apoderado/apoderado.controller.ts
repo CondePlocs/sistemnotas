@@ -1,6 +1,6 @@
-import { Controller, Get, Post, Body, Param, ParseIntPipe, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param, ParseIntPipe, UseGuards, Req } from '@nestjs/common';
 import { ApoderadoService } from './apoderado.service';
-import { CreateApoderadoDto } from './dto/create-apoderado.dto';
+import { CreateApoderadoDto, UpdateApoderadoDto } from './dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -18,10 +18,10 @@ export class ApoderadoController {
   }
 
   @Get()
-  @Roles('DIRECTOR')
+  @Roles('DIRECTOR', 'ADMINISTRATIVO')
   async obtenerApoderados(@Req() request: any) {
-    const directorUserId = request.user.id;
-    return this.apoderadoService.obtenerApoderados(directorUserId);
+    const userId = request.user.id;
+    return this.apoderadoService.obtenerApoderados(userId);
   }
 
   // ========================================
@@ -43,10 +43,32 @@ export class ApoderadoController {
   }
 
   @Get(':id')
-  @Roles('DIRECTOR')
+  @Roles('DIRECTOR', 'ADMINISTRATIVO')
   async obtenerApoderado(@Param('id', ParseIntPipe) id: number, @Req() request: any) {
-    const directorUserId = request.user.id;
-    return this.apoderadoService.obtenerApoderado(id, directorUserId);
+    const userId = request.user.id;
+    return this.apoderadoService.obtenerApoderado(id, userId);
+  }
+
+  @Put(':id')
+  @Roles('DIRECTOR', 'ADMINISTRATIVO')
+  async actualizarApoderado(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateApoderadoDto: UpdateApoderadoDto,
+    @Req() request: any
+  ) {
+    const userId = request.user.id;
+    return this.apoderadoService.actualizarApoderado(id, updateApoderadoDto, userId);
+  }
+
+  @Put(':id/estado')
+  @Roles('DIRECTOR', 'ADMINISTRATIVO')
+  async cambiarEstadoApoderado(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: { estado: 'activo' | 'inactivo' },
+    @Req() request: any
+  ) {
+    const userId = request.user.id;
+    return this.apoderadoService.cambiarEstadoApoderado(id, body.estado, userId);
   }
 
   @Get(':id/alumnos')

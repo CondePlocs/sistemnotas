@@ -1,6 +1,6 @@
 import { Injectable, ForbiddenException, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../../providers/prisma.service';
-import { CreateAdministrativoDto } from './dto/create-administrativo.dto';
+import { CreateAdministrativoDto, UpdateAdministrativoDto } from './dto';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -202,12 +202,21 @@ export class AdministrativoService {
                 telefono: true,
                 estado: true,
                 creado_en: true,
+                actualizado_en: true,
               }
             },
             rol: true,
             colegio: {
               include: {
                 ugel: { include: { dre: true } }
+              }
+            },
+            creadoPor: {
+              select: {
+                id: true,
+                email: true,
+                nombres: true,
+                apellidos: true,
               }
             }
           }
@@ -217,7 +226,31 @@ export class AdministrativoService {
       orderBy: { creadoEn: 'desc' }
     });
 
-    return administrativos;
+    // Obtener información de usuarios que actualizaron 
+    const administrativosConActualizador = await Promise.all(
+      administrativos.map(async (admin) => {
+        let actualizadoPorUsuario: any = null;
+        
+        if (admin.actualizadoPor) {
+          actualizadoPorUsuario = await this.prisma.usuario.findUnique({
+            where: { id: admin.actualizadoPor },
+            select: {
+              id: true,
+              email: true,
+              nombres: true,
+              apellidos: true,
+            }
+          });
+        }
+
+        return {
+          ...admin,
+          actualizadoPorUsuario
+        };
+      })
+    );
+
+    return administrativosConActualizador;
   }
 
   async obtenerAdministrativoPropio(userId: number) {
@@ -263,17 +296,17 @@ export class AdministrativoService {
     return [administrativo]; // Devolver como array para mantener compatibilidad
   }
 
-  async obtenerAdministrativo(id: number, directorUserId: number) {
-    // Verificar que el director puede ver este administrativo
-    const directorInfo = await this.prisma.usuarioRol.findFirst({
+  async obtenerAdministrativo(id: number, userId: number) {
+    // Verificar si es director o administrativo
+    const usuarioRol = await this.prisma.usuarioRol.findFirst({
       where: {
-        usuario_id: directorUserId,
-        rol: { nombre: 'DIRECTOR' }
+        usuario_id: userId,
+        rol: { nombre: { in: ['DIRECTOR', 'ADMINISTRATIVO'] } }
       }
     });
 
-    if (!directorInfo) {
-      throw new ForbiddenException('Solo directores pueden ver administrativos');
+    if (!usuarioRol) {
+      throw new ForbiddenException('Solo directores y administrativos pueden ver administrativos');
     }
 
     const administrativo = await this.prisma.administrativo.findUnique({
@@ -291,6 +324,7 @@ export class AdministrativoService {
                 telefono: true,
                 estado: true,
                 creado_en: true,
+                actualizado_en: true,
               }
             },
             rol: true,
@@ -298,7 +332,53 @@ export class AdministrativoService {
               include: {
                 ugel: { include: { dre: true } }
               }
+            },
+            creadoPor: {
+              select: {
+                id: true,
+                nombres: true,
+                apellidos: true,
+                email: true,
+              }
             }
+          }
+        },
+        permisos: true
+      }
+    });
+
+    if (!administrativo) {
+      throw new NotFoundException('Administrativo no encontrado');
+    }
+
+    // Verificar que el administrativo pertenece al mismo colegio
+    if (administrativo.usuarioRol.colegio_id !== usuarioRol.colegio_id) {
+      throw new ForbiddenException('No tienes acceso a este administrativo');
+    }
+
+    return administrativo;
+  }
+
+  async actualizarAdministrativo(id: number, updateAdministrativoDto: UpdateAdministrativoDto, userId: number) {
+    // Verificar permisos del usuario
+    const usuarioRol = await this.prisma.usuarioRol.findFirst({
+      where: {
+        usuario_id: userId,
+        rol: { nombre: { in: ['DIRECTOR', 'ADMINISTRATIVO'] } }
+      }
+    });
+
+    if (!usuarioRol) {
+      throw new ForbiddenException('Solo directores y administrativos pueden actualizar administrativos');
+    }
+
+    // Obtener el administrativo a actualizar
+    const administrativo = await this.prisma.administrativo.findUnique({
+      where: { id },
+      include: {
+        usuarioRol: {
+          include: {
+            usuario: true
           }
         }
       }
@@ -308,11 +388,132 @@ export class AdministrativoService {
       throw new NotFoundException('Administrativo no encontrado');
     }
 
-    // Verificar que el administrativo pertenece al colegio del director
-    if (administrativo.usuarioRol.colegio_id !== directorInfo.colegio_id) {
+    // Verificar que pertenece al mismo colegio
+    if (administrativo.usuarioRol.colegio_id !== usuarioRol.colegio_id) {
       throw new ForbiddenException('No tienes acceso a este administrativo');
     }
 
-    return administrativo;
+    // Verificar conflictos de email y DNI si se están actualizando
+    if (updateAdministrativoDto.email && updateAdministrativoDto.email !== administrativo.usuarioRol.usuario.email) {
+      const existingEmail = await this.prisma.usuario.findUnique({
+        where: { email: updateAdministrativoDto.email }
+      });
+      if (existingEmail) {
+        throw new ConflictException('El email ya está registrado');
+      }
+    }
+
+    if (updateAdministrativoDto.dni && updateAdministrativoDto.dni !== administrativo.usuarioRol.usuario.dni) {
+      const existingDni = await this.prisma.usuario.findUnique({
+        where: { dni: updateAdministrativoDto.dni }
+      });
+      if (existingDni) {
+        throw new ConflictException('El DNI ya está registrado');
+      }
+    }
+
+    // Actualizar en transacción
+    const result = await this.prisma.$transaction(async (prisma) => {
+      // Preparar datos del usuario
+      const usuarioData: any = {};
+      if (updateAdministrativoDto.email) usuarioData.email = updateAdministrativoDto.email;
+      if (updateAdministrativoDto.dni) usuarioData.dni = updateAdministrativoDto.dni;
+      if (updateAdministrativoDto.nombres) usuarioData.nombres = updateAdministrativoDto.nombres;
+      if (updateAdministrativoDto.apellidos) usuarioData.apellidos = updateAdministrativoDto.apellidos;
+      if (updateAdministrativoDto.telefono) usuarioData.telefono = updateAdministrativoDto.telefono;
+
+      // Agregar auditoría
+      if (Object.keys(usuarioData).length > 0) {
+        usuarioData.actualizado_en = new Date();
+      }
+
+      // Actualizar usuario si hay cambios
+      if (Object.keys(usuarioData).length > 0) {
+        await prisma.usuario.update({
+          where: { id: administrativo.usuarioRol.usuario.id },
+          data: usuarioData
+        });
+      }
+
+      // Preparar datos del administrativo
+      const administrativoData: any = {};
+      if (updateAdministrativoDto.fechaNacimiento) {
+        administrativoData.fechaNacimiento = new Date(updateAdministrativoDto.fechaNacimiento);
+      }
+      if (updateAdministrativoDto.sexo) administrativoData.sexo = updateAdministrativoDto.sexo;
+      if (updateAdministrativoDto.estadoCivil) administrativoData.estadoCivil = updateAdministrativoDto.estadoCivil;
+      if (updateAdministrativoDto.nacionalidad) administrativoData.nacionalidad = updateAdministrativoDto.nacionalidad;
+      if (updateAdministrativoDto.direccion) administrativoData.direccion = updateAdministrativoDto.direccion;
+      if (updateAdministrativoDto.cargo) administrativoData.cargo = updateAdministrativoDto.cargo;
+      if (updateAdministrativoDto.fechaIngreso) {
+        administrativoData.fechaIngreso = new Date(updateAdministrativoDto.fechaIngreso);
+      }
+      if (updateAdministrativoDto.condicionLaboral) administrativoData.condicionLaboral = updateAdministrativoDto.condicionLaboral;
+
+      // Agregar auditoría
+      if (Object.keys(administrativoData).length > 0) {
+        administrativoData.actualizadoEn = new Date();
+      }
+
+      // Actualizar administrativo si hay cambios
+      if (Object.keys(administrativoData).length > 0) {
+        await prisma.administrativo.update({
+          where: { id },
+          data: administrativoData
+        });
+      }
+
+      return { success: true };
+    });
+
+    // Retornar el administrativo actualizado
+    return this.obtenerAdministrativo(id, userId);
+  }
+
+  async cambiarEstadoAdministrativo(id: number, estado: 'activo' | 'inactivo', userId: number) {
+    // Verificar permisos del usuario
+    const usuarioRol = await this.prisma.usuarioRol.findFirst({
+      where: {
+        usuario_id: userId,
+        rol: { nombre: { in: ['DIRECTOR', 'ADMINISTRATIVO'] } }
+      }
+    });
+
+    if (!usuarioRol) {
+      throw new ForbiddenException('Solo directores y administrativos pueden cambiar el estado de administrativos');
+    }
+
+    // Obtener el administrativo
+    const administrativo = await this.prisma.administrativo.findUnique({
+      where: { id },
+      include: {
+        usuarioRol: {
+          include: {
+            usuario: true
+          }
+        }
+      }
+    });
+
+    if (!administrativo) {
+      throw new NotFoundException('Administrativo no encontrado');
+    }
+
+    // Verificar que pertenece al mismo colegio
+    if (administrativo.usuarioRol.colegio_id !== usuarioRol.colegio_id) {
+      throw new ForbiddenException('No tienes acceso a este administrativo');
+    }
+
+    // Actualizar estado del usuario
+    await this.prisma.usuario.update({
+      where: { id: administrativo.usuarioRol.usuario.id },
+      data: {
+        estado,
+        actualizado_en: new Date()
+      }
+    });
+
+    // Retornar el administrativo actualizado
+    return this.obtenerAdministrativo(id, userId);
   }
 }
