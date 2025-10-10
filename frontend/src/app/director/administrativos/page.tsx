@@ -304,20 +304,33 @@ function AdministrativosContent() {
                   className="w-full px-4 py-3 border-2 border-[#E9E1C9] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8D2C1D] focus:border-[#8D2C1D] transition-all duration-200 text-[#333333] placeholder-[#999999] bg-white/90"
                 />
               </div>
-              <button
-                onClick={() => {
-                  setSelectedAdministrativo(null);
-                  setIsEditing(false);
-                  setIsModalOpen(true);
-                }}
-                className="px-4 py-3 sm:px-6 bg-gradient-to-r from-[#8D2C1D] to-[#D96924] text-white font-semibold rounded-xl hover:from-[#D96924] hover:to-[#8D2C1D] transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5 flex items-center gap-2 whitespace-nowrap"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                <span className="hidden sm:inline">Nuevo Administrativo</span>
-                <span className="sm:hidden">Nuevo</span>
-              </button>
+              <div className="flex gap-2 sm:gap-3">
+                <button
+                  onClick={() => {
+                    setSelectedAdministrativo(null);
+                    setIsEditing(false);
+                    setIsModalOpen(true);
+                  }}
+                  className="px-3 py-3 sm:px-6 bg-gradient-to-r from-[#8D2C1D] to-[#D96924] text-white font-semibold rounded-xl hover:from-[#D96924] hover:to-[#8D2C1D] transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5 flex items-center gap-2 whitespace-nowrap flex-shrink-0"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  <span className="hidden sm:inline">Nuevo Administrativo</span>
+                  <span className="sm:hidden text-sm">Nuevo</span>
+                </button>
+                
+                <button
+                  onClick={() => router.push('/director/permisos')}
+                  className="px-3 py-3 sm:px-6 bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] text-white font-semibold rounded-xl hover:from-[#1D4ED8] hover:to-[#2563EB] transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5 flex items-center gap-2 whitespace-nowrap flex-shrink-0"
+                >
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                  <span className="hidden sm:inline">Gestionar Permisos</span>
+                  <span className="sm:hidden text-sm">Permisos</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
