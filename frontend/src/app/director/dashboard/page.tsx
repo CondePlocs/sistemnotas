@@ -115,7 +115,7 @@ function DirectorDashboardContent() {
               Registrar estudiantes del colegio.
             </p>
             <Link 
-              href="/director/alumnos/nuevo"
+              href="/director/alumnos"
               className="w-full bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-4 rounded-md transition-colors inline-block text-center"
             >
               Registrar Alumno

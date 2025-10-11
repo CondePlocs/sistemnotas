@@ -3,17 +3,19 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import FormularioAlumno from '@/components/forms/FormularioAlumno';
+import DashboardHeader from '@/components/layout/DashboardHeader';
 import { AlumnoFormData } from '@/types/alumno';
 import { useAuth } from '@/context/AuthContext';
 import { usePermissionCheck } from '@/hooks/usePermissionCheck';
+import ModalAlumno from '@/components/modals/ModalAlumno';
 
 function NuevoAlumnoDirectorContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(true);
   const router = useRouter();
-  const { user } = useAuth();
+  const { logout } = useAuth();
   
   const { permisoVerificado, loading: permissionLoading } = usePermissionCheck({
     permissionType: 'alumnos'
@@ -21,10 +23,10 @@ function NuevoAlumnoDirectorContent() {
 
   if (permissionLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9] flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Verificando permisos...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8D2C1D] mx-auto"></div>
+          <p className="mt-4 text-[#666666]">Verificando permisos...</p>
         </div>
       </div>
     );
@@ -40,7 +42,7 @@ function NuevoAlumnoDirectorContent() {
     setSuccess('');
 
     try {
-      const response = await fetch('http://localhost:3001/api/alumnos', {
+      const response = await fetch('/api/alumnos', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -68,11 +70,12 @@ function NuevoAlumnoDirectorContent() {
       const result = await response.json();
       
       setSuccess('¡Alumno registrado exitosamente!');
+      setIsModalOpen(false);
       
-      // Redirigir después de 2 segundos
+      // Redirigir después de un momento
       setTimeout(() => {
         router.push('/director/alumnos');
-      }, 2000);
+      }, 1000);
 
     } catch (error) {
       console.error('Error al registrar alumno:', error);
@@ -82,31 +85,22 @@ function NuevoAlumnoDirectorContent() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-6xl mx-auto px-4">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Registrar Nuevo Alumno</h1>
-              <p className="mt-2 text-gray-600">
-                Complete la información del alumno para registrarlo en el sistema
-              </p>
-            </div>
-            
-            <div className="text-right">
-              <p className="text-sm text-gray-500">Director:</p>
-              <p className="font-medium text-gray-900">
-                {user?.nombres} {user?.apellidos}
-              </p>
-            </div>
-          </div>
-        </div>
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    router.push('/director/alumnos');
+  };
 
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9]">
+      <DashboardHeader 
+        title="Registrar Nuevo Alumno"
+        onLogout={logout}
+      />
+      
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Mensajes de estado */}
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4">
             <div className="flex">
               <div className="flex-shrink-0">
                 <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
@@ -122,7 +116,7 @@ function NuevoAlumnoDirectorContent() {
         )}
 
         {success && (
-          <div className="mb-6 bg-green-50 border border-green-200 rounded-md p-4">
+          <div className="mb-6 bg-green-50 border border-green-200 rounded-xl p-4">
             <div className="flex">
               <div className="flex-shrink-0">
                 <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
@@ -136,37 +130,15 @@ function NuevoAlumnoDirectorContent() {
             </div>
           </div>
         )}
+      </main>
 
-        {/* Formulario */}
-        <FormularioAlumno
-          onSubmit={handleSubmit}
-          loading={loading}
-          title="Registrar Nuevo Alumno"
-        />
-
-        {/* Información adicional */}
-        <div className="mt-8 bg-blue-50 border border-blue-200 rounded-md p-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-blue-800">Información importante</h3>
-              <div className="mt-1 text-sm text-blue-700">
-                <ul className="list-disc list-inside space-y-1">
-                  <li>Los campos marcados con (*) son obligatorios</li>
-                  <li>El DNI es opcional pero recomendado para identificación única</li>
-                  <li>El código de alumno es opcional y útil para integración con SIAGIE</li>
-                  <li>La información académica (grado, sección) se asignará posteriormente</li>
-                  <li>Todos los alumnos registrados pertenecerán a su colegio</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Modal de Registro */}
+      <ModalAlumno
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onSubmit={handleSubmit}
+        title="Registrar Nuevo Alumno"
+      />
     </div>
   );
 }
