@@ -3,7 +3,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { PeriodoAcademicoService } from './periodo-academico.service';
-import { CrearPeriodoAcademicoDto, ActualizarPeriodoAcademicoDto } from './dto';
+import { CrearPeriodoAcademicoDto, ActualizarPeriodoAcademicoDto, ActivarPeriodoAcademicoDto } from './dto';
 
 @Controller('api/periodos-academicos')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -58,8 +58,12 @@ export class PeriodoAcademicoController {
   // PUT /api/periodos-academicos/:id/activar - Activar período académico
   @Put(':id/activar')
   @Roles('DIRECTOR')
-  async activar(@Req() request: any, @Param('id', ParseIntPipe) periodoId: number) {
+  async activar(
+    @Req() request: any, 
+    @Param('id', ParseIntPipe) periodoId: number,
+    @Body() activarDto: ActivarPeriodoAcademicoDto
+  ) {
     const directorUserId = request.user.id;
-    return this.periodoAcademicoService.activar(directorUserId, periodoId);
+    return this.periodoAcademicoService.activar(directorUserId, periodoId, activarDto);
   }
 }

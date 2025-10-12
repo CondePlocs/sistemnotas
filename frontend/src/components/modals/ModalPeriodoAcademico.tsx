@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog } from '@headlessui/react';
 import { XMarkIcon, CalendarIcon } from '@heroicons/react/24/outline';
 import { 
+  PeriodoAcademico,
   PeriodoAcademicoFormData, 
   TipoPeriodo, 
   TIPOS_PERIODO, 
@@ -16,13 +17,17 @@ interface ModalPeriodoAcademicoProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: PeriodoAcademicoFormData) => Promise<void>;
+  periodo?: PeriodoAcademico | null;
+  title?: string;
   loading?: boolean;
 }
 
 export default function ModalPeriodoAcademico({ 
   isOpen, 
   onClose, 
-  onSubmit, 
+  onSubmit,
+  periodo = null,
+  title = 'Nuevo Período Académico',
   loading = false 
 }: ModalPeriodoAcademicoProps) {
   const anioActual = obtenerAnioAcademicoActual();
@@ -35,6 +40,30 @@ export default function ModalPeriodoAcademico({
     fechaInicio: '',
     fechaFin: ''
   });
+
+  // Cargar datos del período si es edición
+  useEffect(() => {
+    if (periodo && isOpen) {
+      setFormData({
+        nombre: periodo.nombre,
+        tipo: periodo.tipo,
+        anioAcademico: periodo.anioAcademico,
+        orden: periodo.orden,
+        fechaInicio: periodo.fechaInicio.split('T')[0],
+        fechaFin: periodo.fechaFin.split('T')[0]
+      });
+    } else if (!periodo && isOpen) {
+      // Reset para nuevo período
+      setFormData({
+        nombre: 'I',
+        tipo: TipoPeriodo.BIMESTRE,
+        anioAcademico: anioActual,
+        orden: 1,
+        fechaInicio: '',
+        fechaFin: ''
+      });
+    }
+  }, [periodo, isOpen, anioActual]);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -99,155 +128,161 @@ export default function ModalPeriodoAcademico({
 
   return (
     <Dialog open={isOpen} onClose={handleClose} className="relative z-50">
-      <div className="fixed inset-0 bg-black/25" />
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
       
       <div className="fixed inset-0 overflow-y-auto">
         <div className="flex min-h-full items-center justify-center p-4">
-          <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+          <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all">
             
-            {/* Header */}
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center">
-                <CalendarIcon className="h-6 w-6 text-blue-600 mr-2" />
-                <Dialog.Title className="text-lg font-medium text-gray-900">
-                  Agregar Período Académico
-                </Dialog.Title>
-              </div>
+            {/* Header con gradiente */}
+            <div className="relative bg-gradient-to-r from-[#8D2C1D] to-[#D96924] px-6 py-8 text-white">
               <button
                 onClick={handleClose}
                 disabled={loading}
-                className="text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                className="absolute top-4 right-4 p-2 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-colors disabled:opacity-50"
               >
-                <XMarkIcon className="h-6 w-6" />
+                <XMarkIcon className="w-6 h-6" />
               </button>
+              
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl">
+                  <CalendarIcon className="w-8 h-8" />
+                </div>
+                <div className="text-left">
+                  <h2 className="text-2xl font-bold">{title}</h2>
+                  <p className="text-white/80 mt-1">Configura el período académico</p>
+                </div>
+              </div>
             </div>
 
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              
-              {/* Nombre (Número Romano) */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nombre del Período
-                </label>
-                <select
-                  value={formData.nombre}
-                  onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-                  disabled={loading}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 ${
-                    errors.nombre ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                >
-                  {NUMEROS_ROMANOS.map((numero) => (
-                    <option key={numero.value} value={numero.value}>
-                      {numero.label}
-                    </option>
-                  ))}
-                </select>
-                {errors.nombre && (
-                  <p className="text-red-500 text-sm mt-1">{errors.nombre}</p>
-                )}
-              </div>
-
-              {/* Tipo */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Tipo de Período
-                </label>
-                <select
-                  value={formData.tipo}
-                  onChange={(e) => setFormData({ ...formData, tipo: e.target.value as TipoPeriodo })}
-                  disabled={loading}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-                >
-                  {TIPOS_PERIODO.map((tipo) => (
-                    <option key={tipo.value} value={tipo.value}>
-                      {tipo.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Año Académico (Solo lectura) */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Año Académico
-                </label>
-                <input
-                  type="text"
-                  value={formData.anioAcademico}
-                  disabled={true}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-600 cursor-not-allowed"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Se asigna automáticamente el año actual
-                </p>
-              </div>
-
-              {/* Fechas */}
-              <div className="grid grid-cols-2 gap-4">
+            {/* Contenido */}
+            <div className="p-6">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Nombre */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Fecha Inicio
+                  <label className="block text-sm font-semibold text-[#8D2C1D] mb-3">
+                    Nombre del Período *
                   </label>
-                  <input
-                    type="date"
-                    value={formData.fechaInicio}
-                    onChange={(e) => setFormData({ ...formData, fechaInicio: e.target.value })}
-                    disabled={loading}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 ${
-                      errors.fechaInicio ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                  />
-                  {errors.fechaInicio && (
-                    <p className="text-red-500 text-sm mt-1">{errors.fechaInicio}</p>
+                  <select
+                    value={formData.nombre}
+                    onChange={(e) => {
+                      const nombre = e.target.value;
+                      const orden = convertirRomanoAOrden(nombre);
+                      setFormData(prev => ({ ...prev, nombre, orden }));
+                    }}
+                    className="w-full px-4 py-3 border-2 border-[#E9E1C9] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8D2C1D] focus:border-[#8D2C1D] transition-all duration-200 text-[#333333] bg-white/90"
+                    required
+                  >
+                    {NUMEROS_ROMANOS.map(num => (
+                      <option key={num.value} value={num.value}>
+                        {num.label}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.nombre && (
+                    <p className="text-red-600 text-sm mt-2 font-medium">{errors.nombre}</p>
                   )}
                 </div>
 
+                {/* Tipo */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Fecha Fin
+                  <label className="block text-sm font-semibold text-[#8D2C1D] mb-3">
+                    Tipo de Período *
                   </label>
-                  <input
-                    type="date"
-                    value={formData.fechaFin}
-                    onChange={(e) => setFormData({ ...formData, fechaFin: e.target.value })}
-                    disabled={loading}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 ${
-                      errors.fechaFin ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                  />
-                  {errors.fechaFin && (
-                    <p className="text-red-500 text-sm mt-1">{errors.fechaFin}</p>
+                  <select
+                    value={formData.tipo}
+                    onChange={(e) => setFormData(prev => ({ ...prev, tipo: e.target.value as TipoPeriodo }))}
+                    className="w-full px-4 py-3 border-2 border-[#E9E1C9] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8D2C1D] focus:border-[#8D2C1D] transition-all duration-200 text-[#333333] bg-white/90"
+                    required
+                  >
+                    {TIPOS_PERIODO.map(tipo => (
+                      <option key={tipo.value} value={tipo.value}>
+                        {tipo.label}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.tipo && (
+                    <p className="text-red-600 text-sm mt-2 font-medium">{errors.tipo}</p>
                   )}
                 </div>
-              </div>
 
-              {/* Buttons */}
-              <div className="flex justify-end space-x-3 pt-4">
-                <button
-                  type="button"
-                  onClick={handleClose}
-                  disabled={loading}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center"
-                >
-                  {loading && (
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
+                {/* Año Académico */}
+                <div>
+                  <label className="block text-sm font-semibold text-[#8D2C1D] mb-3">
+                    Año Académico *
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.anioAcademico}
+                    onChange={(e) => setFormData(prev => ({ ...prev, anioAcademico: parseInt(e.target.value) }))}
+                    className="w-full px-4 py-3 border-2 border-[#E9E1C9] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8D2C1D] focus:border-[#8D2C1D] transition-all duration-200 text-[#333333] bg-white/90"
+                    min={2020}
+                    max={2030}
+                    required
+                  />
+                  {errors.anioAcademico && (
+                    <p className="text-red-600 text-sm mt-2 font-medium">{errors.anioAcademico}</p>
                   )}
-                  {loading ? 'Creando...' : 'Crear Período'}
-                </button>
-              </div>
-            </form>
+                </div>
+
+                {/* Fechas */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-[#8D2C1D] mb-3">
+                      Fecha Inicio *
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.fechaInicio}
+                      onChange={(e) => setFormData(prev => ({ ...prev, fechaInicio: e.target.value }))}
+                      className="w-full px-4 py-3 border-2 border-[#E9E1C9] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8D2C1D] focus:border-[#8D2C1D] transition-all duration-200 text-[#333333] bg-white/90"
+                      required
+                    />
+                    {errors.fechaInicio && (
+                      <p className="text-red-600 text-sm mt-2 font-medium">{errors.fechaInicio}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-[#8D2C1D] mb-3">
+                      Fecha Fin *
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.fechaFin}
+                      onChange={(e) => setFormData(prev => ({ ...prev, fechaFin: e.target.value }))}
+                      className="w-full px-4 py-3 border-2 border-[#E9E1C9] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8D2C1D] focus:border-[#8D2C1D] transition-all duration-200 text-[#333333] bg-white/90"
+                      required
+                    />
+                    {errors.fechaFin && (
+                      <p className="text-red-600 text-sm mt-2 font-medium">{errors.fechaFin}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Botones */}
+                <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6">
+                  <button
+                    type="button"
+                    onClick={handleClose}
+                    disabled={loading}
+                    className="px-6 py-3 text-[#666666] bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors disabled:opacity-50 font-medium"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-8 py-3 bg-gradient-to-r from-[#8D2C1D] to-[#D96924] hover:from-[#D96924] hover:to-[#8D2C1D] text-white rounded-xl transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2 font-semibold shadow-lg hover:shadow-xl"
+                  >
+                    {loading && (
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    )}
+                    {loading ? 'Guardando...' : (periodo ? 'Actualizar Período' : 'Crear Período')}
+                  </button>
+                </div>
+              </form>
+            </div>
           </Dialog.Panel>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../providers/prisma.service';
-import { CrearPeriodoAcademicoDto, ActualizarPeriodoAcademicoDto } from './dto';
+import { CrearPeriodoAcademicoDto, ActualizarPeriodoAcademicoDto, ActivarPeriodoAcademicoDto } from './dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class PeriodoAcademicoService {
@@ -178,6 +179,22 @@ export class PeriodoAcademicoService {
   async actualizar(directorUserId: number, periodoId: number, actualizarDto: ActualizarPeriodoAcademicoDto) {
     const colegioId = await this.verificarDirectorYColegio(directorUserId);
 
+    // Verificar contraseña si se proporciona
+    if (actualizarDto.password) {
+      const usuario = await this.prisma.usuario.findUnique({
+        where: { id: directorUserId }
+      });
+
+      if (!usuario) {
+        throw new NotFoundException('Usuario no encontrado');
+      }
+
+      const passwordValida = await bcrypt.compare(actualizarDto.password, usuario.password_hash);
+      if (!passwordValida) {
+        throw new BadRequestException('Contraseña incorrecta');
+      }
+    }
+
     // Verificar que el período existe y pertenece al colegio
     const periodoExistente = await this.prisma.periodoAcademico.findFirst({
       where: {
@@ -213,15 +230,37 @@ export class PeriodoAcademicoService {
       });
     }
 
+    // Preparar datos para actualización (excluir password)
+    const { password, ...datosActualizacion } = actualizarDto;
+
+    // Verificar duplicados si se están cambiando campos únicos
+    if (datosActualizacion.nombre || datosActualizacion.anioAcademico) {
+      const orden = datosActualizacion.orden || periodoExistente.orden;
+      const anioAcademico = datosActualizacion.anioAcademico || periodoExistente.anioAcademico;
+      
+      const duplicado = await this.prisma.periodoAcademico.findFirst({
+        where: {
+          colegioId,
+          anioAcademico,
+          orden,
+          id: { not: periodoId } // Excluir el período actual
+        }
+      });
+
+      if (duplicado) {
+        throw new BadRequestException(`Ya existe un período con el mismo orden en el año académico ${anioAcademico}`);
+      }
+    }
+
     // Actualizar período
     const periodoActualizado = await this.prisma.periodoAcademico.update({
       where: {
         id: periodoId
       },
       data: {
-        ...actualizarDto,
-        fechaInicio: actualizarDto.fechaInicio ? new Date(actualizarDto.fechaInicio) : undefined,
-        fechaFin: actualizarDto.fechaFin ? new Date(actualizarDto.fechaFin) : undefined
+        ...datosActualizacion,
+        fechaInicio: datosActualizacion.fechaInicio ? new Date(datosActualizacion.fechaInicio) : undefined,
+        fechaFin: datosActualizacion.fechaFin ? new Date(datosActualizacion.fechaFin) : undefined
       },
       include: {
         colegio: {
@@ -248,8 +287,22 @@ export class PeriodoAcademicoService {
   }
 
   // Activar período académico (solo uno activo por colegio)
-  async activar(directorUserId: number, periodoId: number) {
+  async activar(directorUserId: number, periodoId: number, activarDto: ActivarPeriodoAcademicoDto) {
     const colegioId = await this.verificarDirectorYColegio(directorUserId);
+
+    // Verificar contraseña
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { id: directorUserId }
+    });
+
+    if (!usuario) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    const passwordValida = await bcrypt.compare(activarDto.password, usuario.password_hash);
+    if (!passwordValida) {
+      throw new BadRequestException('Contraseña incorrecta');
+    }
 
     // Verificar que el período existe y pertenece al colegio
     const periodo = await this.prisma.periodoAcademico.findFirst({
