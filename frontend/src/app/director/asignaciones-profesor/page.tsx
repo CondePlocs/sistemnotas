@@ -4,24 +4,43 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/context/AuthContext';
+import DashboardHeader from '@/components/layout/DashboardHeader';
+import DashboardFooter from '@/components/layout/DashboardFooter';
 import ModalAsignacionProfesor from '@/components/modals/ModalAsignacionProfesor';
+import ModalConfirmarPassword from '@/components/modals/ModalConfirmarPassword';
+import AsignacionCard from '@/components/director/AsignacionCard';
+import FiltrosAsignaciones from '@/components/director/FiltrosAsignaciones';
+import Paginacion from '@/components/common/Paginacion';
 import { 
   ProfesorAsignacion, 
   ListaAsignacionesResponse,
   ProfesorAsignacionFormData 
 } from '@/types/profesor-asignacion';
-import { PlusIcon, UserGroupIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, UserGroupIcon } from '@heroicons/react/24/outline';
 
 function AsignacionesProfesorContent() {
   const router = useRouter();
-  const { user, hasRole } = useAuth();
+  const { user, hasRole, logout } = useAuth();
   const [asignaciones, setAsignaciones] = useState<ProfesorAsignacion[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [filtroActivo, setFiltroActivo] = useState<boolean | null>(null);
   const [permisoVerificado, setPermisoVerificado] = useState(false);
+  
+  // Estados para filtros y paginación
+  const [busqueda, setBusqueda] = useState('');
+  const [filtroActivo, setFiltroActivo] = useState<boolean | null>(null);
+  const [paginaActual, setPaginaActual] = useState(1);
+  const elementosPorPagina = 20; // 4 columnas x 5 filas
+  
+  // Estados para confirmación de contraseña
+  const [modalConfirmacion, setModalConfirmacion] = useState(false);
+  const [accionPendiente, setAccionPendiente] = useState<{
+    tipo: 'activar' | 'desactivar' | 'pasar-grupo';
+    asignacionId: number;
+    activo?: boolean;
+  } | null>(null);
 
   // Verificar permisos para administrativos
   const verificarPermisos = async () => {
@@ -150,19 +169,85 @@ function AsignacionesProfesorContent() {
     }
   };
 
-  // Cambiar estado de asignación
-  const handleCambiarEstado = async (asignacionId: number, activo: boolean) => {
+  // Funciones de filtrado
+  const asignacionesFiltradas = asignaciones.filter(asignacion => {
+    // Filtro por estado
+    if (filtroActivo !== null && asignacion.activo !== filtroActivo) {
+      return false;
+    }
+    
+    // Filtro por búsqueda
+    if (busqueda.trim() !== '') {
+      const termino = busqueda.toLowerCase();
+      const profesor = `${asignacion.profesor.usuarioRol.usuario.nombres} ${asignacion.profesor.usuarioRol.usuario.apellidos}`.toLowerCase();
+      const curso = asignacion.curso.nombre.toLowerCase();
+      const salon = `${asignacion.salon.grado} ${asignacion.salon.seccion} ${asignacion.salon.colegioNivel.nivel.nombre}`.toLowerCase();
+      
+      return profesor.includes(termino) || curso.includes(termino) || salon.includes(termino);
+    }
+    
+    return true;
+  });
+  
+  // Cálculos de paginación
+  const totalPaginas = Math.ceil(asignacionesFiltradas.length / elementosPorPagina);
+  const indiceInicio = (paginaActual - 1) * elementosPorPagina;
+  const indiceFin = indiceInicio + elementosPorPagina;
+  const asignacionesPaginadas = asignacionesFiltradas.slice(indiceInicio, indiceFin);
+  
+  // Resetear página cuando cambian los filtros
+  useEffect(() => {
+    setPaginaActual(1);
+  }, [busqueda, filtroActivo]);
+  
+  // Manejar acciones con confirmación
+  const handleCambiarEstado = (asignacionId: number, activo: boolean) => {
+    setAccionPendiente({
+      tipo: activo ? 'activar' : 'desactivar',
+      asignacionId,
+      activo
+    });
+    setModalConfirmacion(true);
+  };
+  
+  const handlePasarGrupo = (asignacionId: number) => {
+    setAccionPendiente({
+      tipo: 'pasar-grupo',
+      asignacionId
+    });
+    setModalConfirmacion(true);
+  };
+  
+  // Ejecutar acción confirmada
+  const ejecutarAccion = async (password: string) => {
+    if (!accionPendiente) return;
+    
     try {
-      const endpoint = activo ? 'activar' : 'desactivar';
-      const response = await fetch(`http://localhost:3001/api/profesor-asignaciones/${asignacionId}/${endpoint}`, {
+      if (accionPendiente.tipo === 'pasar-grupo') {
+        // Por ahora solo mostrar mensaje
+        alert('Funcionalidad "Pasar Grupo" será implementada próximamente');
+        setModalConfirmacion(false);
+        setAccionPendiente(null);
+        return;
+      }
+      
+      const endpoint = accionPendiente.activo ? 'activar' : 'desactivar';
+      const response = await fetch(`http://localhost:3001/api/profesor-asignaciones/${accionPendiente.asignacionId}/${endpoint}`, {
         method: 'PUT',
-        credentials: 'include'
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ password })
       });
 
       if (response.ok) {
-        await cargarAsignaciones(); // Recargar lista
+        await cargarAsignaciones();
+        setModalConfirmacion(false);
+        setAccionPendiente(null);
       } else {
-        setError(`Error al ${activo ? 'activar' : 'desactivar'} asignación`);
+        const errorData = await response.json();
+        setError(errorData.message || `Error al ${accionPendiente.activo ? 'activar' : 'desactivar'} asignación`);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -195,72 +280,74 @@ function AsignacionesProfesorContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center">
-              <button
-                onClick={() => router.back()}
-                className="mr-4 text-gray-600 hover:text-gray-900"
-              >
-                ← Volver
-              </button>
-              <UserGroupIcon className="h-8 w-8 text-teal-600 mr-3" />
-              <h1 className="text-2xl font-bold text-gray-900">Asignaciones de Profesores</h1>
+    <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9]">
+      <DashboardHeader 
+        title="Gestión de Asignaciones de Profesores"
+        onLogout={logout}
+      />
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="mb-6">
+          <div className="flex items-center gap-4 mb-4">
+            <button
+              onClick={() => router.back()}
+              className="p-3 rounded-xl bg-white/90 backdrop-blur-sm shadow-lg border-2 border-[#E9E1C9] hover:border-[#8D2C1D] transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 text-[#8D2C1D]"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <div>
+              <h1 className="text-3xl font-bold text-[#8D2C1D] mb-2">Asignaciones de Profesores</h1>
+              <p className="text-[#666666] text-lg">Gestiona las asignaciones de cursos a profesores</p>
             </div>
+          </div>
+        </div>
+        
+        {/* Barra de búsqueda y botón Nueva Asignación */}
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg border border-[#E9E1C9]/30 p-4 sm:p-6 mb-6">
+          <div className="flex gap-3 items-center">
+            {/* Barra de búsqueda */}
+            <div className="flex-1 relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg className="h-5 w-5 text-[#666666]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                type="text"
+                placeholder="Buscar por profesor, curso o salón..."
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                className="block w-full pl-10 pr-3 py-3 border border-[#E9E1C9] rounded-xl leading-5 bg-white text-[#333333] placeholder:text-[#999999] focus:outline-none focus:ring-2 focus:ring-[#8D2C1D] focus:border-[#8D2C1D] transition-colors"
+              />
+            </div>
+            
+            {/* Botón Nueva Asignación - Siempre a la derecha */}
             <button
               onClick={() => setModalOpen(true)}
-              className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-md flex items-center transition-colors"
+              className="bg-gradient-to-r from-[#8D2C1D] to-[#D96924] hover:from-[#7A2518] hover:to-[#C55A1F] text-white px-4 sm:px-6 py-3 rounded-xl flex items-center transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 whitespace-nowrap"
             >
-              <PlusIcon className="h-5 w-5 mr-2" />
-              Nueva Asignación
+              <PlusIcon className="h-5 w-5 sm:mr-2" />
+              <span className="hidden sm:inline">Nueva Asignación</span>
             </button>
           </div>
         </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
-        {/* Filtros */}
-        <div className="mb-6 flex space-x-4">
-          <button
-            onClick={() => setFiltroActivo(null)}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              filtroActivo === null 
-                ? 'bg-teal-600 text-white' 
-                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-            }`}
-          >
-            Todas
-          </button>
-          <button
-            onClick={() => setFiltroActivo(true)}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              filtroActivo === true 
-                ? 'bg-green-600 text-white' 
-                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-            }`}
-          >
-            Activas
-          </button>
-          <button
-            onClick={() => setFiltroActivo(false)}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              filtroActivo === false 
-                ? 'bg-gray-600 text-white' 
-                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-            }`}
-          >
-            Inactivas
-          </button>
-        </div>
+        {/* Filtros compactos */}
+        <FiltrosAsignaciones
+          busqueda={busqueda}
+          onBusquedaChange={setBusqueda}
+          filtroActivo={filtroActivo}
+          onFiltroActivoChange={setFiltroActivo}
+          totalAsignaciones={asignaciones.length}
+          asignacionesFiltradas={asignacionesFiltradas.length}
+        />
 
         {/* Error Message */}
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4 shadow-sm">
             <p className="text-red-800">{error}</p>
             <button
               onClick={() => setError(null)}
@@ -272,87 +359,80 @@ function AsignacionesProfesorContent() {
         )}
 
         {/* Lista de Asignaciones */}
-        {asignaciones.length === 0 ? (
-          <div className="text-center py-12">
-            <UserGroupIcon className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No hay asignaciones</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Comienza creando tu primera asignación de profesor.
-            </p>
-            <div className="mt-6">
-              <button
-                onClick={() => setModalOpen(true)}
-                className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-md flex items-center mx-auto"
-              >
-                <PlusIcon className="h-5 w-5 mr-2" />
-                Nueva Asignación
-              </button>
+        {asignacionesFiltradas.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-12 max-w-md mx-auto">
+              <UserGroupIcon className="mx-auto h-16 w-16 text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                {asignaciones.length === 0 ? 'No hay asignaciones' : 'No se encontraron resultados'}
+              </h3>
+              <p className="text-sm text-gray-500 mb-6">
+                {asignaciones.length === 0 
+                  ? 'Comienza creando tu primera asignación de profesor.'
+                  : 'Intenta ajustar los filtros de búsqueda.'
+                }
+              </p>
+              {asignaciones.length === 0 && (
+                <button
+                  onClick={() => setModalOpen(true)}
+                  className="bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white px-6 py-3 rounded-xl flex items-center mx-auto transition-all duration-200 shadow-lg hover:shadow-xl"
+                >
+                  <PlusIcon className="h-5 w-5 mr-2" />
+                  Nueva Asignación
+                </button>
+              )}
             </div>
           </div>
         ) : (
-          <div className="bg-white shadow overflow-hidden sm:rounded-md">
-            <ul className="divide-y divide-gray-200">
-              {asignaciones.map((asignacion) => (
-                <li key={asignacion.id} className="px-6 py-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0">
-                        <div className={`w-3 h-3 rounded-full ${
-                          asignacion.activo ? 'bg-green-400' : 'bg-gray-400'
-                        }`}></div>
-                      </div>
-                      <div className="ml-4">
-                        <div className="flex items-center">
-                          <p className="text-sm font-medium text-gray-900">
-                            {asignacion.profesor.usuarioRol.usuario.nombres} {asignacion.profesor.usuarioRol.usuario.apellidos}
-                          </p>
-                          {asignacion.activo && (
-                            <CheckCircleIcon className="ml-2 h-4 w-4 text-green-500" />
-                          )}
-                        </div>
-                        <div className="mt-1 flex items-center text-sm text-gray-500">
-                          <span className="font-medium text-gray-700">
-                            {asignacion.curso.nombre}
-                          </span>
-                          <span className="mx-2">•</span>
-                          <span>
-                            {asignacion.salon.grado} {asignacion.salon.seccion} - {asignacion.salon.colegioNivel.nivel.nombre}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      {asignacion.activo ? (
-                        <button
-                          onClick={() => handleCambiarEstado(asignacion.id, false)}
-                          className="text-red-600 hover:text-red-800 text-sm font-medium"
-                        >
-                          Desactivar
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleCambiarEstado(asignacion.id, true)}
-                          className="text-green-600 hover:text-green-800 text-sm font-medium"
-                        >
-                          Activar
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </li>
+          <>
+            {/* Grid de Cards - 2 columnas en móvil */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+              {asignacionesPaginadas.map((asignacion) => (
+                <AsignacionCard
+                  key={asignacion.id}
+                  asignacion={asignacion}
+                  onCambiarEstado={handleCambiarEstado}
+                  onPasarGrupo={handlePasarGrupo}
+                />
               ))}
-            </ul>
-          </div>
+            </div>
+            
+            {/* Paginación */}
+            {totalPaginas > 1 && (
+              <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-[#E9E1C9]/30">
+                <Paginacion
+                  paginaActual={paginaActual}
+                  totalPaginas={totalPaginas}
+                  totalElementos={asignacionesFiltradas.length}
+                  elementosPorPagina={elementosPorPagina}
+                  onCambioPagina={setPaginaActual}
+                />
+              </div>
+            )}
+          </>
         )}
       </main>
 
-      {/* Modal */}
+      {/* Modales */}
       <ModalAsignacionProfesor
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         onSubmit={handleCrearAsignacion}
         loading={submitting}
       />
+      
+      <ModalConfirmarPassword
+        isOpen={modalConfirmacion}
+        onClose={() => {
+          setModalConfirmacion(false);
+          setAccionPendiente(null);
+        }}
+        onConfirm={ejecutarAccion}
+        title={`Confirmar ${accionPendiente?.tipo === 'activar' ? 'Activación' : accionPendiente?.tipo === 'desactivar' ? 'Desactivación' : 'Acción'}`}
+        message={`¿Estás seguro de que deseas ${accionPendiente?.tipo === 'activar' ? 'activar' : accionPendiente?.tipo === 'desactivar' ? 'desactivar' : 'realizar esta acción en'} esta asignación?`}
+      />
+      
+      <DashboardFooter />
     </div>
   );
 }
