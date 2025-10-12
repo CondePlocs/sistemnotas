@@ -197,6 +197,29 @@ export class SalonService {
           include: {
             nivel: true // ← Incluir datos del nivel
           }
+        },
+        colegio: {
+          select: {
+            id: true,
+            nombre: true,
+          }
+        },
+        _count: {
+          select: {
+            alumnos: true,
+            cursos: true // ← Incluir conteo de cursos
+          }
+        },
+        alumnos: {
+          select: {
+            id: true,
+            alumno: {
+              select: {
+                id: true,
+                activo: true
+              }
+            }
+          }
         }
       },
       orderBy: [
@@ -207,7 +230,7 @@ export class SalonService {
     });
 
     // 3. Agrupar por nivel para mejor presentación
-    const salonesPorNivel = salones.reduce((acc, salon) => {
+    const salonesPorNivel = salones.reduce((acc, salon: any) => {
       const nivelNombre = salon.colegioNivel?.nivel?.nombre || 'Sin nivel';
       if (!acc[nivelNombre]) {
         acc[nivelNombre] = [];
