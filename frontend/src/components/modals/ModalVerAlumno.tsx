@@ -15,7 +15,10 @@ export default function ModalVerAlumno({ isOpen, onClose, alumno }: ModalVerAlum
     return new Date(dateString).toLocaleDateString('es-PE', {
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
     });
   };
 

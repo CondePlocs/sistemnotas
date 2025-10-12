@@ -93,7 +93,7 @@ function AdministrativosContent() {
     // Guardar los datos y mostrar modal de confirmación de contraseña
     setPendingEdit({ administrativo: selectedAdministrativo, formData });
     setIsPasswordModalOpen(true);
-    setIsModalOpen(false); // Cerrar el modal de edición
+    // NO cerrar el modal de edición - debe superponerse
   };
 
   const executeUpdate = async (formData: AdministrativoFormData) => {
@@ -160,6 +160,8 @@ function AdministrativosContent() {
         setPendingEdit(null);
         setSelectedAdministrativo(null);
         setIsEditing(false);
+        // Cerrar modal de edición después de actualizar exitosamente
+        setIsModalOpen(false);
       } catch (error) {
         console.error('Error al actualizar administrativo:', error);
         alert('Error al actualizar el administrativo. Verifica tu contraseña.');

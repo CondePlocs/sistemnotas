@@ -77,7 +77,10 @@ const ModalAdministrativo: React.FC<ModalAdministrativoProps> = ({
     
     try {
       await onSubmit(formData);
-      onClose();
+      // NO cerrar automáticamente si es edición (requiere confirmación de contraseña)
+      if (!isEditing) {
+        onClose();
+      }
     } catch (error) {
       console.error('Error al procesar administrativo:', error);
     } finally {
@@ -90,7 +93,10 @@ const ModalAdministrativo: React.FC<ModalAdministrativoProps> = ({
     
     try {
       await onSubmit(formData);
-      onClose();
+      // NO cerrar automáticamente si es edición (requiere confirmación de contraseña)
+      if (!isEditing) {
+        onClose();
+      }
     } catch (error) {
       console.error('Error al procesar administrativo:', error);
     } finally {

@@ -133,6 +133,10 @@ function AlumnosContent() {
         await fetchAlumnos();
         alert('¡Alumno actualizado exitosamente!');
         setPendingEdit(null);
+        // Cerrar modal de edición después de actualizar exitosamente
+        setIsModalOpen(false);
+        setSelectedAlumno(null);
+        setIsEditing(false);
       }
 
       if (pendingStatusChange) {
