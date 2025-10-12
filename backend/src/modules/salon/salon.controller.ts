@@ -61,7 +61,7 @@ export class SalonController {
 
   // Actualizar un salón específico
   @Patch(':id')
-  @Roles('DIRECTOR')
+  @Roles('DIRECTOR', 'ADMINISTRATIVO')
   async actualizarSalon(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateSalonDto: UpdateSalonDto,

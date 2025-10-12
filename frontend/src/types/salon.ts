@@ -23,6 +23,30 @@ export interface Salon {
   
   // Relaciones opcionales
   colegioNivel?: ColegioNivel; // ← Datos del nivel
+  colegio?: {
+    id: number;
+    nombre: string;
+  };
+  creador?: {
+    id: number;
+    nombres: string;
+    apellidos: string;
+    email: string;
+  };
+  
+  // Contadores opcionales (desde Prisma)
+  _count?: {
+    alumnos?: number;
+    cursos?: number;
+  };
+  
+  // Relaciones completas opcionales
+  alumnos?: Array<{
+    id: number;
+    nombres: string;
+    apellidos: string;
+    activo: boolean;
+  }>;
 }
 
 // Tipo para compatibilidad con código existente
