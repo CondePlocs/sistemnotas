@@ -173,7 +173,7 @@ export default function CrearSalonModal({ nivel, onClose, onSubmit }: CrearSalon
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className={`bg-${info.color}-600 text-white p-4 rounded-t-lg`}>
@@ -311,13 +311,13 @@ export default function CrearSalonModal({ nivel, onClose, onSubmit }: CrearSalon
                       value={formDataManual.grado}
                       onChange={(e) => handleGradoManualChange(e.target.value)}
                       placeholder={nivel === NivelEducativo.INICIAL ? 'Ej: 3 años' : 'Ej: 1° Primaria'}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-[#333333] placeholder-[#999999]"
                     />
                   ) : (
                     <select
                       value={formDataManual.grado}
                       onChange={(e) => handleGradoManualChange(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-[#333333]"
                     >
                       <option value="">Seleccionar {nivel === NivelEducativo.INICIAL ? 'edad' : 'grado'}</option>
                       {sugerenciasGrados.map((grado) => (
@@ -356,13 +356,13 @@ export default function CrearSalonModal({ nivel, onClose, onSubmit }: CrearSalon
                       value={formDataManual.seccion}
                       onChange={(e) => handleSeccionManualChange(e.target.value)}
                       placeholder="Ej: Los Leones, Rojo, A, etc."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-[#333333] placeholder-[#999999]"
                     />
                   ) : (
                     <select
                       value={formDataManual.seccion}
                       onChange={(e) => handleSeccionManualChange(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-[#333333]"
                     >
                       {sugerenciasSecciones.map((seccion) => (
                         <option key={seccion} value={seccion}>
@@ -402,7 +402,7 @@ export default function CrearSalonModal({ nivel, onClose, onSubmit }: CrearSalon
                 <select
                   value={formDataAutomatico.grado}
                   onChange={(e) => handleGradoAutomaticoChange(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-[#333333]"
                 >
                   <option value="">Seleccionar {nivel === NivelEducativo.INICIAL ? 'edad' : 'grado'}</option>
                   {sugerenciasGrados.map((grado) => (
@@ -444,7 +444,7 @@ export default function CrearSalonModal({ nivel, onClose, onSubmit }: CrearSalon
                     <select
                       value={formDataAutomatico.rango.desde}
                       onChange={(e) => handleRangoChange('desde', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-[#333333]"
                     >
                       {LETRAS_SECCIONES.map((letra) => (
                         <option key={letra} value={letra}>
@@ -459,7 +459,7 @@ export default function CrearSalonModal({ nivel, onClose, onSubmit }: CrearSalon
                     <select
                       value={formDataAutomatico.rango.hasta}
                       onChange={(e) => handleRangoChange('hasta', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-[#333333]"
                     >
                       {LETRAS_SECCIONES.map((letra) => (
                         <option key={letra} value={letra}>

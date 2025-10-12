@@ -104,7 +104,7 @@ export default function ModalEditarSalon({ isOpen, onClose, salon, onSuccess }: 
                         type="text"
                         value={formData.grado}
                         onChange={(e) => setFormData(prev => ({ ...prev, grado: e.target.value }))}
-                        className="w-full px-4 py-3 border-2 border-[#E9E1C9] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8D2C1D] focus:border-[#8D2C1D] transition-all duration-200"
+                        className="w-full px-4 py-3 border-2 border-[#E9E1C9] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8D2C1D] focus:border-[#8D2C1D] transition-all duration-200 text-[#333333] placeholder-[#999999]"
                         placeholder="Ej: 1° Primaria"
                         required
                       />
@@ -119,7 +119,7 @@ export default function ModalEditarSalon({ isOpen, onClose, salon, onSuccess }: 
                         type="text"
                         value={formData.seccion}
                         onChange={(e) => setFormData(prev => ({ ...prev, seccion: e.target.value }))}
-                        className="w-full px-4 py-3 border-2 border-[#E9E1C9] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8D2C1D] focus:border-[#8D2C1D] transition-all duration-200"
+                        className="w-full px-4 py-3 border-2 border-[#E9E1C9] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8D2C1D] focus:border-[#8D2C1D] transition-all duration-200 text-[#333333] placeholder-[#999999]"
                         placeholder="Ej: A"
                         required
                       />
@@ -133,7 +133,7 @@ export default function ModalEditarSalon({ isOpen, onClose, salon, onSuccess }: 
                       <select
                         value={formData.turno}
                         onChange={(e) => setFormData(prev => ({ ...prev, turno: e.target.value }))}
-                        className="w-full px-4 py-3 border-2 border-[#E9E1C9] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8D2C1D] focus:border-[#8D2C1D] transition-all duration-200"
+                        className="w-full px-4 py-3 border-2 border-[#E9E1C9] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8D2C1D] focus:border-[#8D2C1D] transition-all duration-200 text-[#333333]"
                         required
                       >
                         <option value="MAÑANA">Mañana</option>

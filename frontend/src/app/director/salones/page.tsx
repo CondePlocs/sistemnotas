@@ -188,6 +188,14 @@ function GestionSalonesContent() {
   const cerrarModalCrear = () => {
     setModalCrearSalon(false);
     setNivelSeleccionado(null);
+    // Regresar al modal de selección de nivel
+    setModalSeleccionNivel(true);
+  };
+
+  const cerrarTodoElFlujo = () => {
+    setModalSeleccionNivel(false);
+    setModalCrearSalon(false);
+    setNivelSeleccionado(null);
   };
 
   const handleSalonCreado = async (salonData: any) => {
@@ -228,7 +236,7 @@ function GestionSalonesContent() {
         alert(`¡${result.resumen?.total || salonData.secciones.length} salones creados exitosamente!`);
       }
       
-      cerrarModalCrear();
+      cerrarTodoElFlujo(); // Cerrar todo el flujo de creación
       cargarDatos(); // Recargar datos
       
     } catch (error) {
@@ -404,7 +412,7 @@ function GestionSalonesContent() {
                     value={estado.busqueda}
                     onChange={(e) => handleBusquedaChange(e.target.value)}
                     placeholder="Buscar por grado o sección..."
-                    className="w-full pl-9 pr-3 py-2 lg:py-3 border-2 border-[#E9E1C9] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8D2C1D] focus:border-[#8D2C1D] transition-all duration-200 bg-white/90 text-sm"
+                    className="w-full pl-9 pr-3 py-2 lg:py-3 border-2 border-[#E9E1C9] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8D2C1D] focus:border-[#8D2C1D] transition-all duration-200 bg-white/90 text-sm text-[#333333] placeholder-[#999999]"
                   />
                 </div>
                 {/* Botón Crear - Solo móvil */}
@@ -428,7 +436,7 @@ function GestionSalonesContent() {
                 <select
                   value={estado.filtroNivel}
                   onChange={(e) => setEstado(prev => ({ ...prev, filtroNivel: e.target.value, paginaActual: 1 }))}
-                  className="w-full px-2 lg:px-3 py-2 lg:py-3 border-2 border-[#E9E1C9] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8D2C1D] focus:border-[#8D2C1D] transition-all duration-200 bg-white/90 text-xs lg:text-sm"
+                  className="w-full px-2 lg:px-3 py-2 lg:py-3 border-2 border-[#E9E1C9] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8D2C1D] focus:border-[#8D2C1D] transition-all duration-200 bg-white/90 text-xs lg:text-sm text-[#333333]"
                 >
                   <option value="TODOS">Todos</option>
                   <option value="INICIAL">Inicial</option>
@@ -445,7 +453,7 @@ function GestionSalonesContent() {
                 <select
                   value={estado.filtroTurno}
                   onChange={(e) => setEstado(prev => ({ ...prev, filtroTurno: e.target.value, paginaActual: 1 }))}
-                  className="w-full px-2 lg:px-3 py-2 lg:py-3 border-2 border-[#E9E1C9] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8D2C1D] focus:border-[#8D2C1D] transition-all duration-200 bg-white/90 text-xs lg:text-sm"
+                  className="w-full px-2 lg:px-3 py-2 lg:py-3 border-2 border-[#E9E1C9] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8D2C1D] focus:border-[#8D2C1D] transition-all duration-200 bg-white/90 text-xs lg:text-sm text-[#333333]"
                 >
                   <option value="TODOS">Todos</option>
                   <option value="MAÑANA">Mañana</option>
@@ -595,8 +603,11 @@ function GestionSalonesContent() {
       {/* Modales */}
       <ModalSeleccionNivel
         isOpen={modalSeleccionNivel}
-        onClose={() => setModalSeleccionNivel(false)}
-        niveles={estado.nivelesColegio?.nivelesPermitidos || []}
+        onClose={cerrarTodoElFlujo}
+        niveles={(estado.nivelesColegio?.nivelesPermitidos || []).sort((a, b) => {
+          const orden: Record<string, number> = { 'INICIAL': 1, 'PRIMARIA': 2, 'SECUNDARIA': 3 };
+          return (orden[a.nombre] || 999) - (orden[b.nombre] || 999);
+        })}
         onSeleccionarNivel={seleccionarNivel}
       />
 
