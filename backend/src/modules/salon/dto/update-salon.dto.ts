@@ -18,4 +18,8 @@ export class UpdateSalonDto {
   @IsOptional()
   @IsBoolean({ message: 'El estado activo debe ser verdadero o falso' })
   activo?: boolean;
+
+  @IsOptional()
+  @IsString({ message: 'La contraseña debe ser un texto' })
+  password?: string;
 }

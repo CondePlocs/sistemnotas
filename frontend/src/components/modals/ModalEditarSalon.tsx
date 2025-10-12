@@ -9,7 +9,7 @@ interface ModalEditarSalonProps {
   isOpen: boolean;
   onClose: () => void;
   salon: Salon | null;
-  onSuccess: () => void;
+  onSuccess: (salon: Salon, formData: any) => void;
 }
 
 export default function ModalEditarSalon({ isOpen, onClose, salon, onSuccess }: ModalEditarSalonProps) {
@@ -35,34 +35,10 @@ export default function ModalEditarSalon({ isOpen, onClose, salon, onSuccess }: 
     e.preventDefault();
     if (!salon) return;
 
-    setLoading(true);
-    try {
-      const response = await fetch(`/api/salones/${salon.id}`, {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
-      });
-
-      if (!response.ok) {
-        const errorData = await response.text();
-        console.error('Error response:', response.status, errorData);
-        throw new Error(`Error ${response.status}: ${errorData}`);
-      }
-
-      const result = await response.json();
-      console.log('Salón actualizado:', result);
-      alert('¡Salón actualizado exitosamente!');
-      onSuccess();
-      onClose();
-    } catch (error) {
-      console.error('Error completo:', error);
-      alert(`Error al actualizar el salón: ${error instanceof Error ? error.message : 'Error desconocido'}`);
-    } finally {
-      setLoading(false);
-    }
+    // En lugar de hacer la petición directamente, llamamos a onSuccess con los datos
+    // para que el componente padre maneje la confirmación de contraseña
+    onSuccess(salon, formData);
+    onClose();
   };
 
   if (!salon) return null;

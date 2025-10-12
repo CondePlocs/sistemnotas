@@ -11,6 +11,7 @@ import CrearSalonModal from '@/components/CrearSalonModal';
 import ModalSeleccionNivel from '@/components/modals/ModalSeleccionNivel';
 import ModalVerSalon from '@/components/modals/ModalVerSalon';
 import ModalEditarSalon from '@/components/modals/ModalEditarSalon';
+import ModalConfirmarPassword from '@/components/modals/ModalConfirmarPassword';
 import SalonInfoCard from '@/components/salon/SalonInfoCard';
 import { 
   PlusIcon, 
@@ -123,8 +124,12 @@ function GestionSalonesContent() {
   const [modalCrearSalon, setModalCrearSalon] = useState(false);
   const [modalVerSalon, setModalVerSalon] = useState(false);
   const [modalEditarSalon, setModalEditarSalon] = useState(false);
+  const [modalConfirmarPassword, setModalConfirmarPassword] = useState(false);
   const [nivelSeleccionado, setNivelSeleccionado] = useState<NivelEducativo | null>(null);
   const [salonSeleccionado, setSalonSeleccionado] = useState<Salon | null>(null);
+  
+  // Estados para confirmación de contraseña
+  const [pendingEdit, setPendingEdit] = useState<{ salon: Salon; formData: any } | null>(null);
 
   // Cargar datos iniciales
   useEffect(() => {
@@ -241,6 +246,55 @@ function GestionSalonesContent() {
   const editarSalon = (salon: Salon) => {
     setSalonSeleccionado(salon);
     setModalEditarSalon(true);
+  };
+
+  // Función para manejar la edición con confirmación de contraseña
+  const handleEditWithPassword = (salon: Salon, formData: any) => {
+    setPendingEdit({ salon, formData });
+    setModalEditarSalon(false); // Cerrar modal de edición
+    setModalConfirmarPassword(true); // Abrir modal de confirmación
+  };
+
+  // Función para confirmar la edición con contraseña
+  const handlePasswordConfirm = async (password: string) => {
+    if (!pendingEdit) return;
+
+    try {
+      const { salon, formData } = pendingEdit;
+      const response = await fetch(`/api/salones/${salon.id}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...formData,
+          password // Para confirmar la operación
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response:', response.status, errorData);
+        throw new Error(`Error ${response.status}: ${errorData}`);
+      }
+
+      const result = await response.json();
+      console.log('Salón actualizado:', result);
+      
+      // Recargar datos y cerrar modales
+      await cargarDatos();
+      alert('¡Salón actualizado exitosamente!');
+      
+      // Limpiar estados
+      setPendingEdit(null);
+      setModalConfirmarPassword(false);
+      setSalonSeleccionado(null);
+      
+    } catch (error) {
+      console.error('Error completo:', error);
+      alert(`Error al actualizar el salón: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+    }
   };
 
   const eliminarSalon = async (salon: Salon) => {
@@ -564,11 +618,18 @@ function GestionSalonesContent() {
         isOpen={modalEditarSalon}
         onClose={() => setModalEditarSalon(false)}
         salon={salonSeleccionado}
-        onSuccess={() => {
-          cargarDatos();
-          setModalEditarSalon(false);
-          setSalonSeleccionado(null);
+        onSuccess={handleEditWithPassword}
+      />
+
+      <ModalConfirmarPassword
+        isOpen={modalConfirmarPassword}
+        onClose={() => {
+          setModalConfirmarPassword(false);
+          setPendingEdit(null);
         }}
+        onConfirm={handlePasswordConfirm}
+        title="Confirmar Edición de Salón"
+        message="Para confirmar la actualización de los datos del salón, ingresa tu contraseña."
       />
     </div>
   );

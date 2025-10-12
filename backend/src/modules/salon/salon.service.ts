@@ -1,10 +1,11 @@
-import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../../providers/prisma.service';
 import { CreateSalonDto } from './dto/create-salon.dto';
 import { CreateSalonesLoteDto } from './dto/create-salones-lote.dto';
 import { UpdateSalonDto } from './dto/update-salon.dto';
 import { NivelEducativo, SalonCreado } from '../../types/salon.types';
 import { SalonCursosService } from './salon-cursos.service';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class SalonService {
@@ -238,6 +239,22 @@ export class SalonService {
     // 1. Verificar que el usuario es director y obtener su colegio
     const director = await this.verificarDirectorYColegio(usuarioId);
     
+    // 1.5. Si se proporciona contraseña, verificarla
+    if (updateSalonDto.password) {
+      const usuario = await this.prisma.usuario.findUnique({
+        where: { id: usuarioId }
+      });
+
+      if (!usuario) {
+        throw new NotFoundException('Usuario no encontrado');
+      }
+
+      const passwordValida = await bcrypt.compare(updateSalonDto.password, usuario.password_hash);
+      if (!passwordValida) {
+        throw new UnauthorizedException('Contraseña incorrecta');
+      }
+    }
+    
     // 2. Verificar que el salón existe y pertenece al colegio del director
     const salonExistente = await this.prisma.salon.findFirst({
       where: {
@@ -269,10 +286,13 @@ export class SalonService {
       }
     }
 
-    // 4. Actualizar el salón
+    // 4. Preparar datos para actualización (excluir password)
+    const { password, ...datosActualizacion } = updateSalonDto;
+
+    // 5. Actualizar el salón
     const salonActualizado = await this.prisma.salon.update({
       where: { id },
-      data: updateSalonDto,
+      data: datosActualizacion,
       include: {
         colegio: {
           select: {
