@@ -20,6 +20,7 @@ model Usuario {
   creado_en                 DateTime                 @default(now())
   actualizado_en            DateTime                 @updatedAt
   alumnosCreados            Alumno[]                 @relation("AlumnoCreador")
+  alumnosActualizados       Alumno[]                 @relation("AlumnoActualizador")
   asignacionesAlumnoSalon   AlumnoSalon[]            @relation("AlumnoSalonAsignador")
   relacionesApoderadoAlumno ApoderadoAlumno[]        @relation("RelacionCreador")
   competenciasCreadas       Competencia[]            @relation("CompetenciaCreador")
@@ -276,10 +277,12 @@ model Alumno {
   numeroContacto  String?
   activo          Boolean           @default(true)
   creadoPor       Int
+  actualizadoPor  Int?
   creadoEn        DateTime          @default(now())
   actualizadoEn   DateTime          @updatedAt
   colegio         Colegio           @relation(fields: [colegioId], references: [id], onDelete: Cascade)
   creadorUser     Usuario           @relation("AlumnoCreador", fields: [creadoPor], references: [id])
+  actualizadorUser Usuario?         @relation("AlumnoActualizador", fields: [actualizadoPor], references: [id])
   salon           AlumnoSalon?
   apoderados      ApoderadoAlumno[]
   notas           RegistroNota[]

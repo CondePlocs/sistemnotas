@@ -11,10 +11,6 @@ interface ModalVerAlumnoProps {
 export default function ModalVerAlumno({ isOpen, onClose, alumno }: ModalVerAlumnoProps) {
   if (!isOpen || !alumno) return null;
 
-  // Debug temporal - verificar datos recibidos
-  console.log('Datos del alumno en modal:', alumno);
-  console.log('creadorUser:', alumno.creadorUser);
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-PE', {
       year: 'numeric',
@@ -234,12 +230,22 @@ export default function ModalVerAlumno({ isOpen, onClose, alumno }: ModalVerAlum
                 <span className="font-semibold text-[#333333]">{formatDate(alumno.actualizadoEn)}</span>
               </div>
 
-              <div className="bg-white/60 p-4 rounded-xl md:col-span-2">
+              <div className="bg-white/60 p-4 rounded-xl">
                 <span className="text-[#666666] font-medium block mb-1">Creado Por:</span>
                 <span className="font-semibold text-[#333333]">
                   {alumno.creadorUser ? 
                     `${alumno.creadorUser.nombres} ${alumno.creadorUser.apellidos}` : 
                     'Información no disponible'
+                  }
+                </span>
+              </div>
+
+              <div className="bg-white/60 p-4 rounded-xl">
+                <span className="text-[#666666] font-medium block mb-1">Actualizado Por:</span>
+                <span className="font-semibold text-[#333333]">
+                  {alumno.actualizadorUser ? 
+                    `${alumno.actualizadorUser.nombres} ${alumno.actualizadorUser.apellidos}` : 
+                    'Sin actualizaciones'
                   }
                 </span>
               </div>

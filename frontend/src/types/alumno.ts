@@ -21,6 +21,7 @@ export interface Alumno {
   numeroContacto?: string;
   activo: boolean;
   creadoPor: number;
+  actualizadoPor?: number;
   creadoEn: string;
   actualizadoEn: string;
   colegio?: {
@@ -28,6 +29,11 @@ export interface Alumno {
     nombre: string;
   };
   creadorUser?: {
+    id: number;
+    nombres?: string;
+    apellidos?: string;
+  };
+  actualizadorUser?: {
     id: number;
     nombres?: string;
     apellidos?: string;

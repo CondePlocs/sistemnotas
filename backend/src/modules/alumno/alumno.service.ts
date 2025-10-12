@@ -197,6 +197,13 @@ export class AlumnoService {
                 nombres: true,
                 apellidos: true
               }
+            },
+            actualizadorUser: {
+              select: {
+                id: true,
+                nombres: true,
+                apellidos: true
+              }
             }
           }
         }),
@@ -258,6 +265,13 @@ export class AlumnoService {
             }
           },
           creadorUser: {
+            select: {
+              id: true,
+              nombres: true,
+              apellidos: true
+            }
+          },
+          actualizadorUser: {
             select: {
               id: true,
               nombres: true,
@@ -370,12 +384,27 @@ export class AlumnoService {
           distrito: actualizarAlumnoDto.distrito,
           numeroContacto: actualizarAlumnoDto.numeroContacto,
           activo: actualizarAlumnoDto.activo,
+          actualizadoPor: usuarioId,
         },
         include: {
           colegio: {
             select: {
               id: true,
               nombre: true
+            }
+          },
+          creadorUser: {
+            select: {
+              id: true,
+              nombres: true,
+              apellidos: true
+            }
+          },
+          actualizadorUser: {
+            select: {
+              id: true,
+              nombres: true,
+              apellidos: true
             }
           }
         }
