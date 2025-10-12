@@ -190,6 +190,13 @@ export class AlumnoService {
                 id: true,
                 nombre: true
               }
+            },
+            creadorUser: {
+              select: {
+                id: true,
+                nombres: true,
+                apellidos: true
+              }
             }
           }
         }),
@@ -248,6 +255,13 @@ export class AlumnoService {
             select: {
               id: true,
               nombre: true
+            }
+          },
+          creadorUser: {
+            select: {
+              id: true,
+              nombres: true,
+              apellidos: true
             }
           }
         }

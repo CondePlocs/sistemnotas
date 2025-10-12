@@ -134,37 +134,38 @@ export default function AlumnoCard({ alumno, onView, onEdit, onStatusChange }: A
 
       {/* Acciones */}
       <div className="px-4 pb-4">
-        <div className="flex gap-2">
-          {/* Ver */}
-          <button
-            onClick={() => onView(alumno)}
-            className="flex-1 px-3 py-2 bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] text-white text-sm font-medium rounded-lg hover:from-[#1D4ED8] hover:to-[#2563EB] transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-            </svg>
-            <span className="hidden sm:inline">Ver</span>
-          </button>
-
-          {/* Editar */}
-          <button
-            onClick={() => onEdit(alumno)}
-            className="flex-1 px-3 py-2 bg-gradient-to-r from-[#16A34A] to-[#15803D] text-white text-sm font-medium rounded-lg hover:from-[#15803D] hover:to-[#16A34A] transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-            <span className="hidden sm:inline">Editar</span>
-          </button>
-
-          {/* Activar/Desactivar */}
+        <div className="mt-4 space-y-2">
+          {/* Primera fila - Ver y Editar */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => onView(alumno)}
+              className="flex-1 px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-1"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              Ver
+            </button>
+            
+            <button
+              onClick={() => onEdit(alumno)}
+              className="flex-1 px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-1"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Editar
+            </button>
+          </div>
+          
+          {/* Segunda fila - Activar/Desactivar */}
           <button
             onClick={() => onStatusChange(alumno, alumno.activo ? 'inactivo' : 'activo')}
-            className={`flex-1 px-3 py-2 text-white text-sm font-medium rounded-lg transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2 ${
-              alumno.activo
-                ? 'bg-gradient-to-r from-[#DC2626] to-[#B91C1C] hover:from-[#B91C1C] hover:to-[#DC2626]'
-                : 'bg-gradient-to-r from-[#16A34A] to-[#15803D] hover:from-[#15803D] hover:to-[#16A34A]'
+            className={`w-full px-3 py-2 text-white text-sm rounded-lg transition-colors flex items-center justify-center gap-1 ${
+              alumno.activo 
+                ? 'bg-red-600 hover:bg-red-700' 
+                : 'bg-orange-600 hover:bg-orange-700'
             }`}
           >
             {alumno.activo ? (
@@ -172,14 +173,14 @@ export default function AlumnoCard({ alumno, onView, onEdit, onStatusChange }: A
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728" />
                 </svg>
-                <span className="hidden sm:inline">Desactivar</span>
+                Desactivar
               </>
             ) : (
               <>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                <span className="hidden sm:inline">Activar</span>
+                Activar
               </>
             )}
           </button>

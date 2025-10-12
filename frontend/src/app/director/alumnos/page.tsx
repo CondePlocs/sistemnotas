@@ -360,26 +360,24 @@ function AlumnosContent() {
             </div>
           ) : (
             <>
-              {/* Grid de Cards - Responsive */}
-              <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {alumnosPaginados.map((alumno) => (
-                    <AlumnoCard
-                      key={alumno.id}
-                      alumno={alumno}
-                      onView={(alumno) => {
-                        setSelectedAlumno(alumno);
-                        setIsViewModalOpen(true);
-                      }}
-                      onEdit={(alumno) => {
-                        setSelectedAlumno(alumno);
-                        setIsEditing(true);
-                        setIsModalOpen(true);
-                      }}
-                      onStatusChange={handleStatusChange}
-                    />
-                  ))}
-                </div>
+              {/* Grid de alumnos */}
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                {alumnosPaginados.map((alumno) => (
+                  <AlumnoCard
+                    key={alumno.id}
+                    alumno={alumno}
+                    onView={(alumno) => {
+                      setSelectedAlumno(alumno);
+                      setIsViewModalOpen(true);
+                    }}
+                    onEdit={(alumno) => {
+                      setSelectedAlumno(alumno);
+                      setIsEditing(true);
+                      setIsModalOpen(true);
+                    }}
+                    onStatusChange={handleStatusChange}
+                  />
+                ))}
               </div>
 
               {/* Paginación */}
@@ -455,7 +453,10 @@ function AlumnosContent() {
           setSelectedAlumno(null);
           setIsEditing(false);
         }}
-        onSubmit={isEditing ? handleEdit : handleCreate}
+        onSubmit={isEditing 
+          ? (formData: AlumnoFormData) => handleEdit(selectedAlumno!, formData)
+          : handleCreate
+        }
         alumno={isEditing ? selectedAlumno : null}
         title={isEditing ? 'Editar Alumno' : 'Nuevo Alumno'}
       />
