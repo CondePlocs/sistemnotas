@@ -8,6 +8,8 @@ import { ProfesorAsignacion, PeriodoAcademico } from '@/types/evaluaciones';
 import AsignacionCard from '@/components/profesor/AsignacionCard';
 import LoadingCard from '@/components/profesor/LoadingCard';
 import ModalSeleccionPeriodo from '@/components/modals/ModalSeleccionPeriodo';
+import DashboardHeader from '@/components/layout/DashboardHeader';
+import DashboardFooter from '@/components/layout/DashboardFooter';
 import { AcademicCapIcon, BookOpenIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline';
 
 interface AsignacionesResponse {
@@ -19,7 +21,7 @@ interface AsignacionesResponse {
 }
 
 export default function ProfesorDashboard() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const router = useRouter();
   const [asignaciones, setAsignaciones] = useState<ProfesorAsignacion[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,6 +30,11 @@ export default function ProfesorDashboard() {
   // Estado para el modal de selección de período
   const [modalPeriodoAbierto, setModalPeriodoAbierto] = useState(false);
   const [asignacionSeleccionada, setAsignacionSeleccionada] = useState<ProfesorAsignacion | null>(null);
+  
+  // Estados para filtros y paginación
+  const [filtroNivel, setFiltroNivel] = useState<string>('TODOS');
+  const [paginaActual, setPaginaActual] = useState(1);
+  const ELEMENTOS_POR_PAGINA = 20;
 
   // Obtener el ID del profesor desde el usuario autenticado
   const getProfesorId = async () => {
@@ -102,8 +109,23 @@ export default function ProfesorDashboard() {
     router.push(`/profesor/evaluaciones?asignacionId=${asignacion.id}&periodoId=${periodo.id}`);
   };
 
+  // Filtrar asignaciones por nivel
+  const asignacionesFiltradas = asignaciones.filter(asignacion => {
+    if (filtroNivel === 'TODOS') return true;
+    return asignacion.salon.colegioNivel.nivel.nombre === filtroNivel;
+  });
+
+  // Paginación
+  const totalPaginas = Math.ceil(asignacionesFiltradas.length / ELEMENTOS_POR_PAGINA);
+  const indiceInicio = (paginaActual - 1) * ELEMENTOS_POR_PAGINA;
+  const indiceFin = indiceInicio + ELEMENTOS_POR_PAGINA;
+  const asignacionesPaginadas = asignacionesFiltradas.slice(indiceInicio, indiceFin);
+
+  // Obtener niveles únicos para el filtro
+  const nivelesUnicos = Array.from(new Set(asignaciones.map(a => a.salon.colegioNivel.nivel.nombre)));
+
   // Agrupar asignaciones por nivel educativo
-  const asignacionesPorNivel = asignaciones.reduce((acc, asignacion) => {
+  const asignacionesPorNivel = asignacionesPaginadas.reduce((acc, asignacion) => {
     const nivel = asignacion.salon.colegioNivel.nivel.nombre;
     if (!acc[nivel]) {
       acc[nivel] = [];
@@ -114,67 +136,92 @@ export default function ProfesorDashboard() {
 
   return (
     <ProtectedRoute requiredRole="PROFESOR">
-      <div className="min-h-screen bg-gray-50">
-        {/* Header */}
-        <div className="bg-white shadow-sm border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="py-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900">
-                    Dashboard del Profesor
-                  </h1>
-                  <p className="mt-1 text-sm text-gray-500">
-                    Bienvenido, {user?.nombres} {user?.apellidos}
-                  </p>
-                </div>
-                <div className="flex items-center space-x-4">
-                  <div className="bg-blue-50 p-3 rounded-lg">
-                    <AcademicCapIcon className="h-8 w-8 text-blue-600" />
-                  </div>
-                </div>
+      <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9] flex flex-col">
+        {/* Header Reutilizable */}
+        <DashboardHeader 
+          title="Dashboard del Profesor"
+          userName={`${user?.nombres} ${user?.apellidos}`}
+          userEmail={user?.email}
+          onLogout={logout}
+        />
+
+        {/* Contenido principal */}
+        <div className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Filtros */}
+          <div className="mb-6">
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => {
+                    setFiltroNivel('TODOS');
+                    setPaginaActual(1);
+                  }}
+                  className={`px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 ${
+                    filtroNivel === 'TODOS'
+                      ? 'bg-gradient-to-r from-[#8D2C1D] to-[#D96924] text-white shadow-lg'
+                      : 'bg-white/80 text-[#8D2C1D] border-2 border-[#E9E1C9] hover:border-[#8D2C1D]'
+                  }`}
+                >
+                  Todos ({asignaciones.length})
+                </button>
+                {nivelesUnicos.map((nivel) => {
+                  const count = asignaciones.filter(a => a.salon.colegioNivel.nivel.nombre === nivel).length;
+                  return (
+                    <button
+                      key={nivel}
+                      onClick={() => {
+                        setFiltroNivel(nivel);
+                        setPaginaActual(1);
+                      }}
+                      className={`px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 ${
+                        filtroNivel === nivel
+                          ? 'bg-gradient-to-r from-[#8D2C1D] to-[#D96924] text-white shadow-lg'
+                          : 'bg-white/80 text-[#8D2C1D] border-2 border-[#E9E1C9] hover:border-[#8D2C1D]'
+                      }`}
+                    >
+                      {nivel} ({count})
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Contenido principal */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Estadísticas rápidas */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white rounded-lg shadow-sm p-6 border">
-              <div className="flex items-center">
-                <div className="bg-blue-50 p-3 rounded-lg">
-                  <BookOpenIcon className="h-6 w-6 text-blue-600" />
+          {/* Estadísticas rápidas con paleta de marca - SIEMPRE EN UNA FILA */}
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-8">
+            <div className="bg-white/95 backdrop-blur-sm rounded-lg sm:rounded-xl shadow-lg p-3 sm:p-6 border-2 border-[#E9E1C9] hover:shadow-xl transition-all duration-300 hover:scale-105">
+              <div className="flex flex-col sm:flex-row items-center sm:items-center text-center sm:text-left">
+                <div className="bg-gradient-to-br from-[#8D2C1D] to-[#D96924] p-2 sm:p-3 rounded-lg sm:rounded-xl shadow-md mb-2 sm:mb-0">
+                  <BookOpenIcon className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Total Asignaciones</p>
-                  <p className="text-2xl font-bold text-gray-900">{asignaciones.length}</p>
+                <div className="sm:ml-4">
+                  <p className="text-xs sm:text-sm font-medium text-[#666666] leading-tight">Total Asignaciones</p>
+                  <p className="text-lg sm:text-2xl font-bold text-[#8D2C1D]">{asignacionesFiltradas.length}</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm p-6 border">
-              <div className="flex items-center">
-                <div className="bg-green-50 p-3 rounded-lg">
-                  <BuildingOfficeIcon className="h-6 w-6 text-green-600" />
+            <div className="bg-white/95 backdrop-blur-sm rounded-lg sm:rounded-xl shadow-lg p-3 sm:p-6 border-2 border-[#E9E1C9] hover:shadow-xl transition-all duration-300 hover:scale-105">
+              <div className="flex flex-col sm:flex-row items-center sm:items-center text-center sm:text-left">
+                <div className="bg-gradient-to-br from-[#8D2C1D] to-[#D96924] p-2 sm:p-3 rounded-lg sm:rounded-xl shadow-md mb-2 sm:mb-0">
+                  <BuildingOfficeIcon className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Niveles Educativos</p>
-                  <p className="text-2xl font-bold text-gray-900">{Object.keys(asignacionesPorNivel).length}</p>
+                <div className="sm:ml-4">
+                  <p className="text-xs sm:text-sm font-medium text-[#666666] leading-tight">Niveles Educativos</p>
+                  <p className="text-lg sm:text-2xl font-bold text-[#8D2C1D]">{nivelesUnicos.length}</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm p-6 border">
-              <div className="flex items-center">
-                <div className="bg-purple-50 p-3 rounded-lg">
-                  <AcademicCapIcon className="h-6 w-6 text-purple-600" />
+            <div className="bg-white/95 backdrop-blur-sm rounded-lg sm:rounded-xl shadow-lg p-3 sm:p-6 border-2 border-[#E9E1C9] hover:shadow-xl transition-all duration-300 hover:scale-105">
+              <div className="flex flex-col sm:flex-row items-center sm:items-center text-center sm:text-left">
+                <div className="bg-gradient-to-br from-[#8D2C1D] to-[#D96924] p-2 sm:p-3 rounded-lg sm:rounded-xl shadow-md mb-2 sm:mb-0">
+                  <AcademicCapIcon className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Cursos Únicos</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {new Set(asignaciones.map(a => a.curso.id)).size}
+                <div className="sm:ml-4">
+                  <p className="text-xs sm:text-sm font-medium text-[#666666] leading-tight">Cursos Únicos</p>
+                  <p className="text-lg sm:text-2xl font-bold text-[#8D2C1D]">
+                    {new Set(asignacionesFiltradas.map(a => a.curso.id)).size}
                   </p>
                 </div>
               </div>
@@ -184,9 +231,9 @@ export default function ProfesorDashboard() {
           {/* Contenido de asignaciones */}
           {loading ? (
             <div className="space-y-8">
-              <div className="bg-white rounded-lg shadow-sm border">
-                <div className="px-6 py-4 border-b border-gray-200">
-                  <div className="h-6 bg-gray-300 rounded w-32 animate-pulse"></div>
+              <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border-2 border-[#E9E1C9]">
+                <div className="px-6 py-4 border-b border-[#E9E1C9]">
+                  <div className="h-6 bg-[#E9E1C9] rounded w-32 animate-pulse"></div>
                 </div>
                 <div className="p-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -198,45 +245,45 @@ export default function ProfesorDashboard() {
               </div>
             </div>
           ) : error ? (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+            <div className="bg-red-50/95 backdrop-blur-sm border-2 border-red-200 rounded-xl p-6 text-center shadow-lg">
               <div className="text-red-600 mb-2">⚠️ Error</div>
               <p className="text-red-700">{error}</p>
               <button
                 onClick={cargarAsignaciones}
-                className="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+                className="mt-4 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
               >
                 Reintentar
               </button>
             </div>
-          ) : asignaciones.length === 0 ? (
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-12 text-center">
-              <AcademicCapIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+          ) : asignacionesFiltradas.length === 0 ? (
+            <div className="bg-white/95 backdrop-blur-sm border-2 border-[#E9E1C9] rounded-xl p-12 text-center shadow-lg">
+              <AcademicCapIcon className="h-16 w-16 text-[#8D2C1D] mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-[#8D2C1D] mb-2">
                 No tienes asignaciones activas
               </h3>
-              <p className="text-gray-500">
+              <p className="text-[#666666]">
                 Contacta al director de tu colegio para que te asigne cursos y salones.
               </p>
             </div>
           ) : (
             <div className="space-y-8">
               {Object.entries(asignacionesPorNivel).map(([nivel, asignacionesNivel]) => (
-                <div key={nivel} className="bg-white rounded-lg shadow-sm border">
-                  <div className="px-6 py-4 border-b border-gray-200">
-                    <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-                      <span className={`inline-block w-3 h-3 rounded-full mr-3 ${
-                        nivel === 'INICIAL' ? 'bg-yellow-500' :
-                        nivel === 'PRIMARIA' ? 'bg-blue-500' :
-                        nivel === 'SECUNDARIA' ? 'bg-green-500' : 'bg-gray-500'
+                <div key={nivel} className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border-2 border-[#E9E1C9] hover:shadow-xl transition-all duration-300">
+                  <div className="px-6 py-4 border-b border-[#E9E1C9]">
+                    <h2 className="text-xl font-bold text-[#8D2C1D] flex items-center">
+                      <span className={`inline-block w-3 h-3 rounded-full mr-3 shadow-sm ${
+                        nivel === 'INICIAL' ? 'bg-gradient-to-r from-yellow-400 to-yellow-500' :
+                        nivel === 'PRIMARIA' ? 'bg-gradient-to-r from-blue-400 to-blue-500' :
+                        nivel === 'SECUNDARIA' ? 'bg-gradient-to-r from-green-400 to-green-500' : 'bg-gradient-to-r from-gray-400 to-gray-500'
                       }`}></span>
                       {nivel}
-                      <span className="ml-2 text-sm font-normal text-gray-500">
+                      <span className="ml-2 text-sm font-normal text-[#666666]">
                         ({asignacionesNivel.length} asignación{asignacionesNivel.length !== 1 ? 'es' : ''})
                       </span>
                     </h2>
                   </div>
                   <div className="p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
                       {asignacionesNivel.map((asignacion) => (
                         <AsignacionCard
                           key={asignacion.id}
@@ -250,7 +297,47 @@ export default function ProfesorDashboard() {
               ))}
             </div>
           )}
+
+          {/* Paginación - Responsive mejorada */}
+          {totalPaginas > 1 && (
+            <div className="mt-8 flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-2">
+              <button
+                onClick={() => setPaginaActual(prev => Math.max(prev - 1, 1))}
+                disabled={paginaActual === 1}
+                className="w-full sm:w-auto px-3 sm:px-4 py-2 rounded-xl bg-white/80 text-[#8D2C1D] border-2 border-[#E9E1C9] hover:border-[#8D2C1D] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 text-sm font-semibold"
+              >
+                Anterior
+              </button>
+              
+              <div className="flex gap-1 flex-wrap justify-center">
+                {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((pagina) => (
+                  <button
+                    key={pagina}
+                    onClick={() => setPaginaActual(pagina)}
+                    className={`px-2 sm:px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-300 ${
+                      paginaActual === pagina
+                        ? 'bg-gradient-to-r from-[#8D2C1D] to-[#D96924] text-white shadow-lg'
+                        : 'bg-white/80 text-[#8D2C1D] hover:bg-[#FCE0C1]'
+                    }`}
+                  >
+                    {pagina}
+                  </button>
+                ))}
+              </div>
+              
+              <button
+                onClick={() => setPaginaActual(prev => Math.min(prev + 1, totalPaginas))}
+                disabled={paginaActual === totalPaginas}
+                className="w-full sm:w-auto px-3 sm:px-4 py-2 rounded-xl bg-white/80 text-[#8D2C1D] border-2 border-[#E9E1C9] hover:border-[#8D2C1D] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 text-sm font-semibold"
+              >
+                Siguiente
+              </button>
+            </div>
+          )}
         </div>
+
+        {/* Footer Reutilizable */}
+        <DashboardFooter />
 
         {/* Modal de selección de período */}
         <ModalSeleccionPeriodo
