@@ -76,17 +76,22 @@ export default function ModalCrearEvaluacion({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
-          <h3 className="text-lg font-semibold text-gray-900">
-            Nueva Evaluación
-          </h3>
+    <div className="fixed inset-0 bg-black/65 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl max-w-md w-full mx-4 border-2 border-[#E9E1C9]">
+        {/* Header con paleta corporativa */}
+        <div className="flex items-center justify-between p-6 border-b border-[#E9E1C9] bg-gradient-to-r from-[#8D2C1D] to-[#D96924] rounded-t-xl">
+          <div className="flex items-center gap-3">
+            <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
+              <DocumentTextIcon className="h-6 w-6 text-white" />
+            </div>
+            <h3 className="text-lg font-bold text-white">
+              Nueva Evaluación
+            </h3>
+          </div>
           <button
             onClick={handleClose}
             disabled={loading}
-            className="text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
+            className="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-lg transition-all duration-300 disabled:opacity-50"
           >
             <XMarkIcon className="h-6 w-6" />
           </button>
@@ -95,32 +100,32 @@ export default function ModalCrearEvaluacion({
         {/* Content */}
         <form onSubmit={handleSubmit} className="p-6">
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-700 text-sm">{error}</p>
+            <div className="mb-4 p-4 bg-red-50/95 backdrop-blur-sm border-2 border-red-200 rounded-xl">
+              <p className="text-red-700 text-sm font-medium">{error}</p>
             </div>
           )}
 
           {/* Fecha de evaluación (solo lectura) */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              <CalendarIcon className="h-4 w-4 inline mr-1" />
+            <label className="block text-sm font-semibold text-[#333333] mb-2">
+              <CalendarIcon className="h-4 w-4 inline mr-2 text-[#8D2C1D]" />
               Fecha de Evaluación
             </label>
             <input
               type="date"
               value={fechaActual}
               readOnly
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
+              className="w-full px-4 py-3 border-2 border-[#E9E1C9] rounded-xl bg-[#FCE0C1]/30 text-[#666666] cursor-not-allowed font-medium"
             />
-            <p className="text-xs text-gray-500 mt-1">
-              La fecha se establece automáticamente al día actual
+            <p className="text-xs text-[#666666] mt-2 font-medium">
+              ℹ️ La fecha se establece automáticamente al día actual
             </p>
           </div>
 
           {/* Nombre de la evaluación */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              <DocumentTextIcon className="h-4 w-4 inline mr-1" />
+            <label className="block text-sm font-semibold text-[#333333] mb-2">
+              <DocumentTextIcon className="h-4 w-4 inline mr-2 text-[#8D2C1D]" />
               Nombre de la Evaluación *
             </label>
             <input
@@ -128,7 +133,7 @@ export default function ModalCrearEvaluacion({
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
               placeholder="Ej: Examen Parcial, Práctica Calificada, etc."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-4 py-3 border-2 border-[#E9E1C9] rounded-xl focus:ring-2 focus:ring-[#8D2C1D] focus:border-[#8D2C1D] transition-all duration-300 font-medium"
               disabled={loading}
               required
               maxLength={100}
@@ -137,15 +142,15 @@ export default function ModalCrearEvaluacion({
 
           {/* Descripción (opcional) */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Descripción (opcional)
+            <label className="block text-sm font-semibold text-[#333333] mb-2">
+              📝 Descripción (opcional)
             </label>
             <textarea
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
               placeholder="Descripción adicional sobre la evaluación..."
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+              className="w-full px-4 py-3 border-2 border-[#E9E1C9] rounded-xl focus:ring-2 focus:ring-[#8D2C1D] focus:border-[#8D2C1D] resize-none transition-all duration-300 font-medium"
               disabled={loading}
               maxLength={500}
             />
@@ -157,14 +162,14 @@ export default function ModalCrearEvaluacion({
               type="button"
               onClick={handleClose}
               disabled={loading}
-              className="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50"
+              className="flex-1 bg-white/80 hover:bg-white text-[#8D2C1D] px-4 py-3 rounded-xl transition-all duration-300 font-semibold border-2 border-[#E9E1C9] hover:border-[#8D2C1D] shadow-sm hover:shadow-md disabled:opacity-50"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={loading || !nombre.trim()}
-              className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="flex-1 bg-gradient-to-r from-[#8D2C1D] to-[#D96924] hover:from-[#7A2518] hover:to-[#C55A1F] text-white px-4 py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center font-semibold"
             >
               {loading ? (
                 <>

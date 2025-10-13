@@ -183,15 +183,39 @@ export default function TablaEvaluacionesReal({
     setModalCrearAbierto(true);
   };
 
-  // Obtener color de rendimiento para notas literales
-  const getColorNota = (nota: NotaLiteral | null): string => {
-    if (nota === null) return 'bg-gray-100 text-gray-400';
+  // Obtener color de rendimiento para notas literales (versión mejorada)
+  const getColorNotaMejorado = (nota: NotaLiteral | null): string => {
+    if (nota === null) return 'bg-white/80 text-[#666666] border-[#E9E1C9] hover:bg-[#FCE0C1] hover:border-[#8D2C1D]';
     switch (nota) {
-      case 'AD': return 'bg-green-100 text-green-800';
-      case 'A': return 'bg-blue-100 text-blue-800';
-      case 'B': return 'bg-yellow-100 text-yellow-800';
-      case 'C': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-400';
+      case 'AD': return 'bg-gradient-to-br from-green-400 to-green-500 text-white border-green-500 hover:from-green-500 hover:to-green-600';
+      case 'A': return 'bg-gradient-to-br from-blue-400 to-blue-500 text-white border-blue-500 hover:from-blue-500 hover:to-blue-600';
+      case 'B': return 'bg-gradient-to-br from-yellow-400 to-yellow-500 text-white border-yellow-500 hover:from-yellow-500 hover:to-yellow-600';
+      case 'C': return 'bg-gradient-to-br from-red-400 to-red-500 text-white border-red-500 hover:from-red-500 hover:to-red-600';
+      default: return 'bg-white/80 text-[#666666] border-[#E9E1C9] hover:bg-[#FCE0C1] hover:border-[#8D2C1D]';
+    }
+  };
+
+  // Obtener color para promedios de competencia
+  const getColorPromedio = (promedio: string): string => {
+    if (promedio === '-') return 'bg-gray-100 text-gray-500 border border-gray-200';
+    switch (promedio) {
+      case 'AD': return 'bg-gradient-to-br from-green-100 to-green-200 text-green-800 border border-green-300';
+      case 'A': return 'bg-gradient-to-br from-blue-100 to-blue-200 text-blue-800 border border-blue-300';
+      case 'B': return 'bg-gradient-to-br from-yellow-100 to-yellow-200 text-yellow-800 border border-yellow-300';
+      case 'C': return 'bg-gradient-to-br from-red-100 to-red-200 text-red-800 border border-red-300';
+      default: return 'bg-gray-100 text-gray-500 border border-gray-200';
+    }
+  };
+
+  // Obtener color para promedio final
+  const getColorPromedioFinal = (promedio: string): string => {
+    if (promedio === '-') return 'bg-gradient-to-br from-gray-200 to-gray-300 text-gray-600 border-2 border-gray-400';
+    switch (promedio) {
+      case 'AD': return 'bg-gradient-to-br from-green-400 to-green-600 text-white border-2 border-green-600';
+      case 'A': return 'bg-gradient-to-br from-blue-400 to-blue-600 text-white border-2 border-blue-600';
+      case 'B': return 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-white border-2 border-yellow-600';
+      case 'C': return 'bg-gradient-to-br from-red-400 to-red-600 text-white border-2 border-red-600';
+      default: return 'bg-gradient-to-br from-gray-200 to-gray-300 text-gray-600 border-2 border-gray-400';
     }
   };
 
@@ -206,58 +230,63 @@ export default function TablaEvaluacionesReal({
         onDescartar={descartarCambios}
       />
 
-      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-        {/* Header - SIN botón "Nueva Tarea Global" */}
-        <div className="bg-gray-50 px-6 py-4 border-b">
+      <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-xl border-2 border-[#E9E1C9] overflow-hidden">
+        {/* Header mejorado con paleta corporativa */}
+        <div className="bg-gradient-to-r from-[#8D2C1D] to-[#D96924] px-6 py-5">
           <div className="flex justify-between items-center">
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">
+              <h2 className="text-xl font-bold text-white mb-1">
                 📚 {contexto.asignacion.curso} - {contexto.asignacion.salon}
               </h2>
-              <p className="text-sm text-gray-600">🗓️ {contexto.periodo.tipo} {contexto.periodo.nombre} - {contexto.periodo.anioAcademico}</p>
+              <p className="text-[#FCE0C1] text-sm font-medium">
+                🗺️ {contexto.periodo.tipo} {contexto.periodo.nombre} - {contexto.periodo.anioAcademico}
+              </p>
             </div>
-            <div className="text-sm text-gray-500">
-              {contexto.alumnos.length} estudiantes • {contexto.competencias.length} competencias
+            <div className="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
+              <div className="text-white text-sm font-semibold text-center">
+                <div>{contexto.alumnos.length} estudiantes</div>
+                <div>{contexto.competencias.length} competencias</div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Tabla */}
+        {/* Tabla mejorada */}
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-gray-50">
-                <th className="px-4 py-3 text-left text-sm font-medium text-gray-900 border-r">
-                  ALUMNO
+              <tr className="bg-gradient-to-r from-[#FCE0C1] to-[#E9E1C9]">
+                <th className="px-6 py-4 text-left text-sm font-bold text-[#8D2C1D] border-r border-[#E9E1C9] sticky left-0 bg-gradient-to-r from-[#FCE0C1] to-[#E9E1C9] z-10">
+                  👥 ESTUDIANTE
                 </th>
                 {contexto.competencias.map(competencia => {
                   const evaluacionesCompetencia = obtenerEvaluacionesPorCompetencia(competencia.id);
                   return (
-                    <th key={competencia.id} className="border-r">
-                      <div className="px-2 py-3">
-                        <div className="text-center text-sm font-medium text-white px-3 py-1 rounded bg-blue-600">
-                          {competencia.nombre}
+                    <th key={competencia.id} className="border-r border-[#E9E1C9] min-w-[200px]">
+                      <div className="px-3 py-4">
+                        <div className="text-center text-sm font-bold text-white px-4 py-2 rounded-xl bg-gradient-to-r from-[#8D2C1D] to-[#D96924] shadow-lg mb-3">
+                          🎯 {competencia.nombre}
                         </div>
-                        <div className="flex mt-2">
+                        <div className="flex items-center gap-1">
                           {evaluacionesCompetencia.map(evaluacion => (
-                            <div key={evaluacion.id} className="flex-1 px-1">
-                              <div className="text-xs text-gray-600 text-center border-r last:border-r-0">
+                            <div key={evaluacion.id} className="flex-1 min-w-[60px]">
+                              <div className="text-xs text-[#666666] text-center font-semibold p-2 bg-white/50 rounded-lg border border-[#E9E1C9]">
                                 {evaluacion.nombre}
                               </div>
                             </div>
                           ))}
-                          <div className="w-8 flex justify-center">
+                          <div className="w-10 flex justify-center">
                             <button
                               onClick={() => handleCrearEvaluacion(competencia.id)}
-                              className="text-gray-400 hover:text-blue-600 transition-colors"
+                              className="text-[#8D2C1D] hover:text-[#7A2518] hover:bg-[#FCE0C1] p-2 rounded-lg transition-all duration-300 hover:scale-110 shadow-sm hover:shadow-md"
                               title="Agregar evaluación"
                             >
-                              <PlusIcon className="w-4 h-4" />
+                              <PlusIcon className="w-5 h-5" />
                             </button>
                           </div>
-                          <div className="w-16 px-1">
-                            <div className="text-xs text-gray-600 text-center font-medium">
-                              Promedio
+                          <div className="w-20">
+                            <div className="text-xs text-[#8D2C1D] text-center font-bold bg-white/70 rounded-lg p-2 border border-[#E9E1C9]">
+                              📈 Promedio
                             </div>
                           </div>
                         </div>
@@ -265,35 +294,44 @@ export default function TablaEvaluacionesReal({
                     </th>
                   );
                 })}
-                <th className="px-4 py-3 text-center text-sm font-medium text-gray-900">
-                  PROMEDIO
+                <th className="px-6 py-4 text-center text-sm font-bold text-[#8D2C1D] bg-gradient-to-r from-[#FCE0C1] to-[#E9E1C9] sticky right-0 z-10">
+                  🏆 PROMEDIO FINAL
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
-              {contexto.alumnos.map(alumno => (
-                <tr key={alumno.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 border-r">
-                    <div className="text-sm font-medium text-gray-900">
-                      {alumno.nombres} {alumno.apellidos}
-                    </div>
-                    {alumno.dni && (
-                      <div className="text-xs text-gray-500">
-                        DNI: {alumno.dni}
+            <tbody className="divide-y divide-[#E9E1C9]">
+              {contexto.alumnos.map((alumno, index) => (
+                <tr key={alumno.id} className={`hover:bg-[#FCE0C1]/30 transition-all duration-300 ${
+                  index % 2 === 0 ? 'bg-white/50' : 'bg-[#FCE0C1]/10'
+                }`}>
+                  <td className="px-6 py-4 border-r border-[#E9E1C9] sticky left-0 z-10 bg-inherit">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-[#8D2C1D] to-[#D96924] rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
+                        {alumno.nombres.charAt(0)}{alumno.apellidos.charAt(0)}
                       </div>
-                    )}
+                      <div>
+                        <div className="text-sm font-bold text-[#333333]">
+                          {alumno.nombres} {alumno.apellidos}
+                        </div>
+                        {alumno.dni && (
+                          <div className="text-xs text-[#666666] font-medium">
+                            🎫 DNI: {alumno.dni}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </td>
                   {contexto.competencias.map(competencia => {
                     const evaluacionesCompetencia = obtenerEvaluacionesPorCompetencia(competencia.id);
                     return (
-                      <td key={competencia.id} className="border-r">
-                        <div className="flex">
+                      <td key={competencia.id} className="border-r border-[#E9E1C9] p-2">
+                        <div className="flex items-center gap-1">
                           {evaluacionesCompetencia.map(evaluacion => {
                             const nota = obtenerNota(alumno.id, evaluacion.id);
                             const key = `${alumno.id}-${evaluacion.id}`;
                             return (
-                              <div key={evaluacion.id} className="flex-1 px-1 py-2">
-                                <div className="text-center border-r last:border-r-0">
+                              <div key={evaluacion.id} className="flex-1 min-w-[60px]">
+                                <div className="text-center">
                                   {editando === key ? (
                                     <input
                                       type="text"
@@ -306,7 +344,7 @@ export default function TablaEvaluacionesReal({
                                       onKeyDown={(e) => {
                                         if (e.key === 'Enter') setEditando(null);
                                       }}
-                                      className="w-12 text-center text-sm border rounded px-1"
+                                      className="w-full text-center text-sm border-2 border-[#8D2C1D] rounded-lg px-2 py-1 font-bold focus:ring-2 focus:ring-[#8D2C1D]"
                                       placeholder="AD,A,B,C"
                                       maxLength={2}
                                       autoFocus
@@ -314,19 +352,19 @@ export default function TablaEvaluacionesReal({
                                   ) : (
                                     <button
                                       onClick={() => setEditando(key)}
-                                      className={`w-12 h-8 text-sm rounded transition-colors ${getColorNota(nota)}`}
+                                      className={`w-full h-10 text-sm font-bold rounded-lg transition-all duration-300 hover:scale-105 shadow-sm hover:shadow-md border-2 ${getColorNotaMejorado(nota)}`}
                                     >
-                                      {nota || '-'}
+                                      {nota || '➕'}
                                     </button>
                                   )}
                                 </div>
                               </div>
                             );
                           })}
-                          <div className="w-8"></div>
-                          <div className="w-16 px-1 py-2">
+                          <div className="w-10"></div>
+                          <div className="w-20">
                             <div className="text-center">
-                              <span className="px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-700">
+                              <span className={`px-3 py-2 rounded-lg text-xs font-bold shadow-sm ${getColorPromedio(calcularPromedioCompetencia(alumno.id, competencia.id))}`}>
                                 {calcularPromedioCompetencia(alumno.id, competencia.id)}
                               </span>
                             </div>
@@ -335,10 +373,12 @@ export default function TablaEvaluacionesReal({
                       </td>
                     );
                   })}
-                  <td className="px-4 py-3 text-center">
-                    <span className="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700">
-                      {calcularPromedio(alumno.id)}
-                    </span>
+                  <td className="px-6 py-4 text-center border-l-2 border-[#8D2C1D] sticky right-0 z-10 bg-inherit">
+                    <div className="flex items-center justify-center">
+                      <span className={`px-4 py-3 rounded-xl text-sm font-bold shadow-lg ${getColorPromedioFinal(calcularPromedio(alumno.id))}`}>
+                        🏆 {calcularPromedio(alumno.id)}
+                      </span>
+                    </div>
                   </td>
                 </tr>
               ))}

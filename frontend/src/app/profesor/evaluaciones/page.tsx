@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import DashboardHeader from '@/components/layout/DashboardHeader';
+import DashboardFooter from '@/components/layout/DashboardFooter';
 import { ContextoTrabajo, CreateEvaluacionDto, Evaluacion } from '@/types/evaluaciones';
 import { evaluacionesAPI } from '@/lib/api/evaluaciones';
 import SistemaEvaluaciones from '@/components/evaluaciones/SistemaEvaluaciones';
@@ -11,7 +13,8 @@ import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 
 export default function ProfesorEvaluacionesPage() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const asignacionId = searchParams.get('asignacionId');
   const periodoId = searchParams.get('periodoId');
@@ -65,11 +68,20 @@ export default function ProfesorEvaluacionesPage() {
   if (loading) {
     return (
       <ProtectedRoute requiredRole="PROFESOR">
-        <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Cargando datos de evaluación...</p>
+        <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9] flex flex-col">
+          <DashboardHeader 
+            title="Registro de Evaluaciones"
+            userName={`${user?.nombres} ${user?.apellidos}`}
+            userEmail={user?.email}
+            onLogout={logout}
+          />
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center bg-white/95 backdrop-blur-sm rounded-xl p-8 shadow-lg border-2 border-[#E9E1C9]">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8D2C1D] mx-auto"></div>
+              <p className="mt-4 text-[#666666] font-medium">Cargando datos de evaluación...</p>
+            </div>
           </div>
+          <DashboardFooter />
         </div>
       </ProtectedRoute>
     );
@@ -78,25 +90,34 @@ export default function ProfesorEvaluacionesPage() {
   if (error) {
     return (
       <ProtectedRoute requiredRole="PROFESOR">
-        <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-          <div className="text-center">
-            <div className="text-red-600 mb-4">⚠️ Error</div>
-            <p className="text-red-700 mb-4">{error}</p>
-            <div className="space-x-4">
-              <button
-                onClick={cargarContextoTrabajo}
-                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
-              >
-                Reintentar
-              </button>
-              <Link
-                href="/profesor/dashboard"
-                className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors inline-block"
-              >
-                Volver al Dashboard
-              </Link>
+        <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9] flex flex-col">
+          <DashboardHeader 
+            title="Registro de Evaluaciones"
+            userName={`${user?.nombres} ${user?.apellidos}`}
+            userEmail={user?.email}
+            onLogout={logout}
+          />
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center bg-white/95 backdrop-blur-sm rounded-xl p-8 shadow-lg border-2 border-red-200">
+              <div className="text-red-600 mb-4 text-lg">⚠️ Error</div>
+              <p className="text-red-700 mb-6 font-medium">{error}</p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={cargarContextoTrabajo}
+                  className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 font-semibold"
+                >
+                  Reintentar
+                </button>
+                <Link
+                  href="/profesor/dashboard"
+                  className="bg-gradient-to-r from-[#8D2C1D] to-[#D96924] hover:from-[#7A2518] hover:to-[#C55A1F] text-white px-6 py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 font-semibold text-center"
+                >
+                  Volver al Dashboard
+                </Link>
+              </div>
             </div>
           </div>
+          <DashboardFooter />
         </div>
       </ProtectedRoute>
     );
@@ -105,16 +126,25 @@ export default function ProfesorEvaluacionesPage() {
   if (!contexto) {
     return (
       <ProtectedRoute requiredRole="PROFESOR">
-        <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-          <div className="text-center">
-            <p className="text-gray-600">No se pudo cargar el contexto de trabajo</p>
-            <Link
-              href="/profesor/dashboard"
-              className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors inline-block"
-            >
-              Volver al Dashboard
-            </Link>
+        <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9] flex flex-col">
+          <DashboardHeader 
+            title="Registro de Evaluaciones"
+            userName={`${user?.nombres} ${user?.apellidos}`}
+            userEmail={user?.email}
+            onLogout={logout}
+          />
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center bg-white/95 backdrop-blur-sm rounded-xl p-8 shadow-lg border-2 border-[#E9E1C9]">
+              <p className="text-[#666666] mb-6 font-medium">No se pudo cargar el contexto de trabajo</p>
+              <Link
+                href="/profesor/dashboard"
+                className="bg-gradient-to-r from-[#8D2C1D] to-[#D96924] hover:from-[#7A2518] hover:to-[#C55A1F] text-white px-6 py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 font-semibold"
+              >
+                Volver al Dashboard
+              </Link>
+            </div>
           </div>
+          <DashboardFooter />
         </div>
       </ProtectedRoute>
     );
@@ -122,37 +152,29 @@ export default function ProfesorEvaluacionesPage() {
 
   return (
     <ProtectedRoute requiredRole="PROFESOR">
-      <div className="min-h-screen bg-gray-100">
-        {/* Header con navegación */}
-        <div className="bg-white shadow-sm border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="py-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <Link
-                    href="/profesor/dashboard"
-                    className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
-                  >
-                    <ArrowLeftIcon className="h-5 w-5 mr-2" />
-                    Volver al Dashboard
-                  </Link>
-                  <div className="h-6 border-l border-gray-300"></div>
-                  <div>
-                    <h1 className="text-xl font-semibold text-gray-900">
-                      Registro de Evaluaciones
-                    </h1>
-                    <p className="text-sm text-gray-600">
-                      {contexto.asignacion.curso} - {contexto.asignacion.salon} | {contexto.periodo.nombre}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9] flex flex-col">
+        {/* Header Reutilizable */}
+        <DashboardHeader 
+          title="Registro de Evaluaciones"
+          userName={`${user?.nombres} ${user?.apellidos}`}
+          userEmail={user?.email}
+          onLogout={logout}
+        />
+
 
         {/* Contenido principal */}
-        <div className="p-4">
+        <div className="flex-1 p-4 sm:p-6">
+          {/* Navegación discreta */}
+          <div className="mb-4">
+            <Link
+              href="/profesor/dashboard"
+              className="inline-flex items-center text-[#8D2C1D] hover:text-[#7A2518] transition-colors font-medium text-sm"
+            >
+              <ArrowLeftIcon className="h-4 w-4 mr-1" />
+              Volver al Dashboard
+            </Link>
+          </div>
+
           <SistemaEvaluaciones
             contexto={contexto}
             onCrearEvaluacion={handleCrearEvaluacion}
@@ -160,6 +182,9 @@ export default function ProfesorEvaluacionesPage() {
             periodoId={parseInt(periodoId!)}
           />
         </div>
+
+        {/* Footer Reutilizable */}
+        <DashboardFooter />
       </div>
     </ProtectedRoute>
   );

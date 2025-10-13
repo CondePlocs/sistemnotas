@@ -48,35 +48,37 @@ export default function BotonGuardarNotas({
   }
 
   return (
-    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+    <div className="bg-gradient-to-r from-[#FCE0C1] to-[#E9E1C9] border-2 border-[#8D2C1D] rounded-xl p-4 mb-6 shadow-lg">
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600" />
+        <div className="flex items-center space-x-3">
+          <div className="bg-[#8D2C1D] p-2 rounded-lg">
+            <ExclamationTriangleIcon className="h-5 w-5 text-white" />
+          </div>
           <div>
-            <p className="text-sm font-medium text-yellow-800">
-              Tienes {cantidadPendientes} nota{cantidadPendientes !== 1 ? 's' : ''} sin guardar
+            <p className="text-sm font-bold text-[#8D2C1D]">
+              ⚠️ Tienes {cantidadPendientes} nota{cantidadPendientes !== 1 ? 's' : ''} sin guardar
             </p>
-            <p className="text-xs text-yellow-600">
-              Los cambios se perderán si sales sin guardar
+            <p className="text-xs text-[#666666] font-medium">
+              🚨 Los cambios se perderán si sales sin guardar
             </p>
           </div>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-3">
           {onDescartar && (
             <button
               onClick={handleDescartar}
               disabled={guardando}
-              className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-2 text-sm font-semibold text-[#8D2C1D] bg-white/80 border-2 border-[#E9E1C9] rounded-xl hover:bg-white hover:border-[#8D2C1D] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-sm hover:shadow-md"
             >
-              Descartar
+              🗑️ Descartar
             </button>
           )}
           
           <button
             onClick={handleGuardar}
             disabled={guardando}
-            className="px-4 py-1.5 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+            className="px-6 py-2 text-sm font-bold text-white bg-gradient-to-r from-[#8D2C1D] to-[#D96924] hover:from-[#7A2518] hover:to-[#C55A1F] border border-transparent rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center space-x-2"
           >
             {guardando ? (
               <>
@@ -86,7 +88,7 @@ export default function BotonGuardarNotas({
             ) : (
               <>
                 <CheckIcon className="h-4 w-4" />
-                <span>Guardar Notas</span>
+                <span>💾 Guardar Notas</span>
               </>
             )}
           </button>
@@ -95,12 +97,12 @@ export default function BotonGuardarNotas({
 
       {/* Mensaje de resultado */}
       {mensaje && (
-        <div className={`mt-3 p-2 rounded-md text-sm ${
+        <div className={`mt-4 p-3 rounded-xl text-sm font-medium shadow-sm ${
           mensaje.tipo === 'success' 
-            ? 'bg-green-100 text-green-800 border border-green-200' 
-            : 'bg-red-100 text-red-800 border border-red-200'
+            ? 'bg-green-100/95 backdrop-blur-sm text-green-800 border-2 border-green-300' 
+            : 'bg-red-100/95 backdrop-blur-sm text-red-800 border-2 border-red-300'
         }`}>
-          {mensaje.texto}
+          {mensaje.tipo === 'success' ? '✅' : '❌'} {mensaje.texto}
         </div>
       )}
     </div>
