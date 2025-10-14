@@ -10,6 +10,52 @@ import { Roles } from '../auth/decorators/roles.decorator';
 export class ApoderadoController {
   constructor(private readonly apoderadoService: ApoderadoService) {}
 
+  // ========================================
+  // ENDPOINTS PARA EL DASHBOARD DEL APODERADO (DEBEN IR PRIMERO)
+  // ========================================
+
+  @Get('mis-alumnos')
+  @Roles('APODERADO')
+  async obtenerMisAlumnos(@Req() request: any) {
+    const userId = request.user.id;
+    return this.apoderadoService.obtenerMisAlumnosComoApoderado(userId);
+  }
+
+  @Get('alumno/:alumnoId/cursos')
+  @Roles('APODERADO')
+  async obtenerCursosDelAlumno(
+    @Param('alumnoId', ParseIntPipe) alumnoId: number,
+    @Req() request: any
+  ) {
+    const userId = request.user.id;
+    return this.apoderadoService.obtenerCursosDelAlumno(alumnoId, userId);
+  }
+
+  @Get('alumno/:alumnoId/profesores')
+  @Roles('APODERADO')
+  async obtenerProfesoresDelAlumno(
+    @Param('alumnoId', ParseIntPipe) alumnoId: number,
+    @Req() request: any
+  ) {
+    const userId = request.user.id;
+    return this.apoderadoService.obtenerProfesoresDelAlumno(alumnoId, userId);
+  }
+
+  @Get('alumno/:alumnoId/curso/:cursoId')
+  @Roles('APODERADO')
+  async obtenerDetalleCursoDelAlumno(
+    @Param('alumnoId', ParseIntPipe) alumnoId: number,
+    @Param('cursoId', ParseIntPipe) cursoId: number,
+    @Req() request: any
+  ) {
+    const userId = request.user.id;
+    return this.apoderadoService.obtenerDetalleCursoAlumno(alumnoId, cursoId, userId);
+  }
+
+  // ========================================
+  // ENDPOINTS PARA ADMINISTRACIÓN (DIRECTOR/ADMINISTRATIVO)
+  // ========================================
+
   @Post()
   @Roles('DIRECTOR', 'ADMINISTRATIVO')
   async crearApoderado(@Body() createApoderadoDto: CreateApoderadoDto, @Req() request: any) {

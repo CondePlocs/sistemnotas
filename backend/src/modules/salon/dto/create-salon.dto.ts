@@ -1,6 +1,6 @@
 import { IsString, IsNotEmpty, IsEnum, IsOptional } from 'class-validator';
 import { NivelEducativo } from '../../../types/salon.types';
-import { Turno } from '../../../../generated/prisma';
+import { Turno } from '@prisma/client';
 
 export class CreateSalonDto {
   @IsEnum(NivelEducativo, { message: 'El nivel debe ser INICIAL, PRIMARIA o SECUNDARIA' })

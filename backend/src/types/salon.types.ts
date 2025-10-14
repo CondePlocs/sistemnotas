@@ -1,5 +1,5 @@
 // Tipos compartidos para el módulo de salones
-import { NivelEducativo } from '../../generated/prisma';
+import { NivelEducativo } from '@prisma/client';
 
 export { NivelEducativo };
 

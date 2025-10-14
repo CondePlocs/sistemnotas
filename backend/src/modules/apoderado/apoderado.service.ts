@@ -929,4 +929,330 @@ export class ApoderadoService {
       message: `Apoderado ${estado === 'activo' ? 'activado' : 'desactivado'} exitosamente`
     };
   }
+
+  // ========================================
+  // MÉTODOS PARA EL DASHBOARD DEL APODERADO
+  // ========================================
+
+  /**
+   * Obtener los alumnos a cargo del apoderado autenticado
+   */
+  async obtenerMisAlumnosComoApoderado(userId: number) {
+    // 1. Buscar las relaciones apoderado-alumno usando la cadena correcta
+    const relaciones = await this.prisma.apoderadoAlumno.findMany({
+      where: {
+        apoderado: {
+          usuarioRol: {
+            usuario_id: userId
+          }
+        },
+        activo: true
+      },
+      include: {
+        alumno: {
+          include: {
+            colegio: {
+              select: {
+                id: true,
+                nombre: true
+              }
+            },
+            salon: {
+              include: {
+                salon: {
+                  include: {
+                    colegioNivel: {
+                      include: {
+                        nivel: {
+                          select: {
+                            id: true,
+                            nombre: true
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      orderBy: [
+        { esPrincipal: 'desc' },
+        { alumno: { apellidos: 'asc' } },
+        { alumno: { nombres: 'asc' } }
+      ]
+    });
+
+    return {
+      success: true,
+      data: relaciones
+    };
+  }
+
+  /**
+   * Obtener los cursos de un alumno específico (solo si el apoderado tiene acceso)
+   */
+  async obtenerCursosDelAlumno(alumnoId: number, userId: number) {
+    // 1. Verificar que el apoderado tiene acceso a este alumno
+    await this.verificarAccesoAlumno(alumnoId, userId);
+
+    // 2. Obtener el salón del alumno
+    const alumnoSalon = await this.prisma.alumnoSalon.findFirst({
+      where: {
+        alumnoId: alumnoId
+      },
+      include: {
+        salon: true
+      }
+    });
+
+    if (!alumnoSalon) {
+      return {
+        success: true,
+        data: []
+      };
+    }
+
+    // 3. Obtener las asignaciones de profesores para este salón
+    const asignaciones = await this.prisma.profesorAsignacion.findMany({
+      where: {
+        salonId: alumnoSalon.salonId,
+        activo: true
+      },
+      include: {
+        curso: {
+          include: {
+            competencias: {
+              where: { activo: true },
+              orderBy: { orden: 'asc' }
+            }
+          }
+        },
+        profesor: {
+          include: {
+            usuarioRol: {
+              include: {
+                usuario: {
+                  select: {
+                    nombres: true,
+                    apellidos: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    return {
+      success: true,
+      data: asignaciones.map(asignacion => ({
+        id: asignacion.curso.id,
+        nombre: asignacion.curso.nombre,
+        descripcion: asignacion.curso.descripcion,
+        color: asignacion.curso.color,
+        profesor: {
+          id: asignacion.profesor.id,
+          nombres: asignacion.profesor.usuarioRol.usuario.nombres,
+          apellidos: asignacion.profesor.usuarioRol.usuario.apellidos
+        },
+        competencias: asignacion.curso.competencias
+      }))
+    };
+  }
+
+  /**
+   * Obtener los profesores de un alumno específico
+   */
+  async obtenerProfesoresDelAlumno(alumnoId: number, userId: number) {
+    // 1. Verificar que el apoderado tiene acceso a este alumno
+    await this.verificarAccesoAlumno(alumnoId, userId);
+
+    // 2. Obtener el salón del alumno
+    const alumnoSalon = await this.prisma.alumnoSalon.findFirst({
+      where: {
+        alumnoId: alumnoId
+      }
+    });
+
+    if (!alumnoSalon) {
+      return {
+        success: true,
+        data: []
+      };
+    }
+
+    // 3. Obtener los profesores únicos que enseñan en este salón
+    const profesores = await this.prisma.profesorAsignacion.findMany({
+      where: {
+        salonId: alumnoSalon.salonId,
+        activo: true
+      },
+      include: {
+        profesor: {
+          include: {
+            usuarioRol: {
+              include: {
+                usuario: {
+                  select: {
+                    nombres: true,
+                    apellidos: true,
+                    email: true
+                  }
+                }
+              }
+            }
+          }
+        },
+        curso: {
+          select: {
+            id: true,
+            nombre: true,
+            color: true
+          }
+        }
+      },
+      distinct: ['profesorId']
+    });
+
+    return {
+      success: true,
+      data: profesores.map(asignacion => ({
+        id: asignacion.profesor.id,
+        nombres: asignacion.profesor.usuarioRol.usuario.nombres,
+        apellidos: asignacion.profesor.usuarioRol.usuario.apellidos,
+        email: asignacion.profesor.usuarioRol.usuario.email,
+        cursos: [asignacion.curso]
+      }))
+    };
+  }
+
+  /**
+   * Obtener detalle completo de un curso específico de un alumno
+   */
+  async obtenerDetalleCursoAlumno(alumnoId: number, cursoId: number, userId: number) {
+    // 1. Verificar que el apoderado tiene acceso a este alumno
+    await this.verificarAccesoAlumno(alumnoId, userId);
+
+    // 2. Obtener información básica del curso
+    const curso = await this.prisma.curso.findUnique({
+      where: { id: cursoId },
+      include: {
+        competencias: {
+          where: { activo: true },
+          include: {
+            evaluaciones: {
+              include: {
+                notas: {
+                  where: { alumnoId: alumnoId }
+                }
+              },
+              orderBy: { fechaEvaluacion: 'asc' }
+            }
+          },
+          orderBy: { orden: 'asc' }
+        }
+      }
+    });
+
+    if (!curso) {
+      throw new NotFoundException('Curso no encontrado');
+    }
+
+    // 3. Obtener información del profesor
+    const alumnoSalon = await this.prisma.alumnoSalon.findFirst({
+      where: { alumnoId: alumnoId }
+    });
+
+    let profesor: any = null;
+    if (alumnoSalon) {
+      const asignacion = await this.prisma.profesorAsignacion.findFirst({
+        where: {
+          salonId: alumnoSalon.salonId,
+          cursoId: cursoId,
+          activo: true
+        },
+        include: {
+          profesor: {
+            include: {
+              usuarioRol: {
+                include: {
+                  usuario: {
+                    select: {
+                      nombres: true,
+                      apellidos: true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      });
+
+      if (asignacion) {
+        profesor = {
+          id: asignacion.profesor.id,
+          nombres: asignacion.profesor.usuarioRol.usuario.nombres,
+          apellidos: asignacion.profesor.usuarioRol.usuario.apellidos
+        };
+      }
+    }
+
+    return {
+      success: true,
+      data: {
+        id: curso.id,
+        nombre: curso.nombre,
+        descripcion: curso.descripcion,
+        color: curso.color,
+        profesor: profesor,
+        competencias: curso.competencias.map(competencia => ({
+          id: competencia.id,
+          nombre: competencia.nombre,
+          evaluaciones: competencia.evaluaciones.map(evaluacion => ({
+            id: evaluacion.id,
+            nombre: evaluacion.nombre,
+            fechaEvaluacion: evaluacion.fechaEvaluacion,
+            nota: evaluacion.notas[0]?.nota || null
+          }))
+        }))
+      }
+    };
+  }
+
+  /**
+   * Método auxiliar para verificar que el apoderado tiene acceso al alumno
+   */
+  private async verificarAccesoAlumno(alumnoId: number, userId: number) {
+    const apoderado = await this.prisma.apoderado.findFirst({
+      where: {
+        usuarioRol: {
+          usuario_id: userId,
+          rol: { nombre: 'APODERADO' }
+        }
+      }
+    });
+
+    if (!apoderado) {
+      throw new NotFoundException('Apoderado no encontrado');
+    }
+
+    const relacion = await this.prisma.apoderadoAlumno.findFirst({
+      where: {
+        apoderadoId: apoderado.id,
+        alumnoId: alumnoId,
+        activo: true
+      }
+    });
+
+    if (!relacion) {
+      throw new ForbiddenException('No tienes acceso a este alumno');
+    }
+
+    return relacion;
+  }
 }

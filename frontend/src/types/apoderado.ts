@@ -154,3 +154,86 @@ export const PARENTESCOS = [
 ] as const;
 
 export type Parentesco = typeof PARENTESCOS[number];
+
+// Tipos específicos para el dashboard del apoderado
+export interface AlumnoApoderado {
+  id: number;
+  dni?: string;
+  nombres: string;
+  apellidos: string;
+  fechaNacimiento?: string;
+  sexo?: 'masculino' | 'femenino';
+  activo: boolean;
+  salon?: {
+    id: number;
+    grado: string;
+    seccion: string;
+    colegioNivel?: {
+      nivel: {
+        id: number;
+        nombre: string;
+      };
+    };
+  };
+  colegio: {
+    id: number;
+    nombre: string;
+  };
+  parentesco: string;
+  esPrincipal: boolean;
+}
+
+export interface CursoAlumno {
+  id: number;
+  nombre: string;
+  descripcion?: string;
+  color?: string;
+  profesor: {
+    id: number;
+    nombres: string;
+    apellidos: string;
+  };
+  promedioFinal?: string;
+  competencias: CompetenciaAlumno[];
+}
+
+export interface CompetenciaAlumno {
+  id: number;
+  nombre: string;
+  promedio?: string;
+  evaluaciones: EvaluacionAlumno[];
+}
+
+export interface EvaluacionAlumno {
+  id: number;
+  nombre: string;
+  fechaEvaluacion: string;
+  nota?: 'AD' | 'A' | 'B' | 'C' | null;
+}
+
+// Tipos específicos para el detalle del curso
+export interface CursoDetalle {
+  id: number;
+  nombre: string;
+  descripcion?: string;
+  color?: string;
+  profesor?: {
+    id: number;
+    nombres: string;
+    apellidos: string;
+  };
+  competencias: CompetenciaDetalle[];
+}
+
+export interface CompetenciaDetalle {
+  id: number;
+  nombre: string;
+  evaluaciones: EvaluacionDetalle[];
+}
+
+export interface EvaluacionDetalle {
+  id: number;
+  nombre: string;
+  fechaEvaluacion: string;
+  nota?: 'AD' | 'A' | 'B' | 'C' | null;
+}
