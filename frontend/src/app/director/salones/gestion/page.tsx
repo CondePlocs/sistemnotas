@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import DashboardHeader from '@/components/layout/DashboardHeader';
-import DashboardFooter from '@/components/layout/DashboardFooter';
+import DirectorSidebar from '@/components/layout/DirectorSidebar';
 import { SalonConAlumnos } from '@/types/salon-alumnos';
 import { Salon, SalonConNivel } from '@/types/salon';
 import { OPCIONES_NIVELES_EDUCATIVOS } from '@/types/colegio';
@@ -171,16 +170,20 @@ function GestionSalonesPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9]">
-      {/* Header Reutilizable */}
-      <DashboardHeader 
-        title="Gestión de Alumnos por Salón"
-        userName={user?.nombres}
-        userEmail={user?.email}
-        onLogout={() => {}}
-      />
+    <DirectorSidebar>
+      <main className="flex-1 p-8 overflow-auto">
+        {/* Header de la página */}
+        <div className="mb-8">
+          <h1 
+            className="text-3xl font-bold text-[#333333] mb-2" 
+            style={{ fontFamily: 'var(--font-poppins)' }}
+          >
+            Gestión de Alumnos por Salón
+          </h1>
+          <p className="text-[#666666]">Asigna y gestiona alumnos en los salones del colegio</p>
+        </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div>
         {/* Estadísticas - 1 fila en móvil */}
         <div className="grid grid-cols-4 gap-2 sm:gap-4 mb-6">
           <div className="bg-white/90 backdrop-blur-sm rounded-xl p-2 sm:p-4 border border-[#E9E1C9] shadow-lg">
@@ -342,21 +345,19 @@ function GestionSalonesPageContent() {
             </div>
           </div>
         )}
-      </div>
+        </div>
 
-      {/* Footer Reutilizable */}
-      <DashboardFooter />
-
-      {/* Modal de asignación */}
-      {estado.modalAsignacionAbierto && estado.salonSeleccionado && (
-        <ModalAsignacionAlumnos
-          salon={estado.salonSeleccionado}
-          isOpen={estado.modalAsignacionAbierto}
-          onClose={cerrarModalAsignacion}
-          onSuccess={onAsignacionExitosa}
-        />
-      )}
-    </div>
+        {/* Modal de asignación */}
+        {estado.modalAsignacionAbierto && estado.salonSeleccionado && (
+          <ModalAsignacionAlumnos
+            salon={estado.salonSeleccionado}
+            isOpen={estado.modalAsignacionAbierto}
+            onClose={cerrarModalAsignacion}
+            onSuccess={onAsignacionExitosa}
+          />
+        )}
+      </main>
+    </DirectorSidebar>
   );
 }
 

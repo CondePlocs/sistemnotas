@@ -144,6 +144,19 @@ export default function DirectorSidebar({ children }: DirectorSidebarProps) {
   ];
 
   const isActiveRoute = (href: string) => {
+    // Caso especial: /director/permisos debe marcar como activo "Personal Administrativo"
+    if (href === '/director/administrativos' && pathname === '/director/permisos') {
+      return true;
+    }
+    
+    // Caso especial: rutas de salones con ID y /gestion deben marcar como activo "Salones"
+    if (href === '/director/salones' && (
+      pathname.match(/^\/director\/salones\/\d+/) || 
+      pathname === '/director/salones/gestion'
+    )) {
+      return true;
+    }
+    
     return pathname === href || (href !== '/director/dashboard' && pathname.startsWith(href));
   };
 
@@ -213,7 +226,7 @@ export default function DirectorSidebar({ children }: DirectorSidebarProps) {
           </div>
 
           {/* Navegación */}
-          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+          <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto scrollbar-hide">
             {navItems.map((item) => (
               <div key={item.id} className="relative">
                 {/* Marco externo cuando está colapsado y activo */}
@@ -229,9 +242,9 @@ export default function DirectorSidebar({ children }: DirectorSidebarProps) {
                   }
                 }}
                 className={`
-                  w-full text-left rounded-xl transition-all duration-300
+                  w-full text-left rounded-lg transition-all duration-300
                   flex items-center group relative overflow-hidden
-                  ${isCollapsed ? 'p-3 justify-center' : 'p-4 gap-4'}
+                  ${isCollapsed ? 'p-2 justify-center' : 'p-3 gap-3'}
                   ${isActiveRoute(item.href)
                     ? 'bg-white/20 text-white shadow-lg'
                     : 'text-[#FCE0C1] hover:bg-white/10 hover:text-white'
@@ -241,7 +254,7 @@ export default function DirectorSidebar({ children }: DirectorSidebarProps) {
               >
                 {/* Indicador activo - solo barra cuando está expandido */}
                 {isActiveRoute(item.href) && !isCollapsed && (
-                  <div className="absolute left-2 w-1 h-8 bg-white rounded-full" />
+                  <div className="absolute left-1 w-1 h-6 bg-white rounded-full" />
                 )}
                 
                 {/* Icono */}
@@ -259,10 +272,10 @@ export default function DirectorSidebar({ children }: DirectorSidebarProps) {
                 {/* Texto */}
                 {!isCollapsed && (
                   <div className="flex-1 animate-fade-in">
-                    <div className="font-semibold text-sm">
+                    <div className="font-semibold text-sm leading-tight">
                       {item.label}
                     </div>
-                    <div className="text-xs opacity-80 mt-1">
+                    <div className="text-xs opacity-75 mt-0.5 leading-tight">
                       {item.description}
                     </div>
                   </div>
@@ -273,15 +286,15 @@ export default function DirectorSidebar({ children }: DirectorSidebarProps) {
           </nav>
 
           {/* Usuario y Logout - Fijo en la parte inferior */}
-          <div className="p-4 border-t border-white/20 flex-shrink-0">
+          <div className="p-3 border-t border-white/20 flex-shrink-0">
             {/* Info del Usuario */}
             {!isCollapsed && (
-              <div className="mb-4 p-4 bg-white/10 backdrop-blur-sm rounded-xl animate-fade-in">
-                <div className="flex items-center gap-3">
+              <div className="mb-3 p-3 bg-white/10 backdrop-blur-sm rounded-lg animate-fade-in">
+                <div className="flex items-center gap-2">
                   {/* Avatar */}
-                  <div className="bg-white/20 backdrop-blur-sm p-2 rounded-full flex-shrink-0">
+                  <div className="bg-white/20 backdrop-blur-sm p-1.5 rounded-full flex-shrink-0">
                     <svg 
-                      className="w-8 h-8 text-white" 
+                      className="w-6 h-6 text-white" 
                       fill="none" 
                       stroke="currentColor" 
                       viewBox="0 0 24 24"
@@ -297,10 +310,10 @@ export default function DirectorSidebar({ children }: DirectorSidebarProps) {
                   
                   {/* Datos */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-white font-medium text-sm truncate">
+                    <p className="text-white font-medium text-sm truncate leading-tight">
                       {user?.nombres || 'Usuario'}
                     </p>
-                    <p className="text-[#FCE0C1] text-xs truncate">
+                    <p className="text-[#FCE0C1] text-xs truncate leading-tight">
                       {user?.email}
                     </p>
                   </div>
@@ -314,8 +327,8 @@ export default function DirectorSidebar({ children }: DirectorSidebarProps) {
               className={`
                 w-full bg-white/10 hover:bg-white/20 
                 backdrop-blur-sm text-white 
-                ${isCollapsed ? 'p-3' : 'px-4 py-3'}
-                rounded-xl text-sm font-medium
+                ${isCollapsed ? 'p-2' : 'px-3 py-2'}
+                rounded-lg text-sm font-medium
                 transition-all duration-300
                 border border-white/20 hover:border-white/40
                 hover:shadow-lg active:scale-95
