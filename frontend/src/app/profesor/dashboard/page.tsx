@@ -8,7 +8,7 @@ import { ProfesorAsignacion, PeriodoAcademico } from '@/types/evaluaciones';
 import AsignacionCard from '@/components/profesor/AsignacionCard';
 import LoadingCard from '@/components/profesor/LoadingCard';
 import ModalSeleccionPeriodo from '@/components/modals/ModalSeleccionPeriodo';
-import DashboardHeader from '@/components/layout/DashboardHeader';
+import SimpleHeader from '@/components/layout/SimpleHeader';
 import DashboardFooter from '@/components/layout/DashboardFooter';
 import { AcademicCapIcon, BookOpenIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline';
 
@@ -137,12 +137,12 @@ export default function ProfesorDashboard() {
   return (
     <ProtectedRoute requiredRole="PROFESOR">
       <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9] flex flex-col">
-        {/* Header Reutilizable */}
-        <DashboardHeader 
+        {/* Header Simple */}
+        <SimpleHeader 
           title="Dashboard del Profesor"
-          userName={`${user?.nombres} ${user?.apellidos}`}
-          userEmail={user?.email}
-          onLogout={logout}
+          showBackButton={false}
+          showForwardButton={true}
+          dashboardPath="/profesor/dashboard"
         />
 
         {/* Contenido principal */}

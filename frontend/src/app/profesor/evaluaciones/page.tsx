@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import DashboardHeader from '@/components/layout/DashboardHeader';
+import SimpleHeader from '@/components/layout/SimpleHeader';
 import DashboardFooter from '@/components/layout/DashboardFooter';
 import { ContextoTrabajo, CreateEvaluacionDto, Evaluacion } from '@/types/evaluaciones';
 import { evaluacionesAPI } from '@/lib/api/evaluaciones';
@@ -69,11 +69,10 @@ export default function ProfesorEvaluacionesPage() {
     return (
       <ProtectedRoute requiredRole="PROFESOR">
         <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9] flex flex-col">
-          <DashboardHeader 
+          <SimpleHeader 
             title="Registro de Evaluaciones"
-            userName={`${user?.nombres} ${user?.apellidos}`}
-            userEmail={user?.email}
-            onLogout={logout}
+            showBackButton={true}
+            dashboardPath="/profesor/dashboard"
           />
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center bg-white/95 backdrop-blur-sm rounded-xl p-8 shadow-lg border-2 border-[#E9E1C9]">
@@ -91,11 +90,10 @@ export default function ProfesorEvaluacionesPage() {
     return (
       <ProtectedRoute requiredRole="PROFESOR">
         <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9] flex flex-col">
-          <DashboardHeader 
+          <SimpleHeader 
             title="Registro de Evaluaciones"
-            userName={`${user?.nombres} ${user?.apellidos}`}
-            userEmail={user?.email}
-            onLogout={logout}
+            showBackButton={true}
+            dashboardPath="/profesor/dashboard"
           />
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center bg-white/95 backdrop-blur-sm rounded-xl p-8 shadow-lg border-2 border-red-200">
@@ -127,11 +125,10 @@ export default function ProfesorEvaluacionesPage() {
     return (
       <ProtectedRoute requiredRole="PROFESOR">
         <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9] flex flex-col">
-          <DashboardHeader 
+          <SimpleHeader 
             title="Registro de Evaluaciones"
-            userName={`${user?.nombres} ${user?.apellidos}`}
-            userEmail={user?.email}
-            onLogout={logout}
+            showBackButton={true}
+            dashboardPath="/profesor/dashboard"
           />
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center bg-white/95 backdrop-blur-sm rounded-xl p-8 shadow-lg border-2 border-[#E9E1C9]">
@@ -153,27 +150,17 @@ export default function ProfesorEvaluacionesPage() {
   return (
     <ProtectedRoute requiredRole="PROFESOR">
       <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9] flex flex-col">
-        {/* Header Reutilizable */}
-        <DashboardHeader 
-          title="Registro de Evaluaciones"
-          userName={`${user?.nombres} ${user?.apellidos}`}
-          userEmail={user?.email}
-          onLogout={logout}
+        {/* Header Simple */}
+        <SimpleHeader 
+          title={contexto ? `Evaluaciones: ${contexto.asignacion.curso}` : 'Registro de Evaluaciones'}
+          showBackButton={true}
+          dashboardPath="/profesor/dashboard"
         />
 
 
         {/* Contenido principal */}
         <div className="flex-1 p-4 sm:p-6">
-          {/* Navegación discreta */}
-          <div className="mb-4">
-            <Link
-              href="/profesor/dashboard"
-              className="inline-flex items-center text-[#8D2C1D] hover:text-[#7A2518] transition-colors font-medium text-sm"
-            >
-              <ArrowLeftIcon className="h-4 w-4 mr-1" />
-              Volver al Dashboard
-            </Link>
-          </div>
+          {/* Navegación ya incluida en SimpleHeader */}
 
           <SistemaEvaluaciones
             contexto={contexto}

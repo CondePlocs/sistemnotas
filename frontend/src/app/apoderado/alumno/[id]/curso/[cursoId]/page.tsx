@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import DashboardHeader from '@/components/layout/DashboardHeader';
+import SimpleHeader from '@/components/layout/SimpleHeader';
 import DashboardFooter from '@/components/layout/DashboardFooter';
 import CursoInfo from '@/components/apoderado/CursoInfo';
 import CompetenciasList from '@/components/apoderado/CompetenciasList';
@@ -114,11 +114,11 @@ export default function CursoDetalle() {
   return (
     <ProtectedRoute requiredRole={['APODERADO']}>
       <div className="min-h-screen bg-gradient-to-br from-[#F7F3E9] to-[#E9E1C9]">
-        <DashboardHeader 
-          title={curso.nombre}
-          userName={user?.nombres ? `${user.nombres} ${user.apellidos}` : user?.email}
-          userEmail={user?.email}
-          onLogout={() => logout()}
+        {/* Header Simple */}
+        <SimpleHeader 
+          title={curso?.nombre ? `Curso: ${curso.nombre}` : 'Detalle del Curso'}
+          showBackButton={true}
+          dashboardPath="/apoderado/dashboard"
         />
         
         <main className="container mx-auto px-4 py-8">

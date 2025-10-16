@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import DashboardHeader from '@/components/layout/DashboardHeader';
+import SimpleHeader from '@/components/layout/SimpleHeader';
 import DashboardFooter from '@/components/layout/DashboardFooter';
 import FiltroAlumnos from '@/components/apoderado/FiltroAlumnos';
 import ListadoAlumnos from '@/components/apoderado/ListadoAlumnos';
@@ -65,11 +65,11 @@ export default function ApoderadoDashboard() {
     return (
       <ProtectedRoute requiredRole="APODERADO">
         <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9] flex flex-col">
-          <DashboardHeader 
+          <SimpleHeader 
             title="Dashboard del Apoderado"
-            userName={`${user?.nombres} ${user?.apellidos}`}
-            userEmail={user?.email}
-            onLogout={logout}
+            showBackButton={false}
+            showForwardButton={true}
+            dashboardPath="/apoderado/dashboard"
           />
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center bg-white/95 backdrop-blur-sm rounded-xl p-8 shadow-lg border-2 border-[#E9E1C9]">
@@ -87,11 +87,11 @@ export default function ApoderadoDashboard() {
     return (
       <ProtectedRoute requiredRole="APODERADO">
         <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9] flex flex-col">
-          <DashboardHeader 
+          <SimpleHeader 
             title="Dashboard del Apoderado"
-            userName={`${user?.nombres} ${user?.apellidos}`}
-            userEmail={user?.email}
-            onLogout={logout}
+            showBackButton={false}
+            showForwardButton={true}
+            dashboardPath="/apoderado/dashboard"
           />
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center bg-white/95 backdrop-blur-sm rounded-xl p-8 shadow-lg border-2 border-red-200">
@@ -114,12 +114,12 @@ export default function ApoderadoDashboard() {
   return (
     <ProtectedRoute requiredRole="APODERADO">
       <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9] flex flex-col">
-        {/* Header Reutilizable */}
-        <DashboardHeader 
+        {/* Header Simple */}
+        <SimpleHeader 
           title="Dashboard del Apoderado"
-          userName={`${user?.nombres} ${user?.apellidos}`}
-          userEmail={user?.email}
-          onLogout={logout}
+          showBackButton={false}
+          showForwardButton={true}
+          dashboardPath="/apoderado/dashboard"
         />
 
         {/* Contenido principal */}
