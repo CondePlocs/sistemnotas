@@ -3,10 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import DashboardHeader from '@/components/layout/DashboardHeader';
-import DashboardFooter from '@/components/layout/DashboardFooter';
-import { NivelEducativo } from '@/types/colegio';
+import DirectorSidebar from '@/components/layout/DirectorSidebar';
 import { Salon } from '@/types/salon';
+import { NivelEducativo } from '@/types/nivel';
 import CrearSalonModal from '@/components/CrearSalonModal';
 import ModalSeleccionNivel from '@/components/modals/ModalSeleccionNivel';
 import ModalVerSalon from '@/components/modals/ModalVerSalon';
@@ -61,6 +60,14 @@ function SalonCard({ nivel, onCrearSalon }: SalonCardProps) {
           descripcion: 'Crear salones de 1° a 5° año',
           color: 'bg-green-50 border-green-200 hover:bg-green-100',
           buttonColor: 'bg-green-600 hover:bg-green-700'
+        };
+      default:
+        return {
+          icon: '📚',
+          titulo: 'Nivel',
+          descripcion: 'Crear salones',
+          color: 'bg-gray-50 border-gray-200 hover:bg-gray-100',
+          buttonColor: 'bg-gray-600 hover:bg-gray-700'
         };
     }
   };
@@ -367,35 +374,20 @@ function GestionSalonesContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9] flex flex-col">
-      {/* Header Reutilizable */}
-      <DashboardHeader 
-        title="Gestión de Salones"
-        userName={user?.nombres && user?.apellidos ? `${user.nombres} ${user.apellidos}` : undefined}
-        userEmail={user?.email}
-        onLogout={logout}
-      />
-
-
-      {/* Contenido Principal */}
-      <div className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-4 lg:py-6">
-        
-        {/* Header con botón crear - Desktop */}
-        <div className="hidden lg:flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-bold text-[#8D2C1D]">Administra los salones</h2>
-            <p className="text-[#666666]">Gestiona los salones de tu institución</p>
-          </div>
-          <button
-            onClick={abrirModalCrear}
-            className="px-6 py-3 bg-gradient-to-r from-[#8D2C1D] to-[#D96924] text-white rounded-xl hover:from-[#D96924] hover:to-[#8D2C1D] focus:outline-none focus:ring-2 focus:ring-[#8D2C1D] transition-all duration-200 flex items-center gap-2 font-semibold shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+    <DirectorSidebar>
+      <main className="flex-1 p-8 overflow-auto">
+        {/* Header de la página */}
+        <div className="mb-8">
+          <h1 
+            className="text-3xl font-bold text-[#333333] mb-2" 
+            style={{ fontFamily: 'var(--font-poppins)' }}
           >
-            <PlusIcon className="w-5 h-5" />
-            Crear Salón
-          </button>
+            Gestión de Salones
+          </h1>
+          <p className="text-[#666666]">Administra salones y aulas del colegio</p>
         </div>
 
-        {/* Filtros - Optimizados para móvil */}
+        {/* Filtros y búsqueda */}
         <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-4 lg:p-6 mb-4 lg:mb-6 border border-[#E9E1C9]">
           <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-4 lg:gap-4">
             
@@ -595,10 +587,7 @@ function GestionSalonesContent() {
             </div>
           </>
         )}
-      </div>
-
-      {/* Footer Reutilizable */}
-      <DashboardFooter />
+      </main>
 
       {/* Modales */}
       <ModalSeleccionNivel
@@ -642,7 +631,7 @@ function GestionSalonesContent() {
         title="Confirmar Edición de Salón"
         message="Para confirmar la actualización de los datos del salón, ingresa tu contraseña."
       />
-    </div>
+    </DirectorSidebar>
   );
 }
 

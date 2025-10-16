@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import RegistroUsuarioForm from "@/components/RegistroUsuarioForm";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import OwnerSidebar from "@/components/layout/OwnerSidebar";
 
 interface RegistroUsuarioData {
   email: string;
@@ -46,26 +46,20 @@ function RegistroOwnerContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center">
-              <Link 
-                href="/owner/dashboard"
-                className="text-blue-600 hover:text-blue-800 mr-4"
-              >
-                ← Volver al Dashboard
-              </Link>
-              <h1 className="text-2xl font-bold text-gray-900">Registrar Nuevo Owner</h1>
-            </div>
-          </div>
+    <OwnerSidebar>
+      <main className="flex-1 p-8 overflow-auto">
+        {/* Header de la página */}
+        <div className="mb-8">
+          <h1 
+            className="text-3xl font-bold text-[#333333] mb-2" 
+            style={{ fontFamily: 'var(--font-poppins)' }}
+          >
+            Registrar Nuevo Owner
+          </h1>
+          <p className="text-[#666666]">Registra un nuevo usuario con permisos de administrador del sistema</p>
         </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-2xl mx-auto">
         <div className="bg-white rounded-lg shadow-md p-8">
           <div className="mb-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
@@ -90,8 +84,9 @@ function RegistroOwnerContent() {
             </ul>
           </div>
         </div>
+        </div>
       </main>
-    </div>
+    </OwnerSidebar>
   );
 }
 

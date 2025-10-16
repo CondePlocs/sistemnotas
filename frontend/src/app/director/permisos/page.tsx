@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/context/AuthContext';
-import DashboardHeader from '@/components/layout/DashboardHeader';
+import DirectorSidebar from '@/components/layout/DirectorSidebar';
 import { 
   AdministrativoConPermisos, 
   Permisos as PermisosType, 
@@ -164,31 +164,17 @@ function PermisosContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9]">
-      <DashboardHeader 
-        title="Gestión de Permisos Administrativos"
-        onLogout={logout}
-      />
-      
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center gap-4 mb-4">
-            <button
-              onClick={() => router.back()}
-              className="p-3 rounded-xl bg-white/90 backdrop-blur-sm shadow-lg border-2 border-[#E9E1C9] hover:border-[#8D2C1D] transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 text-[#8D2C1D]"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <div>
-              <h1 className="text-3xl font-bold text-[#8D2C1D]">Gestión de Permisos</h1>
-              <p className="mt-2 text-[#666666]">
-                Asigna permisos específicos al personal administrativo de tu institución
-              </p>
-            </div>
-          </div>
+    <DirectorSidebar>
+      <main className="flex-1 p-8 overflow-auto">
+        {/* Header de la página */}
+        <div className="mb-8">
+          <h1 
+            className="text-3xl font-bold text-[#333333] mb-2" 
+            style={{ fontFamily: 'var(--font-poppins)' }}
+          >
+            Gestión de Permisos
+          </h1>
+          <p className="text-[#666666]">Administra permisos del personal administrativo</p>
         </div>
 
         {/* Búsqueda con Botón Guardar */}
@@ -442,7 +428,7 @@ function PermisosContent() {
           )}
         </div>
       </main>
-    </div>
+    </DirectorSidebar>
   );
 }
 

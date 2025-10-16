@@ -3,15 +3,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import { useAuth } from '@/context/AuthContext';
-import DashboardHeader from '@/components/layout/DashboardHeader';
+import OwnerSidebar from '@/components/layout/OwnerSidebar';
 import ColegioCard from '@/components/owner/ColegioCard';
 import ModalColegio from '@/components/owner/ModalColegio';
 import ModalDetallesColegio from '@/components/owner/ModalDetallesColegio';
 import { Colegio } from '@/types/colegio';
 
 function GestionColegiosContent() {
-  const { user, logout } = useAuth();
   const router = useRouter();
   const [colegios, setColegios] = useState<Colegio[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,9 +45,6 @@ function GestionColegiosContent() {
     }
   };
 
-  const handleLogout = async () => {
-    await logout();
-  };
 
   // Filtrar colegios
   const colegiosFiltrados = useMemo(() => {
@@ -72,15 +67,18 @@ function GestionColegiosContent() {
   }, [colegiosFiltrados, currentPage]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#F6CBA3] to-[#E9E1C9] flex flex-col">
-      <DashboardHeader
-        title="Gestión de Colegios"
-        userName={user?.nombres}
-        userEmail={user?.email}
-        onLogout={handleLogout}
-      />
-
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+    <OwnerSidebar>
+      <main className="flex-1 p-8 overflow-auto">
+        {/* Header de la página */}
+        <div className="mb-8">
+          <h1 
+            className="text-3xl font-bold text-[#333333] mb-2" 
+            style={{ fontFamily: 'var(--font-poppins)' }}
+          >
+            Gestión de Colegios
+          </h1>
+          <p className="text-[#666666]">Administra y registra instituciones educativas del sistema</p>
+        </div>
         {/* Header con búsqueda y botón agregar */}
         <div className="mb-8 flex flex-row gap-3 justify-between items-center">
           {/* Barra de búsqueda */}
@@ -266,7 +264,7 @@ function GestionColegiosContent() {
         }}
         colegioId={colegioSeleccionado!}
       />
-    </div>
+    </OwnerSidebar>
   );
 }
 

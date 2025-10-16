@@ -3,9 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import DashboardHeader from '@/components/layout/DashboardHeader';
-import DashboardFooter from '@/components/layout/DashboardFooter';
-import { useAuth } from '@/context/AuthContext';
+import DirectorSidebar from '@/components/layout/DirectorSidebar';
 import { usePermissionCheck } from '@/hooks/usePermissionCheck';
 import AdministrativoCard from '@/components/director/AdministrativoCard';
 import ModalAdministrativo from '@/components/modals/ModalAdministrativo';
@@ -30,7 +28,6 @@ function AdministrativosContent() {
   const administrativosPorPagina = 12;
 
   const router = useRouter();
-  const { logout } = useAuth();
   
   const { permisoVerificado, loading: permissionLoading } = usePermissionCheck({
     permissionType: 'administrativos'
@@ -273,21 +270,17 @@ function AdministrativosContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9]">
-      <DashboardHeader 
-        title="Gestión de Personal Administrativo"
-        onLogout={logout}
-      />
-      
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-[#8D2C1D]">Gestión de Personal Administrativo</h1>
-            <p className="mt-2 text-[#666666]">
-              Administra el personal administrativo de tu institución educativa
-            </p>
-          </div>
+    <DirectorSidebar>
+      <main className="flex-1 p-8 overflow-auto">
+        {/* Header de la página */}
+        <div className="mb-8">
+          <h1 
+            className="text-3xl font-bold text-[#333333] mb-2" 
+            style={{ fontFamily: 'var(--font-poppins)' }}
+          >
+            Gestión de Personal Administrativo
+          </h1>
+          <p className="text-[#666666]">Administra el personal administrativo del colegio</p>
         </div>
 
         {/* Filtros y Búsqueda - Botón al lado del filtro */}
@@ -496,8 +489,6 @@ function AdministrativosContent() {
         )}
       </main>
 
-      <DashboardFooter />
-
       {/* Modales */}
       <ModalAdministrativo
         isOpen={isModalOpen}
@@ -524,7 +515,7 @@ function AdministrativosContent() {
           : `¿Estás seguro de que deseas ${pendingStatusChange?.newStatus === 'activo' ? 'activar' : 'desactivar'} a este administrativo? Esta acción requiere confirmación con tu contraseña.`
         }
       />
-    </div>
+    </DirectorSidebar>
   );
 }
 

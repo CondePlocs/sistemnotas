@@ -1,31 +1,26 @@
 "use client";
 
 import ProtectedRoute from "@/components/ProtectedRoute";
-import { useAuth } from "@/context/AuthContext";
-import DashboardHeader from "@/components/layout/DashboardHeader";
+import OwnerSidebar from "@/components/layout/OwnerSidebar";
 import DashboardFooter from "@/components/layout/DashboardFooter";
 import ActionCard from "@/components/layout/ActionCard";
 import StatCard from "@/components/layout/StatCard";
 
 function OwnerDashboardContent() {
-  const { user, logout } = useAuth();
-
-  const handleLogout = async () => {
-    await logout();
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#F6CBA3] to-[#E9E1C9] flex flex-col">
-      {/* Header */}
-      <DashboardHeader
-        title="Dashboard Owner"
-        userName={user?.nombres}
-        userEmail={user?.email}
-        onLogout={handleLogout}
-      />
-
+    <OwnerSidebar>
       {/* Main Content */}
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+      <main className="flex-1 p-8 overflow-auto">
+        {/* Header de la página */}
+        <div className="mb-8">
+          <h1 
+            className="text-3xl font-bold text-[#333333] mb-2" 
+            style={{ fontFamily: 'var(--font-poppins)' }}
+          >
+            Dashboard Owner
+          </h1>
+          <p className="text-[#666666]">Panel de control y gestión del sistema educativo</p>
+        </div>
         
         {/* Sección de Acciones Principales */}
         <div className="mb-8">
@@ -169,11 +164,11 @@ function OwnerDashboardContent() {
 
           </div>
         </div>
-      </main>
 
-      {/* Footer */}
-      <DashboardFooter />
-    </div>
+        {/* Footer */}
+        <DashboardFooter />
+      </main>
+    </OwnerSidebar>
   );
 }
 

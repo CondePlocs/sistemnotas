@@ -3,11 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import DashboardHeader from '@/components/layout/DashboardHeader';
+import OwnerSidebar from '@/components/layout/OwnerSidebar';
 import DashboardFooter from '@/components/layout/DashboardFooter';
 import ModalDirector from '@/components/modals/ModalDirector';
 import ModalDetallesDirector from '@/components/modals/ModalDetallesDirector';
-import { useAuth } from '@/context/AuthContext';
 
 interface Director {
   id: number;
@@ -41,7 +40,6 @@ interface Director {
 }
 
 function GestionDirectoresContent() {
-  const { user, logout } = useAuth();
   const router = useRouter();
   const [directores, setDirectores] = useState<Director[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,10 +72,6 @@ function GestionDirectoresContent() {
     }
   };
 
-  const handleLogout = async () => {
-    await logout();
-  };
-
   // Filtrar directores por búsqueda
   const directoresFiltrados = directores.filter((director) => {
     const searchLower = searchTerm.toLowerCase();
@@ -98,15 +92,18 @@ function GestionDirectoresContent() {
   const directoresPaginados = directoresFiltrados.slice(startIndex, startIndex + itemsPerPage);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#F6CBA3] to-[#E9E1C9] flex flex-col">
-      <DashboardHeader
-        title="Gestión de Directores"
-        userName={user?.nombres}
-        userEmail={user?.email}
-        onLogout={handleLogout}
-      />
-
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+    <OwnerSidebar>
+      <main className="flex-1 p-8 overflow-auto">
+        {/* Header de la página */}
+        <div className="mb-8">
+          <h1 
+            className="text-3xl font-bold text-[#333333] mb-2" 
+            style={{ fontFamily: 'var(--font-poppins)' }}
+          >
+            Gestión de Directores
+          </h1>
+          <p className="text-[#666666]">Administra y registra directores del sistema educativo</p>
+        </div>
         {/* Header con búsqueda y botón agregar */}
         <div className="mb-8 flex flex-row gap-3 justify-between items-center">
           {/* Barra de búsqueda */}
@@ -259,9 +256,10 @@ function GestionDirectoresContent() {
             )}
           </>
         )}
-      </main>
 
-      <DashboardFooter />
+        {/* Footer */}
+        <DashboardFooter />
+      </main>
 
       {/* Modales */}
       <ModalDirector
@@ -288,7 +286,7 @@ function GestionDirectoresContent() {
           directorId={directorSeleccionado}
         />
       )}
-    </div>
+    </OwnerSidebar>
   );
 }
 

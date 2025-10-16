@@ -3,9 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import DashboardHeader from '@/components/layout/DashboardHeader';
-import DashboardFooter from '@/components/layout/DashboardFooter';
-import { useAuth } from '@/context/AuthContext';
+import DirectorSidebar from '@/components/layout/DirectorSidebar';
 import ProfesorCard from '@/components/director/ProfesorCard';
 import ModalProfesor from '@/components/director/ModalProfesor';
 import ModalVerProfesor from '@/components/director/ModalVerProfesor';
@@ -30,7 +28,6 @@ function GestionProfesoresContent() {
   const [profesorParaToggle, setProfesorParaToggle] = useState<Profesor | null>(null);
 
   const router = useRouter();
-  const { logout } = useAuth();
 
   const { permisoVerificado, loading: permissionLoading } = usePermissionCheck({
     permissionType: 'profesores'
@@ -169,22 +166,17 @@ function GestionProfesoresContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9]">
-      <DashboardHeader 
-        title="Gestión de Profesores"
-        onLogout={logout}
-      />
-      
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
-        {/* Header */}
-        <div className="mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-[#8D2C1D]">Gestión de Profesores</h1>
-            <p className="mt-2 text-[#666666]">
-              Administra los profesores de tu institución educativa
-            </p>
-          </div>
+    <DirectorSidebar>
+      <main className="flex-1 p-8 overflow-auto">
+        {/* Header de la página */}
+        <div className="mb-8">
+          <h1 
+            className="text-3xl font-bold text-[#333333] mb-2" 
+            style={{ fontFamily: 'var(--font-poppins)' }}
+          >
+            Gestión de Profesores
+          </h1>
+          <p className="text-[#666666]">Administra y registra profesores del colegio</p>
         </div>
 
         {/* Estadísticas - Una sola fila en móvil */}
@@ -379,8 +371,6 @@ function GestionProfesoresContent() {
 
       </main>
 
-      <DashboardFooter />
-
       {/* Modales */}
       {showModalProfesor && (
         <ModalProfesor
@@ -417,7 +407,7 @@ function GestionProfesoresContent() {
           message={`¿Estás seguro de ${profesorParaToggle?.usuarioRol.usuario.estado === 'activo' ? 'desactivar' : 'activar'} a este profesor? Esta acción requiere tu contraseña por seguridad.`}
         />
       )}
-    </div>
+    </DirectorSidebar>
   );
 }
 

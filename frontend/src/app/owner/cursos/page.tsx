@@ -3,12 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import DashboardHeader from '@/components/layout/DashboardHeader';
+import OwnerSidebar from '@/components/layout/OwnerSidebar';
 import DashboardFooter from '@/components/layout/DashboardFooter';
 import ModalConfirmarPassword from '@/components/modals/ModalConfirmarPassword';
 import ModalCurso from '@/components/owner/ModalCurso';
 import ModalCompetenciasCurso from '@/components/owner/ModalCompetenciasCurso';
-import { useAuth } from '@/context/AuthContext';
 import { 
   Curso, 
   NivelEducativo, 
@@ -18,7 +17,6 @@ import {
 
 function CursosListContent() {
   const router = useRouter();
-  const { user, logout } = useAuth();
   const [cursos, setCursos] = useState<Curso[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -142,22 +140,20 @@ function CursosListContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#F6CBA3] to-[#E9E1C9]">
-      {/* Header */}
-      <DashboardHeader 
-        title="Sistema de Gestión Educativa"
-        userName={user?.nombres || user?.email}
-        userEmail={user?.email}
-        onLogout={logout}
-      />
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Título de sección con botón */}
-        <div className="mb-8 flex justify-between items-center">
-          <div>
-            <h2 className="text-3xl font-bold text-[#8D2C1D] mb-2">Gestión de Cursos</h2>
-            <p className="text-[#666666]">Administra los cursos y competencias del sistema educativo</p>
-          </div>
+    <OwnerSidebar>
+      <main className="flex-1 p-8 overflow-auto">
+        {/* Header de la página */}
+        <div className="mb-8">
+          <h1 
+            className="text-3xl font-bold text-[#333333] mb-2" 
+            style={{ fontFamily: 'var(--font-poppins)' }}
+          >
+            Gestión de Cursos
+          </h1>
+          <p className="text-[#666666]">Administra los cursos y competencias del sistema educativo</p>
+        </div>
+        {/* Botón nuevo curso */}
+        <div className="mb-8 flex justify-end">
           <button
             onClick={() => {
               setCursoSeleccionado(undefined);
@@ -361,6 +357,9 @@ function CursosListContent() {
             )}
           </>
         )}
+
+        {/* Footer */}
+        <DashboardFooter />
       </main>
 
       {/* Modales */}
@@ -396,10 +395,7 @@ function CursosListContent() {
           message="Esta acción eliminará el curso permanentemente. Por seguridad, ingresa tu contraseña para confirmar."
         />
       )}
-
-      {/* Footer */}
-      <DashboardFooter />
-    </div>
+    </OwnerSidebar>
   );
 }
 

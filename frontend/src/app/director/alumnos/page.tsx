@@ -2,9 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import DirectorSidebar from '@/components/layout/DirectorSidebar';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import DashboardHeader from '@/components/layout/DashboardHeader';
-import { useAuth } from '@/context/AuthContext';
 import { usePermissionCheck } from '@/hooks/usePermissionCheck';
 import AlumnoCard from '@/components/director/AlumnoCard';
 import ModalAlumno from '@/components/modals/ModalAlumno';
@@ -29,7 +28,6 @@ function AlumnosContent() {
   const alumnosPorPagina = 12;
 
   const router = useRouter();
-  const { logout } = useAuth();
   
   const { permisoVerificado, loading: permissionLoading } = usePermissionCheck({
     permissionType: 'alumnos'
@@ -207,31 +205,17 @@ function AlumnosContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9]">
-      <DashboardHeader 
-        title="Gestión de Alumnos"
-        onLogout={logout}
-      />
-      
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center gap-4 mb-4">
-            <button
-              onClick={() => router.back()}
-              className="p-3 rounded-xl bg-white/90 backdrop-blur-sm shadow-lg border-2 border-[#E9E1C9] hover:border-[#8D2C1D] transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 text-[#8D2C1D]"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <div>
-              <h1 className="text-3xl font-bold text-[#8D2C1D]">Gestión de Alumnos</h1>
-              <p className="mt-2 text-[#666666]">
-                Administra los estudiantes de tu institución educativa
-              </p>
-            </div>
-          </div>
+    <DirectorSidebar>
+      <main className="flex-1 p-8 overflow-auto">
+        {/* Header de la página */}
+        <div className="mb-8">
+          <h1 
+            className="text-3xl font-bold text-[#333333] mb-2" 
+            style={{ fontFamily: 'var(--font-poppins)' }}
+          >
+            Gestión de Alumnos
+          </h1>
+          <p className="text-[#666666]">Administra y registra estudiantes del colegio</p>
         </div>
 
         {/* Búsqueda y Nuevo Alumno */}
@@ -488,7 +472,7 @@ function AlumnosContent() {
           : `¿Estás seguro de que deseas ${pendingStatusChange?.newStatus === 'activo' ? 'activar' : 'desactivar'} a este alumno? Esta acción requiere confirmación con tu contraseña.`
         }
       />
-    </div>
+    </DirectorSidebar>
   );
 }
 

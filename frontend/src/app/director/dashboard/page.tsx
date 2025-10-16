@@ -2,39 +2,22 @@
 
 import Link from "next/link";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import { useAuth } from "@/context/AuthContext";
+import DirectorSidebar from "@/components/layout/DirectorSidebar";
 
 function DirectorDashboardContent() {
-  const { user, logout } = useAuth();
-
-  const handleLogout = async () => {
-    await logout();
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <h1 className="text-2xl font-bold text-gray-900">Dashboard Director</h1>
-            <div className="flex items-center space-x-4">
-              <div className="text-sm text-gray-600">
-                Bienvenido, {user?.nombres || user?.email}
-              </div>
-              <button
-                onClick={handleLogout}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm transition-colors"
-              >
-                Cerrar Sesión
-              </button>
-            </div>
-          </div>
+    <DirectorSidebar>
+      <main className="flex-1 p-8 overflow-auto">
+        {/* Header de la página */}
+        <div className="mb-8">
+          <h1 
+            className="text-3xl font-bold text-[#333333] mb-2" 
+            style={{ fontFamily: 'var(--font-poppins)' }}
+          >
+            Dashboard Director
+          </h1>
+          <p className="text-[#666666]">Panel de control y gestión del colegio</p>
         </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Primera fila: 3 cards principales */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
           
@@ -231,7 +214,7 @@ function DirectorDashboardContent() {
           </div>
         </div>
       </main>
-    </div>
+    </DirectorSidebar>
   );
 }
 

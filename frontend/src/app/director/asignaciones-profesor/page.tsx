@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/context/AuthContext';
-import DashboardHeader from '@/components/layout/DashboardHeader';
-import DashboardFooter from '@/components/layout/DashboardFooter';
+import DirectorSidebar from '@/components/layout/DirectorSidebar';
 import ModalAsignacionProfesor from '@/components/modals/ModalAsignacionProfesor';
 import ModalConfirmarPassword from '@/components/modals/ModalConfirmarPassword';
 import AsignacionCard from '@/components/director/AsignacionCard';
@@ -280,31 +279,19 @@ function AsignacionesProfesorContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9]">
-      <DashboardHeader 
-        title="Gestión de Asignaciones de Profesores"
-        onLogout={logout}
-      />
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center gap-4 mb-4">
-            <button
-              onClick={() => router.back()}
-              className="p-3 rounded-xl bg-white/90 backdrop-blur-sm shadow-lg border-2 border-[#E9E1C9] hover:border-[#8D2C1D] transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 text-[#8D2C1D]"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <div>
-              <h1 className="text-3xl font-bold text-[#8D2C1D] mb-2">Asignaciones de Profesores</h1>
-              <p className="text-[#666666] text-lg">Gestiona las asignaciones de cursos a profesores</p>
-            </div>
-          </div>
+    <DirectorSidebar>
+      <main className="flex-1 p-8 overflow-auto">
+        {/* Header de la página */}
+        <div className="mb-8">
+          <h1 
+            className="text-3xl font-bold text-[#333333] mb-2" 
+            style={{ fontFamily: 'var(--font-poppins)' }}
+          >
+            Asignación de Profesores
+          </h1>
+          <p className="text-[#666666]">Asigna profesores a cursos específicos</p>
         </div>
-        
+
         {/* Barra de búsqueda y botón Nueva Asignación */}
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg border border-[#E9E1C9]/30 p-4 sm:p-6 mb-6">
           <div className="flex gap-3 items-center">
@@ -431,9 +418,7 @@ function AsignacionesProfesorContent() {
         title={`Confirmar ${accionPendiente?.tipo === 'activar' ? 'Activación' : accionPendiente?.tipo === 'desactivar' ? 'Desactivación' : 'Acción'}`}
         message={`¿Estás seguro de que deseas ${accionPendiente?.tipo === 'activar' ? 'activar' : accionPendiente?.tipo === 'desactivar' ? 'desactivar' : 'realizar esta acción en'} esta asignación?`}
       />
-      
-      <DashboardFooter />
-    </div>
+    </DirectorSidebar>
   );
 }
 
