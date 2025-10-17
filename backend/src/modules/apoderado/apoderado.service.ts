@@ -1,10 +1,12 @@
-import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../providers/prisma.service';
 import { CreateApoderadoDto, UpdateApoderadoDto, RelacionApoderadoAlumnoDto, CrearRelacionesDto, ActualizarRelacionDto } from './dto';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class ApoderadoService {
+  private readonly logger = new Logger(ApoderadoService.name);
+  
   constructor(private prisma: PrismaService) {}
 
   async crearApoderado(createApoderadoDto: CreateApoderadoDto, userId: number) {
@@ -1134,10 +1136,58 @@ export class ApoderadoService {
    * Obtener detalle completo de un curso específico de un alumno
    */
   async obtenerDetalleCursoAlumno(alumnoId: number, cursoId: number, userId: number) {
+    this.logger.log(`Obteniendo detalle del curso ${cursoId} para alumno ${alumnoId}`);
+    
     // 1. Verificar que el apoderado tiene acceso a este alumno
     await this.verificarAccesoAlumno(alumnoId, userId);
 
-    // 2. Obtener información básica del curso
+    // 2. Obtener información del alumno y su colegio
+    const alumno = await this.prisma.alumno.findUnique({
+      where: { id: alumnoId },
+      include: {
+        colegio: true,
+        salon: {
+          include: {
+            salon: true
+          }
+        }
+      }
+    });
+
+    if (!alumno) {
+      throw new NotFoundException('Alumno no encontrado');
+    }
+
+    // 3. Obtener el periodo académico activo del colegio
+    const periodoActivo = await this.prisma.periodoAcademico.findFirst({
+      where: {
+        colegioId: alumno.colegioId,
+        activo: true
+      }
+    });
+
+    if (!periodoActivo) {
+      throw new NotFoundException('No hay periodo académico activo');
+    }
+
+    this.logger.log(`Periodo activo encontrado: ${periodoActivo.nombre} (ID: ${periodoActivo.id})`);
+    this.logger.log(`Alumno en salón: ${alumno.salon?.salonId || 'Sin salón asignado'}`);
+
+    // 4. Obtener la asignación del profesor para este salón y curso
+    let profesorAsignacionId: number | null = null;
+    if (alumno.salon) {
+      const asignacion = await this.prisma.profesorAsignacion.findFirst({
+        where: {
+          salonId: alumno.salon.salonId,
+          cursoId: cursoId,
+          activo: true
+        }
+      });
+      profesorAsignacionId = asignacion?.id || null;
+      this.logger.log(`Asignación profesor encontrada: ${profesorAsignacionId || 'No encontrada'}`);
+    }
+
+    // 5. Obtener información básica del curso con evaluaciones filtradas
     const curso = await this.prisma.curso.findUnique({
       where: { id: cursoId },
       include: {
@@ -1145,6 +1195,10 @@ export class ApoderadoService {
           where: { activo: true },
           include: {
             evaluaciones: {
+              where: {
+                periodoId: periodoActivo.id,
+                ...(profesorAsignacionId && { profesorAsignacionId: profesorAsignacionId })
+              },
               include: {
                 notas: {
                   where: { alumnoId: alumnoId }
@@ -1162,19 +1216,11 @@ export class ApoderadoService {
       throw new NotFoundException('Curso no encontrado');
     }
 
-    // 3. Obtener información del profesor
-    const alumnoSalon = await this.prisma.alumnoSalon.findFirst({
-      where: { alumnoId: alumnoId }
-    });
-
+    // 6. Obtener información del profesor (reutilizar la asignación ya obtenida)
     let profesor: any = null;
-    if (alumnoSalon) {
-      const asignacion = await this.prisma.profesorAsignacion.findFirst({
-        where: {
-          salonId: alumnoSalon.salonId,
-          cursoId: cursoId,
-          activo: true
-        },
+    if (profesorAsignacionId) {
+      const asignacion = await this.prisma.profesorAsignacion.findUnique({
+        where: { id: profesorAsignacionId },
         include: {
           profesor: {
             include: {
@@ -1201,6 +1247,14 @@ export class ApoderadoService {
         };
       }
     }
+
+    // Log de resultados para debug
+    const totalEvaluaciones = curso.competencias.reduce((total, comp) => total + comp.evaluaciones.length, 0);
+    this.logger.log(`Evaluaciones encontradas: ${totalEvaluaciones} (filtradas por periodo ${periodoActivo.id} y asignación ${profesorAsignacionId})`);
+    
+    curso.competencias.forEach(competencia => {
+      this.logger.log(`Competencia "${competencia.nombre}": ${competencia.evaluaciones.length} evaluaciones`);
+    });
 
     return {
       success: true,
