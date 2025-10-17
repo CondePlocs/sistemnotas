@@ -4,6 +4,7 @@ import { useState, useEffect, useLayoutEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useLogout } from '@/hooks/useLogout';
+import SimpleHeader from './SimpleHeader';
 
 interface DirectorSidebarProps {
   children: React.ReactNode;
@@ -22,6 +23,26 @@ export default function DirectorSidebar({ children }: DirectorSidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { handleLogout } = useLogout();
+
+  // Verificar si el usuario es administrativo
+  const isAdministrativo = user?.roles?.some(role => role.rol === 'ADMINISTRATIVO');
+
+  // Si es administrativo, no mostrar sidebar pero aplicar fondo y SimpleHeader
+  if (isAdministrativo) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9]">
+        <SimpleHeader 
+          title="Gestión Administrativa"
+          showBackButton={true}
+          showForwardButton={true}
+          dashboardPath="/administrativo/dashboard"
+        />
+        <div className="flex-1">
+          {children}
+        </div>
+      </div>
+    );
+  }
   // Inicializar estados correctamente para evitar parpadeo
   const [isCollapsed, setIsCollapsed] = useState(true); // Iniciar colapsado para evitar flash
   const [isMobile, setIsMobile] = useState(true); // Asumir móvil inicialmente

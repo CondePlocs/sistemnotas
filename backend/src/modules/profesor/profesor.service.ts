@@ -174,23 +174,51 @@ export class ProfesorService {
   }
 
 
-  async obtenerProfesores(directorUserId: number) {
-    // Solo mostrar profesores del colegio del director
+  async obtenerProfesores(userId: number) {
+    // Verificar permisos (director o administrativo con permisos)
+    let colegioId: number;
+
+    // Buscar si es director
     const directorInfo = await this.prisma.usuarioRol.findFirst({
       where: {
-        usuario_id: directorUserId,
+        usuario_id: userId,
         rol: { nombre: 'DIRECTOR' }
       }
     });
 
-    if (!directorInfo) {
-      throw new ForbiddenException('Solo directores pueden ver profesores');
+    if (directorInfo && directorInfo.colegio_id) {
+      colegioId = directorInfo.colegio_id;
+    } else {
+      // Buscar si es administrativo con permisos
+      const administrativoInfo = await this.prisma.administrativo.findFirst({
+        where: {
+          usuarioRol: {
+            usuario_id: userId,
+            rol: { nombre: 'ADMINISTRATIVO' }
+          }
+        },
+        include: {
+          usuarioRol: true,
+          permisos: true
+        }
+      });
+
+      if (!administrativoInfo || !administrativoInfo.usuarioRol.colegio_id) {
+        throw new ForbiddenException('Solo directores y administrativos pueden ver profesores');
+      }
+
+      // Verificar permisos del administrativo
+      if (!administrativoInfo.permisos || !administrativoInfo.permisos.puedeRegistrarProfesores) {
+        throw new ForbiddenException('No tienes permisos para ver profesores');
+      }
+
+      colegioId = administrativoInfo.usuarioRol.colegio_id;
     }
 
     return this.prisma.profesor.findMany({
       where: {
         usuarioRol: {
-          colegio_id: directorInfo.colegio_id // ← Filtro por colegio del director
+          colegio_id: colegioId // ← Filtro por colegio del usuario
         }
       },
       include: {
@@ -221,26 +249,52 @@ export class ProfesorService {
     });
   }
 
-  async obtenerProfesor(id: number, directorUserId: number) {
-    // Verificar que el director puede ver este profesor
+  async obtenerProfesor(id: number, userId: number) {
+    // Verificar permisos (director o administrativo con permisos)
+    let colegioId: number;
+
+    // Buscar si es director
     const directorInfo = await this.prisma.usuarioRol.findFirst({
       where: {
-        usuario_id: directorUserId,
-        rol: {
-          nombre: 'DIRECTOR'
-        }
+        usuario_id: userId,
+        rol: { nombre: 'DIRECTOR' }
       }
     });
 
-    if (!directorInfo) {
-      throw new ForbiddenException('Solo los directores pueden ver profesores');
+    if (directorInfo && directorInfo.colegio_id) {
+      colegioId = directorInfo.colegio_id;
+    } else {
+      // Buscar si es administrativo con permisos
+      const administrativoInfo = await this.prisma.administrativo.findFirst({
+        where: {
+          usuarioRol: {
+            usuario_id: userId,
+            rol: { nombre: 'ADMINISTRATIVO' }
+          }
+        },
+        include: {
+          usuarioRol: true,
+          permisos: true
+        }
+      });
+
+      if (!administrativoInfo || !administrativoInfo.usuarioRol.colegio_id) {
+        throw new ForbiddenException('Solo directores y administrativos pueden ver profesores');
+      }
+
+      // Verificar permisos del administrativo
+      if (!administrativoInfo.permisos || !administrativoInfo.permisos.puedeRegistrarProfesores) {
+        throw new ForbiddenException('No tienes permisos para ver profesores');
+      }
+
+      colegioId = administrativoInfo.usuarioRol.colegio_id;
     }
 
     const profesor = await this.prisma.profesor.findFirst({
       where: {
         id: id,
         usuarioRol: {
-          colegio_id: directorInfo.colegio_id
+          colegio_id: colegioId
         }
       },
       include: {

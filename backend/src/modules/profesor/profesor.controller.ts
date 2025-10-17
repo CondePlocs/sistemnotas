@@ -19,10 +19,10 @@ export class ProfesorController {
   }
 
   @Get()
-  @Roles('DIRECTOR')
+  @Roles('DIRECTOR', 'ADMINISTRATIVO')
   async obtenerProfesores(@Req() request: any) {
-    const directorUserId = request.user.id;
-    return this.profesorService.obtenerProfesores(directorUserId);
+    const userId = request.user.id;
+    return this.profesorService.obtenerProfesores(userId);
   }
 
   @Get('by-user/:userId')
@@ -40,8 +40,8 @@ export class ProfesorController {
   @Get(':id')
   @Roles('DIRECTOR', 'ADMINISTRATIVO')
   async obtenerProfesor(@Param('id', ParseIntPipe) id: number, @Req() request: any) {
-    const directorUserId = request.user.id;
-    return this.profesorService.obtenerProfesor(id, directorUserId);
+    const userId = request.user.id;
+    return this.profesorService.obtenerProfesor(id, userId);
   }
 
   @Put(':id')

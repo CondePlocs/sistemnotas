@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../context/AuthContext';
 import ProtectedRoute from '../../../components/ProtectedRoute';
+import SimpleHeader from '@/components/layout/SimpleHeader';
 
 interface PermisosAdministrativo {
   puedeRegistrarProfesores: boolean;
@@ -181,35 +182,14 @@ function AdministrativoDashboardContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Panel Administrativo</h1>
-              <p className="text-sm text-gray-600">
-                {adminInfo?.usuarioRol.usuario.nombres} {adminInfo?.usuarioRol.usuario.apellidos} - {adminInfo?.cargo}
-              </p>
-              <p className="text-xs text-gray-500">
-                {adminInfo?.usuarioRol.colegio.nombre}
-              </p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">{user?.nombres} {user?.apellidos}</p>
-                <p className="text-xs text-gray-500">{user?.email}</p>
-              </div>
-              <button
-                onClick={() => router.push('/auth/logout')}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
-              >
-                Cerrar Sesión
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9]">
+      {/* SimpleHeader */}
+      <SimpleHeader 
+        title="Panel Administrativo"
+        showBackButton={false}
+        showForwardButton={true}
+        dashboardPath="/administrativo/dashboard"
+      />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -248,7 +228,7 @@ function AdministrativoDashboardContent() {
               
               {permisos?.puedeRegistrarProfesores ? (
                 <button
-                  onClick={() => navegarA('/director/profesores/nuevo')}
+                  onClick={() => navegarA('/director/profesores')}
                   className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md text-sm font-medium transition-colors"
                 >
                   Acceder
@@ -286,7 +266,7 @@ function AdministrativoDashboardContent() {
               
               {permisos?.puedeRegistrarApoderados ? (
                 <button
-                  onClick={() => navegarA('/director/apoderados/nuevo')}
+                  onClick={() => navegarA('/director/apoderados')}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm font-medium transition-colors"
                 >
                   Acceder
@@ -324,7 +304,7 @@ function AdministrativoDashboardContent() {
               
               {permisos?.puedeRegistrarAdministrativos ? (
                 <button
-                  onClick={() => navegarA('/director/administrativos/nuevo')}
+                  onClick={() => navegarA('/director/administrativos')}
                   className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-md text-sm font-medium transition-colors"
                 >
                   Acceder
@@ -361,7 +341,7 @@ function AdministrativoDashboardContent() {
               
               {permisos?.puedeRegistrarAlumnos ? (
                 <button
-                  onClick={() => navegarA('/director/alumnos/nuevo')}
+                  onClick={() => navegarA('/director/alumnos')}
                   className="w-full bg-orange-600 hover:bg-orange-700 text-white py-2 px-4 rounded-md text-sm font-medium transition-colors"
                 >
                   Acceder

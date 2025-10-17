@@ -16,8 +16,10 @@ import {
   PlusIcon, 
   MagnifyingGlassIcon,
   AdjustmentsHorizontalIcon,
-  AcademicCapIcon 
+  AcademicCapIcon,
+  UserGroupIcon
 } from '@heroicons/react/24/outline';
+import { useRouter } from 'next/navigation';
 
 interface NivelesColegio {
   colegioId: number;
@@ -111,7 +113,8 @@ interface EstadoSalones {
 }
 
 function GestionSalonesContent() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
+  const router = useRouter();
   
   // Estados principales
   const [estado, setEstado] = useState<EstadoSalones>({
@@ -376,45 +379,60 @@ function GestionSalonesContent() {
   return (
     <DirectorSidebar>
       <main className="flex-1 p-8 overflow-auto">
-        {/* Header de la página */}
+        {/* Header de la página con botones */}
         <div className="mb-8">
-          <h1 
-            className="text-3xl font-bold text-[#333333] mb-2" 
-            style={{ fontFamily: 'var(--font-poppins)' }}
-          >
-            Gestión de Salones
-          </h1>
-          <p className="text-[#666666]">Administra salones y aulas del colegio</p>
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div>
+              <h1 
+                className="text-3xl font-bold text-[#333333] mb-2" 
+                style={{ fontFamily: 'var(--font-poppins)' }}
+              >
+                Gestión de Salones
+              </h1>
+              <p className="text-[#666666]">Administra salones y aulas del colegio</p>
+            </div>
+            
+            {/* Botones de acción en el header */}
+            <div className="flex flex-row gap-3 sm:flex-shrink-0">
+              <button
+                onClick={abrirModalCrear}
+                className="flex-1 sm:flex-none px-4 py-2.5 bg-gradient-to-r from-[#8D2C1D] to-[#D96924] text-white rounded-lg hover:from-[#D96924] hover:to-[#8D2C1D] focus:outline-none focus:ring-2 focus:ring-[#8D2C1D] transition-all duration-200 flex items-center justify-center gap-2 font-medium shadow-md text-sm"
+              >
+                <PlusIcon className="w-4 h-4" />
+                <span className="hidden sm:inline">Crear Salón</span>
+                <span className="sm:hidden">Crear</span>
+              </button>
+              
+              <button
+                onClick={() => router.push('/director/salones/gestion')}
+                className="flex-1 sm:flex-none px-4 py-2.5 bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] text-white rounded-lg hover:from-[#1d4ed8] hover:to-[#2563eb] focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 flex items-center justify-center gap-2 font-medium shadow-md text-sm"
+              >
+                <UserGroupIcon className="w-4 h-4" />
+                <span className="hidden sm:inline">Gestionar Asignaciones</span>
+                <span className="sm:hidden">Asignaciones</span>
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Filtros y búsqueda */}
         <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-4 lg:p-6 mb-4 lg:mb-6 border border-[#E9E1C9]">
           <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-4 lg:gap-4">
             
-            {/* Fila 1: Búsqueda + Botón Crear (móvil) */}
+            {/* Búsqueda */}
             <div className="lg:col-span-2">
               <label className="block text-xs lg:text-sm font-semibold text-[#8D2C1D] mb-1 lg:mb-2">
                 Buscar Salón
               </label>
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#666666]" />
-                  <input
-                    type="text"
-                    value={estado.busqueda}
-                    onChange={(e) => handleBusquedaChange(e.target.value)}
-                    placeholder="Buscar por grado o sección..."
-                    className="w-full pl-9 pr-3 py-2 lg:py-3 border-2 border-[#E9E1C9] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8D2C1D] focus:border-[#8D2C1D] transition-all duration-200 bg-white/90 text-sm text-[#333333] placeholder-[#999999]"
-                  />
-                </div>
-                {/* Botón Crear - Solo móvil */}
-                <button
-                  onClick={abrirModalCrear}
-                  className="lg:hidden px-3 py-2 bg-gradient-to-r from-[#8D2C1D] to-[#D96924] text-white rounded-xl hover:from-[#D96924] hover:to-[#8D2C1D] focus:outline-none focus:ring-2 focus:ring-[#8D2C1D] transition-all duration-200 flex items-center gap-1 font-semibold shadow-lg"
-                >
-                  <PlusIcon className="w-4 h-4" />
-                  <span className="text-xs">Crear</span>
-                </button>
+              <div className="relative">
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#666666]" />
+                <input
+                  type="text"
+                  value={estado.busqueda}
+                  onChange={(e) => handleBusquedaChange(e.target.value)}
+                  placeholder="Buscar por grado o sección..."
+                  className="w-full pl-9 pr-3 py-2 lg:py-3 border-2 border-[#E9E1C9] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8D2C1D] focus:border-[#8D2C1D] transition-all duration-200 bg-white/90 text-sm text-[#333333] placeholder-[#999999]"
+                />
               </div>
             </div>
 
