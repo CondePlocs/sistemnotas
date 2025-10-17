@@ -1,3 +1,6 @@
+// Este componente se mantiene para compatibilidad pero ya no se usa en el nuevo diseño
+// Los nuevos componentes LoginLeftPanel y LoginRightPanel manejan el header
+
 export default function LoginHeader() {
   return (
     <div className="text-center mb-8 animate-fade-in-down">
