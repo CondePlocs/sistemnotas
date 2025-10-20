@@ -1,0 +1,488 @@
+@startuml Sistema de Gestión Educativa - Diagrama de Clases
+
+!define ENTITY_COLOR #E8F4FD
+!define ENUM_COLOR #FFF2CC
+!define RELATION_COLOR #D5E8D4
+
+' Configuración del diagrama
+skinparam class {
+    BackgroundColor ENTITY_COLOR
+    BorderColor #1F2937
+    ArrowColor #374151
+}
+
+skinparam enum {
+    BackgroundColor ENUM_COLOR
+    BorderColor #92400E
+}
+
+' ================================
+' ENTIDADES PRINCIPALES
+' ================================
+
+class Usuario {
+    +id: Int
+    +email: String {unique}
+    +password_hash: String
+    +dni: String {unique}
+    +nombres: String
+    +apellidos: String
+    +telefono: String
+    +estado: EstadoUsuario
+    +creado_en: DateTime
+    +actualizado_en: DateTime
+    --
+    +login(email, password): AuthResult
+    +validatePassword(password): Boolean
+    +cambiarEstado(estado): Usuario
+}
+
+class Rol {
+    +id: Int
+    +nombre: String {unique}
+    --
+    +asignarAUsuario(usuario): UsuarioRol
+}
+
+class UsuarioRol {
+    +id: Int
+    +usuario_id: Int
+    +rol_id: Int
+    +colegio_id: Int
+    +hecho_en: DateTime
+    +hecho_por: Int
+    --
+    +verificarPermisos(): Boolean
+    +obtenerScope(): Colegio
+}
+
+' ================================
+' ENTIDADES GEOGRÁFICAS
+' ================================
+
+class DRE {
+    +id: Int
+    +nombre: String {unique}
+    +codigo: String {unique}
+    --
+    +crearUGEL(datos): UGEL
+}
+
+class UGEL {
+    +id: Int
+    +dreId: Int
+    +nombre: String
+    +codigo: String {unique}
+    --
+    +crearColegio(datos): Colegio
+}
+
+class Colegio {
+    +id: Int
+    +ugelId: Int
+    +nombre: String
+    +codigoModular: String {unique}
+    +distrito: String
+    +direccion: String
+    +creadoEn: DateTime
+    +actualizadoEn: DateTime
+    --
+    +crearPeriodoAcademico(datos): PeriodoAcademico
+    +asignarNivel(nivel): ColegioNivel
+    +obtenerEstadisticas(): EstadisticasColegio
+}
+
+' ================================
+' SISTEMA ACADÉMICO
+' ================================
+
+class Nivel {
+    +id: Int
+    +nombre: String {unique}
+    +activo: Boolean
+    +creadoEn: DateTime
+    +actualizadoEn: DateTime
+    --
+    +crearCurso(datos): Curso
+    +activar(): void
+    +desactivar(): void
+}
+
+class ColegioNivel {
+    +id: Int
+    +colegioId: Int
+    +nivelId: Int
+    +puedeCrearSalones: Boolean
+    +activo: Boolean
+    +creadoEn: DateTime
+    +actualizadoEn: DateTime
+    --
+    +crearSalon(datos): Salon
+}
+
+class Salon {
+    +id: Int
+    +colegioId: Int
+    +colegioNivelId: Int
+    +grado: String
+    +seccion: String
+    +turno: Turno
+    +activo: Boolean
+    +creadoPor: Int
+    +creadoEn: DateTime
+    +actualizadoEn: DateTime
+    --
+    +asignarAlumno(alumno): AlumnoSalon
+    +asignarCurso(curso): SalonCurso
+    +obtenerEstadisticas(): EstadisticasSalon
+}
+
+class PeriodoAcademico {
+    +id: Int
+    +colegioId: Int
+    +nombre: String
+    +tipo: TipoPeriodo
+    +anioAcademico: Int
+    +orden: Int
+    +fechaInicio: DateTime
+    +fechaFin: DateTime
+    +activo: Boolean
+    +creadoPor: Int
+    +creadoEn: DateTime
+    +actualizadoEn: DateTime
+    --
+    +activar(): void
+    +desactivar(): void
+    +estaVigente(): Boolean
+}
+
+' ================================
+' ENTIDADES DE PERSONAS
+' ================================
+
+class Director {
+    +id: Int
+    +usuarioRolId: Int {unique}
+    +fechaNacimiento: DateTime
+    +sexo: String
+    +estadoCivil: String
+    +nacionalidad: String
+    +direccion: String
+    +gradoAcademico: String
+    +carrera: String
+    +especializacion: String
+    +institucionEgreso: String
+    +fechaInicio: DateTime
+    +creadoEn: DateTime
+    +actualizadoEn: DateTime
+    --
+    +gestionarColegio(): void
+    +otorgarPermisos(administrativo): void
+    +crearUsuarios(): void
+}
+
+class Administrativo {
+    +id: Int
+    +usuarioRolId: Int {unique}
+    +fechaNacimiento: DateTime
+    +sexo: String
+    +estadoCivil: String
+    +nacionalidad: String
+    +direccion: String
+    +cargo: String
+    +fechaIngreso: DateTime
+    +condicionLaboral: String
+    +creadoEn: DateTime
+    +actualizadoEn: DateTime
+    +actualizadoPor: Int
+    --
+    +ejecutarTareasPermitidas(): void
+    +solicitarPermisos(): void
+}
+
+class PermisosAdministrativo {
+    +id: Int
+    +administrativoId: Int {unique}
+    +puedeRegistrarProfesores: Boolean
+    +puedeRegistrarApoderados: Boolean
+    +puedeRegistrarAdministrativos: Boolean
+    +puedeRegistrarAlumnos: Boolean
+    +puedeGestionarSalones: Boolean
+    +puedeAsignarProfesores: Boolean
+    +otorgadoPor: Int
+    +otorgadoEn: DateTime
+    +actualizadoPor: Int
+    +actualizadoEn: DateTime
+    --
+    +verificarPermiso(tipo): Boolean
+    +otorgarPermiso(tipo): void
+    +revocarPermiso(tipo): void
+}
+
+class Profesor {
+    +id: Int
+    +usuarioRolId: Int {unique}
+    +fechaNacimiento: DateTime
+    +sexo: String
+    +estadoCivil: String
+    +nacionalidad: String
+    +direccion: String
+    +gradoAcademico: String
+    +especialidad: String
+    +institucionEgreso: String
+    +fechaIngreso: DateTime
+    +condicionLaboral: String
+    +creadoEn: DateTime
+    +actualizadoEn: DateTime
+    +actualizadoPor: Int
+    --
+    +obtenerAsignaciones(): ProfesorAsignacion[]
+    +crearEvaluacion(datos): Evaluacion
+    +registrarNotas(notas): RegistroNota[]
+}
+
+class ProfesorAsignacion {
+    +id: Int
+    +profesorId: Int
+    +salonId: Int
+    +cursoId: Int
+    +activo: Boolean
+    +asignadoPor: Int
+    +asignadoEn: DateTime
+    +actualizadoEn: DateTime
+    --
+    +activar(): void
+    +desactivar(): void
+    +obtenerContextoTrabajo(): ContextoTrabajo
+}
+
+class Apoderado {
+    +id: Int
+    +usuarioRolId: Int {unique}
+    +fechaNacimiento: DateTime
+    +sexo: String
+    +estadoCivil: String
+    +nacionalidad: String
+    +direccion: String
+    +ocupacion: String
+    +centroTrabajo: String
+    +telefonoTrabajo: String
+    +creadoEn: DateTime
+    +actualizadoEn: DateTime
+    +actualizadoPor: Int
+    --
+    +obtenerAlumnos(): Alumno[]
+    +verNotasAlumno(alumno): RegistroNota[]
+    +obtenerReporteAcademico(): ReporteAcademico
+}
+
+class Alumno {
+    +id: Int
+    +colegioId: Int
+    +dni: String {unique}
+    +codigoAlumno: String {unique}
+    +nombres: String
+    +apellidos: String
+    +fechaNacimiento: DateTime
+    +sexo: SexoAlumno
+    +nacionalidad: String
+    +direccion: String
+    +distrito: String
+    +numeroContacto: String
+    +activo: Boolean
+    +creadoPor: Int
+    +actualizadoPor: Int
+    +creadoEn: DateTime
+    +actualizadoEn: DateTime
+    --
+    +asignarASalon(salon): AlumnoSalon
+    +obtenerNotas(): RegistroNota[]
+    +obtenerPromedios(): PromedioAlumno
+}
+
+class ApoderadoAlumno {
+    +id: Int
+    +apoderadoId: Int
+    +alumnoId: Int
+    +parentesco: String
+    +esPrincipal: Boolean
+    +activo: Boolean
+    +creadoPor: Int
+    +creadoEn: DateTime
+    +actualizadoEn: DateTime
+    +actualizadoPor: Int
+    --
+    +establecerComoPrincipal(): void
+    +cambiarParentesco(parentesco): void
+}
+
+' ================================
+' SISTEMA ACADÉMICO - CURSOS Y EVALUACIONES
+' ================================
+
+class Curso {
+    +id: Int
+    +nombre: String
+    +descripcion: String
+    +color: String
+    +activo: Boolean
+    +creadoPor: Int
+    +creadoEn: DateTime
+    +actualizadoEn: DateTime
+    +nivelId: Int
+    --
+    +crearCompetencia(datos): Competencia
+    +asignarASalon(salon): SalonCurso
+    +obtenerEstadisticas(): EstadisticasCurso
+}
+
+class Competencia {
+    +id: Int
+    +cursoId: Int
+    +nombre: String
+    +orden: Int
+    +activo: Boolean
+    +creadoPor: Int
+    +creadoEn: DateTime
+    +actualizadoEn: DateTime
+    --
+    +crearEvaluacion(datos): Evaluacion
+    +reordenar(nuevoOrden): void
+}
+
+class Evaluacion {
+    +id: Int
+    +competenciaId: Int
+    +profesorAsignacionId: Int
+    +periodoId: Int
+    +nombre: String
+    +fechaEvaluacion: DateTime
+    +creadoPor: Int
+    +creadoEn: DateTime
+    +actualizadoEn: DateTime
+    --
+    +registrarNota(alumno, nota): RegistroNota
+    +obtenerEstadisticas(): EstadisticasEvaluacion
+}
+
+class RegistroNota {
+    +id: Int
+    +alumnoId: Int
+    +evaluacionId: Int
+    +nota: String
+    +registradoPor: Int
+    +creadoEn: DateTime
+    +actualizadoEn: DateTime
+    --
+    +convertirANumerico(): Float
+    +esAprobatoria(): Boolean
+}
+
+' ================================
+' RELACIONES INTERMEDIAS
+' ================================
+
+class AlumnoSalon {
+    +id: Int
+    +alumnoId: Int {unique}
+    +salonId: Int
+    +fechaAsignacion: DateTime
+    +asignadoPor: Int
+    +creadoEn: DateTime
+    +actualizadoEn: DateTime
+    --
+    +transferir(nuevoSalon): AlumnoSalon
+}
+
+class SalonCurso {
+    +id: Int
+    +salonId: Int
+    +cursoId: Int
+    +activo: Boolean
+    +asignadoEn: DateTime
+    +asignadoPor: Int
+    --
+    +activar(): void
+    +desactivar(): void
+}
+
+' ================================
+' ENUMERACIONES
+' ================================
+
+enum EstadoUsuario {
+    activo
+    inactivo
+    suspendido
+}
+
+enum SexoAlumno {
+    masculino
+    femenino
+}
+
+enum TipoPeriodo {
+    BIMESTRE
+    TRIMESTRE
+    SEMESTRE
+}
+
+enum Turno {
+    MAÑANA
+    TARDE
+    NOCHE
+}
+
+' ================================
+' RELACIONES PRINCIPALES
+' ================================
+
+' Relaciones de Usuario
+Usuario ||--o{ UsuarioRol : "tiene roles"
+Rol ||--o{ UsuarioRol : "asignado a usuarios"
+UsuarioRol ||--o| Director : "es director"
+UsuarioRol ||--o| Administrativo : "es administrativo"
+UsuarioRol ||--o| Profesor : "es profesor"
+UsuarioRol ||--o| Apoderado : "es apoderado"
+
+' Relaciones geográficas
+DRE ||--o{ UGEL : "contiene"
+UGEL ||--o{ Colegio : "administra"
+Colegio ||--o{ UsuarioRol : "scope"
+
+' Relaciones académicas
+Colegio ||--o{ ColegioNivel : "tiene niveles"
+Nivel ||--o{ ColegioNivel : "permitido en colegios"
+ColegioNivel ||--o{ Salon : "contiene salones"
+Colegio ||--o{ PeriodoAcademico : "tiene periodos"
+
+' Relaciones de personas
+Administrativo ||--o| PermisosAdministrativo : "tiene permisos"
+Profesor ||--o{ ProfesorAsignacion : "asignado a"
+Apoderado ||--o{ ApoderadoAlumno : "responsable de"
+Alumno ||--o{ ApoderadoAlumno : "tiene apoderados"
+Alumno ||--o| AlumnoSalon : "asignado a salon"
+
+' Relaciones académicas - cursos
+Nivel ||--o{ Curso : "tiene cursos"
+Curso ||--o{ Competencia : "contiene"
+Salon ||--o{ SalonCurso : "tiene cursos"
+Curso ||--o{ SalonCurso : "asignado a salones"
+Curso ||--o{ ProfesorAsignacion : "enseñado por"
+
+' Relaciones de evaluación
+Competencia ||--o{ Evaluacion : "evaluada en"
+ProfesorAsignacion ||--o{ Evaluacion : "crea evaluaciones"
+PeriodoAcademico ||--o{ Evaluacion : "contiene evaluaciones"
+Evaluacion ||--o{ RegistroNota : "tiene notas"
+Alumno ||--o{ RegistroNota : "recibe notas"
+
+' Relaciones de auditoría (simplificadas)
+Usuario ||--o{ Alumno : "crea/actualiza"
+Usuario ||--o{ Salon : "crea"
+Usuario ||--o{ Curso : "crea"
+Usuario ||--o{ Competencia : "crea"
+Usuario ||--o{ Evaluacion : "crea"
+Usuario ||--o{ RegistroNota : "registra"
+
+@enduml

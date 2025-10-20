@@ -1,0 +1,331 @@
+@startuml Sistema de Gestión Educativa - Casos de Uso
+
+!define ACTOR_COLOR #E8F4FD
+!define USECASE_COLOR #F0F9FF
+!define SYSTEM_COLOR #FEF3C7
+!define INCLUDE_COLOR #D1FAE5
+!define EXTEND_COLOR #FEE2E2
+
+' Configuración del diagrama
+skinparam actor {
+    BackgroundColor ACTOR_COLOR
+    BorderColor #1F2937
+}
+
+skinparam usecase {
+    BackgroundColor USECASE_COLOR
+    BorderColor #1E40AF
+}
+
+skinparam rectangle {
+    BackgroundColor SYSTEM_COLOR
+    BorderColor #92400E
+}
+
+' ================================
+' ACTORES DEL SISTEMA
+' ================================
+
+actor "Owner\n(Super Admin)" as Owner
+actor "Director" as Director
+actor "Administrativo" as Admin
+actor "Profesor" as Profesor
+actor "Apoderado" as Apoderado
+
+' ================================
+' SISTEMA PRINCIPAL
+' ================================
+
+rectangle "Sistema de Gestión Educativa" {
+
+    ' ================================
+    ' GESTIÓN DE USUARIOS Y AUTENTICACIÓN
+    ' ================================
+    
+    package "Gestión de Usuarios" {
+        usecase "Iniciar Sesión" as UC001
+        usecase "Cerrar Sesión" as UC002
+        usecase "Cambiar Contraseña" as UC003
+        usecase "Gestionar Perfil" as UC004
+        usecase "Activar/Desactivar Usuario" as UC005
+    }
+
+    ' ================================
+    ' GESTIÓN INSTITUCIONAL (OWNER)
+    ' ================================
+    
+    package "Gestión Institucional" {
+        usecase "Gestionar DRE" as UC010
+        usecase "Gestionar UGEL" as UC011
+        usecase "Gestionar Colegios" as UC012
+        usecase "Gestionar Niveles Educativos" as UC013
+        usecase "Gestionar Cursos Globales" as UC014
+        usecase "Crear Directores" as UC015
+        usecase "Ver Estadísticas Globales" as UC016
+    }
+
+    ' ================================
+    ' GESTIÓN ACADÉMICA (DIRECTOR)
+    ' ================================
+    
+    package "Gestión Académica" {
+        usecase "Gestionar Períodos Académicos" as UC020
+        usecase "Gestionar Salones" as UC021
+        usecase "Asignar Cursos a Salones" as UC022
+        usecase "Gestionar Competencias" as UC023
+        usecase "Ver Reportes Académicos" as UC024
+    }
+
+    ' ================================
+    ' GESTIÓN DE PERSONAL (DIRECTOR/ADMIN)
+    ' ================================
+    
+    package "Gestión de Personal" {
+        usecase "Registrar Profesores" as UC030
+        usecase "Registrar Administrativos" as UC031
+        usecase "Registrar Apoderados" as UC032
+        usecase "Asignar Profesores a Cursos" as UC033
+        usecase "Gestionar Permisos Administrativos" as UC034
+        usecase "Ver Personal del Colegio" as UC035
+    }
+
+    ' ================================
+    ' GESTIÓN DE ESTUDIANTES (DIRECTOR/ADMIN)
+    ' ================================
+    
+    package "Gestión de Estudiantes" {
+        usecase "Registrar Alumnos" as UC040
+        usecase "Asignar Alumnos a Salones" as UC041
+        usecase "Gestionar Relaciones Apoderado-Alumno" as UC042
+        usecase "Transferir Alumnos" as UC043
+        usecase "Ver Expediente Académico" as UC044
+        usecase "Generar Reportes de Alumnos" as UC045
+    }
+
+    ' ================================
+    ' SISTEMA DE EVALUACIONES (PROFESOR)
+    ' ================================
+    
+    package "Sistema de Evaluaciones" {
+        usecase "Ver Asignaciones Docentes" as UC050
+        usecase "Crear Evaluaciones" as UC051
+        usecase "Registrar Notas" as UC052
+        usecase "Modificar Notas" as UC053
+        usecase "Ver Estadísticas de Curso" as UC054
+        usecase "Generar Reportes de Evaluación" as UC055
+    }
+
+    ' ================================
+    ' SEGUIMIENTO ACADÉMICO (APODERADO)
+    ' ================================
+    
+    package "Seguimiento Académico" {
+        usecase "Ver Hijos Asignados" as UC060
+        usecase "Consultar Notas del Hijo" as UC061
+        usecase "Ver Detalle de Evaluaciones" as UC062
+        usecase "Ver Profesores del Hijo" as UC063
+        usecase "Ver Cursos del Hijo" as UC064
+        usecase "Descargar Reporte Académico" as UC065
+    }
+
+    ' ================================
+    ' CASOS DE USO DE EXTENSIÓN
+    ' ================================
+    
+    package "Funcionalidades Avanzadas" {
+        usecase "Validar Permisos" as UC070
+        usecase "Auditar Acciones" as UC071
+        usecase "Notificar Cambios" as UC072
+        usecase "Exportar Datos" as UC073
+        usecase "Importar Datos Masivos" as UC074
+        usecase "Generar Backup" as UC075
+    }
+}
+
+' ================================
+' RELACIONES DE ACTORES CON CASOS DE USO
+' ================================
+
+' OWNER - Gestión Global
+Owner --> UC010
+Owner --> UC011
+Owner --> UC012
+Owner --> UC013
+Owner --> UC014
+Owner --> UC015
+Owner --> UC016
+
+' DIRECTOR - Gestión del Colegio
+Director --> UC020
+Director --> UC021
+Director --> UC022
+Director --> UC023
+Director --> UC024
+Director --> UC030
+Director --> UC031
+Director --> UC032
+Director --> UC033
+Director --> UC034
+Director --> UC035
+Director --> UC040
+Director --> UC041
+Director --> UC042
+Director --> UC043
+Director --> UC044
+Director --> UC045
+
+' ADMINISTRATIVO - Según Permisos
+Admin --> UC030
+Admin --> UC031
+Admin --> UC032
+Admin --> UC033
+Admin --> UC040
+Admin --> UC041
+Admin --> UC042
+Admin --> UC035
+Admin --> UC044
+Admin --> UC045
+
+' PROFESOR - Evaluaciones y Enseñanza
+Profesor --> UC050
+Profesor --> UC051
+Profesor --> UC052
+Profesor --> UC053
+Profesor --> UC054
+Profesor --> UC055
+
+' APODERADO - Seguimiento de Hijos
+Apoderado --> UC060
+Apoderado --> UC061
+Apoderado --> UC062
+Apoderado --> UC063
+Apoderado --> UC064
+Apoderado --> UC065
+
+' TODOS LOS USUARIOS - Funcionalidades Básicas
+Owner --> UC001
+Owner --> UC002
+Owner --> UC003
+Owner --> UC004
+
+Director --> UC001
+Director --> UC002
+Director --> UC003
+Director --> UC004
+Director --> UC005
+
+Admin --> UC001
+Admin --> UC002
+Admin --> UC003
+Admin --> UC004
+
+Profesor --> UC001
+Profesor --> UC002
+Profesor --> UC003
+Profesor --> UC004
+
+Apoderado --> UC001
+Apoderado --> UC002
+Apoderado --> UC003
+Apoderado --> UC004
+
+' ================================
+' RELACIONES INCLUDE Y EXTEND
+' ================================
+
+' Validación de permisos se incluye en muchos casos de uso
+UC030 ..> UC070 : <<include>>
+UC031 ..> UC070 : <<include>>
+UC032 ..> UC070 : <<include>>
+UC033 ..> UC070 : <<include>>
+UC040 ..> UC070 : <<include>>
+UC041 ..> UC070 : <<include>>
+UC051 ..> UC070 : <<include>>
+UC052 ..> UC070 : <<include>>
+
+' Auditoría se incluye en acciones críticas
+UC015 ..> UC071 : <<include>>
+UC030 ..> UC071 : <<include>>
+UC031 ..> UC071 : <<include>>
+UC032 ..> UC071 : <<include>>
+UC040 ..> UC071 : <<include>>
+UC052 ..> UC071 : <<include>>
+UC005 ..> UC071 : <<include>>
+
+' Notificaciones se extienden en algunos casos
+UC052 ..> UC072 : <<extend>>
+UC005 ..> UC072 : <<extend>>
+UC041 ..> UC072 : <<extend>>
+
+' Exportación se extiende en reportes
+UC024 ..> UC073 : <<extend>>
+UC045 ..> UC073 : <<extend>>
+UC055 ..> UC073 : <<extend>>
+UC065 ..> UC073 : <<extend>>
+
+' Importación masiva se extiende en registros
+UC040 ..> UC074 : <<extend>>
+UC030 ..> UC074 : <<extend>>
+
+' ================================
+' RELACIONES ESPECÍFICAS DE NEGOCIO
+' ================================
+
+' Gestión de salones requiere gestión de períodos
+UC021 ..> UC020 : <<include>>
+
+' Asignación de cursos requiere salones existentes
+UC022 ..> UC021 : <<include>>
+
+' Asignación de profesores requiere cursos en salones
+UC033 ..> UC022 : <<include>>
+
+' Registro de notas requiere evaluaciones
+UC052 ..> UC051 : <<include>>
+
+' Ver notas requiere validar relación apoderado-alumno
+UC061 ..> UC042 : <<include>>
+
+' Transferir alumnos requiere salones disponibles
+UC043 ..> UC021 : <<include>>
+
+' Gestionar permisos requiere validar rol de director
+UC034 ..> UC070 : <<include>>
+
+' ================================
+' NOTAS Y RESTRICCIONES
+' ================================
+
+note right of UC070
+    La validación de permisos
+    verifica:
+    - Rol del usuario
+    - Scope por colegio
+    - Permisos específicos
+    - Estado del usuario
+end note
+
+note right of UC071
+    La auditoría registra:
+    - Quién realizó la acción
+    - Cuándo se realizó
+    - Qué datos se modificaron
+    - Desde qué IP/dispositivo
+end note
+
+note right of Admin
+    Los administrativos solo
+    pueden ejecutar acciones
+    según los permisos
+    otorgados por el director
+end note
+
+note right of UC052
+    El registro de notas
+    está limitado por:
+    - Período académico activo
+    - Asignación profesor-curso
+    - Alumnos del salón
+end note
+
+@enduml
