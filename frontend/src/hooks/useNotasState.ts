@@ -175,6 +175,11 @@ export function useNotasState({ alumnos, evaluaciones }: UseNotasStateProps) {
     });
   }, []);
 
+  // Convertir Map a array para facilitar el uso
+  const todasLasNotas = useMemo(() => {
+    return Array.from(notas.values());
+  }, [notas]);
+
   return {
     // Estado
     notas,
@@ -182,6 +187,7 @@ export function useNotasState({ alumnos, evaluaciones }: UseNotasStateProps) {
     error,
     hayCambiosPendientes,
     notasPendientes,
+    todasLasNotas,
     
     // Funciones
     obtenerNota,

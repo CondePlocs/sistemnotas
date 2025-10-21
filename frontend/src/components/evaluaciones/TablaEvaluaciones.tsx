@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { ContextoTrabajo, CreateEvaluacionDto, Evaluacion } from '@/types/evaluaciones';
 import { NotaLiteral } from '@/types/registro-nota';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { useNotasState } from '@/hooks/useNotasState';
+import { useEstimacionesIA } from '@/hooks/useEstimacionesIA';
+import { EstimacionUtils } from '@/types/ia';
 import ModalCrearEvaluacion from '../modals/ModalCrearEvaluacion';
 import BotonGuardarNotas from './BotonGuardarNotas';
 import { registroNotaAPI } from '@/lib/api/registro-nota';
@@ -35,10 +37,36 @@ export default function TablaEvaluacionesReal({
     descartarCambios,
     hayCambiosPendientes,
     cantidadPendientes,
-    guardando
+    guardando,
+    todasLasNotas
   } = useNotasState({
     alumnos: contexto.alumnos,
     evaluaciones: contexto.evaluaciones
+  });
+
+  // Convertir notas a Map para el hook de estimaciones
+  const notasExistentesMap = useMemo(() => {
+    const mapa = new Map<string, NotaLiteral>();
+    todasLasNotas.forEach((nota: any) => {
+      if (nota.nota) {
+        const clave = EstimacionUtils.generarClave(nota.alumnoId, nota.evaluacionId);
+        mapa.set(clave, nota.nota);
+      }
+    });
+    return mapa;
+  }, [todasLasNotas]);
+
+  // Hook para gestionar estimaciones de IA
+  const {
+    obtenerEstimacion,
+    tieneEstimacion,
+    cargando: cargandoEstimaciones,
+    totalEstimaciones
+  } = useEstimacionesIA({
+    alumnos: contexto.alumnos,
+    competencias: contexto.competencias,
+    evaluaciones: contexto.evaluaciones,
+    notasExistentes: notasExistentesMap
   });
 
   // Función para cargar notas desde la API
@@ -78,6 +106,9 @@ export default function TablaEvaluacionesReal({
       // Recargar promedios después de guardar
       await cargarPromediosCompetencias();
       await cargarPromediosCurso();
+      
+      // Las estimaciones se actualizarán automáticamente por el useEffect
+      // cuando cambien las notasExistentesMap
     }
     
     return resultado;
@@ -184,7 +215,18 @@ export default function TablaEvaluacionesReal({
   };
 
   // Obtener color de rendimiento para notas literales (versión mejorada)
-  const getColorNotaMejorado = (nota: NotaLiteral | null): string => {
+  const getColorNotaMejorado = (nota: NotaLiteral | null, esEstimacion: boolean = false): string => {
+    if (esEstimacion) {
+      // Colores especiales para estimaciones de IA
+      switch (nota) {
+        case 'AD': return 'bg-gradient-to-br from-purple-400 to-purple-500 text-white border-purple-500 hover:from-purple-500 hover:to-purple-600 ring-2 ring-purple-300';
+        case 'A': return 'bg-gradient-to-br from-indigo-400 to-indigo-500 text-white border-indigo-500 hover:from-indigo-500 hover:to-indigo-600 ring-2 ring-indigo-300';
+        case 'B': return 'bg-gradient-to-br from-pink-400 to-pink-500 text-white border-pink-500 hover:from-pink-500 hover:to-pink-600 ring-2 ring-pink-300';
+        case 'C': return 'bg-gradient-to-br from-orange-400 to-orange-500 text-white border-orange-500 hover:from-orange-500 hover:to-orange-600 ring-2 ring-orange-300';
+        default: return 'bg-gradient-to-br from-gray-400 to-gray-500 text-white border-gray-500 hover:from-gray-500 hover:to-gray-600 ring-2 ring-gray-300';
+      }
+    }
+    
     if (nota === null) return 'bg-white/80 text-[#666666] border-[#E9E1C9] hover:bg-[#FCE0C1] hover:border-[#8D2C1D]';
     switch (nota) {
       case 'AD': return 'bg-gradient-to-br from-green-400 to-green-500 text-white border-green-500 hover:from-green-500 hover:to-green-600';
@@ -246,6 +288,12 @@ export default function TablaEvaluacionesReal({
               <div className="text-white text-sm font-semibold text-center">
                 <div>{contexto.alumnos.length} estudiantes</div>
                 <div>{contexto.competencias.length} competencias</div>
+                {totalEstimaciones > 0 && (
+                  <div className="flex items-center justify-center gap-1 mt-1">
+                    <span>🤖</span>
+                    <span>{totalEstimaciones} estimaciones IA</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -328,10 +376,17 @@ export default function TablaEvaluacionesReal({
                         <div className="flex items-center gap-1">
                           {evaluacionesCompetencia.map(evaluacion => {
                             const nota = obtenerNota(alumno.id, evaluacion.id);
+                            const estimacion = obtenerEstimacion(alumno.id, evaluacion.id);
                             const key = `${alumno.id}-${evaluacion.id}`;
+                            
+                            // Determinar qué mostrar: nota real o estimación
+                            const mostrarEstimacion = !nota && estimacion;
+                            const valorMostrar = nota || (mostrarEstimacion ? estimacion.notaEstimada : null);
+                            const esEstimacion = mostrarEstimacion && !nota;
+                            
                             return (
                               <div key={evaluacion.id} className="flex-1 min-w-[60px]">
-                                <div className="text-center">
+                                <div className="text-center relative">
                                   {editando === key ? (
                                     <input
                                       type="text"
@@ -350,12 +405,27 @@ export default function TablaEvaluacionesReal({
                                       autoFocus
                                     />
                                   ) : (
-                                    <button
-                                      onClick={() => setEditando(key)}
-                                      className={`w-full h-10 text-sm font-bold rounded-lg transition-all duration-300 hover:scale-105 shadow-sm hover:shadow-md border-2 ${getColorNotaMejorado(nota)}`}
-                                    >
-                                      {nota || '➕'}
-                                    </button>
+                                    <>
+                                      <button
+                                        onClick={() => setEditando(key)}
+                                        className={`w-full h-10 text-sm font-bold rounded-lg transition-all duration-300 hover:scale-105 shadow-sm hover:shadow-md border-2 ${getColorNotaMejorado(valorMostrar, !!esEstimacion)}`}
+                                        title={esEstimacion ? `🤖 Estimación IA (${Math.round(estimacion!.confianza * 100)}% confianza): ${estimacion!.mensaje}` : undefined}
+                                      >
+                                        {esEstimacion ? (
+                                          <div className="flex items-center justify-center gap-1">
+                                            <span className="text-xs">🤖</span>
+                                            <span>{valorMostrar}</span>
+                                          </div>
+                                        ) : (
+                                          valorMostrar || '➕'
+                                        )}
+                                      </button>
+                                      {esEstimacion && (
+                                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-purple-500 rounded-full flex items-center justify-center">
+                                          <span className="text-white text-xs font-bold">AI</span>
+                                        </div>
+                                      )}
+                                    </>
                                   )}
                                 </div>
                               </div>
