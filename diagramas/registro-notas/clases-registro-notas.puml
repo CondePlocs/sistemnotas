@@ -1,0 +1,94 @@
+@startuml Diagrama de Clases - Registro de Notas (Núcleo del Sistema)
+
+skinparam class {
+    BackgroundColor #E8F4FD
+    BorderColor #1F2937
+}
+
+title NÚCLEO DEL SISTEMA: Clases del Registro de Notas
+
+' CONTROLADORES
+class RegistroNotaController {
+    +registrarNota(): RegistroNota
+    +calcularPromedios(): Promedio
+    +obtenerEstadisticas(): Estadisticas
+}
+
+class IaController {
+    +estimarNota(): EstimacionIA
+    +analizarPatrones(): AnalisisPatron
+}
+
+' SERVICIOS
+package "Servicios" #F0F9FF {
+    class RegistroNotaService {
+        +registrarNota(): RegistroNota
+        +validarNota(): boolean
+        +auditarCambio(): void
+    }
+
+    class NotaCalculoService {
+        +calcularPromedio(): number
+        +convertirNota(): string
+        +actualizarPromedios(): void
+    }
+}
+
+package "Servicios de Inteligencia Artificial" #F3E8FF {
+    class IaService {
+        +estimarNota(): EstimacionIA
+        +analizarPatrones(): PatronAprendizaje
+        +calcularMomentum(): number
+    }
+}
+
+' ENTIDADES
+package "Entidades" #E8F4FD {
+    class RegistroNota {
+        +id: number
+        +alumnoId: number
+        +evaluacionId: number
+        +nota: string
+        +registradoPor: number
+    }
+
+    class Evaluacion {
+        +id: number
+        +competenciaId: number
+        +nombre: string
+        +fecha: Date
+    }
+    class Alumno {
+        +id: number
+        +nombres: string
+        +apellidos: string
+        +dni: string
+    }
+}
+
+' RELACIONES
+RegistroNotaController --> RegistroNotaService
+IaController --> IaService
+RegistroNotaService --> RegistroNota
+IaService --> RegistroNota
+
+' FLUJO PRINCIPAL
+RegistroNotaController ..> RegistroNotaService : registrar
+RegistroNotaService ..> NotaCalculoService : calcular
+NotaCalculoService ..> IaService : estimar
+
+note right of RegistroNota
+    NÚCLEO DEL SISTEMA
+    
+    Entidad central que desencadena
+    todos los procesos de cálculo y IA
+end note
+
+note right of IaService
+    INTELIGENCIA ARTIFICIAL
+    
+    Análisis avanzado con regresión
+    lineal y patrones de aprendizaje
+end note
+
+@enduml

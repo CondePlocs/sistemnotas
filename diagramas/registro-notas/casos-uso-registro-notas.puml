@@ -1,0 +1,64 @@
+@startuml Casos de Uso - Registro de Notas (Núcleo del Sistema)
+
+skinparam actor {
+    BackgroundColor #E8F4FD
+    BorderColor #1F2937
+}
+
+skinparam usecase {
+    BackgroundColor #F0F9FF
+    BorderColor #1E40AF
+}
+
+title NÚCLEO DEL SISTEMA: Registro de Notas
+
+actor "Profesor" as Profesor
+actor "Sistema IA" as SistemaIA
+
+rectangle "Registro de Notas" {
+    
+    ' NÚCLEO PRINCIPAL
+    usecase "Registrar Nota" as UC_REGISTRAR
+    usecase "Calcular Promedios" as UC_CALCULAR
+    usecase "Generar Estimación IA" as UC_IA
+    
+    ' PROCESOS DE APOYO
+    usecase "Validar Nota" as UC_VALIDAR
+    usecase "Convertir Literal/Numérico" as UC_CONVERTIR
+    usecase "Analizar Patrones" as UC_PATRONES
+    
+    ' RESULTADOS
+    usecase "Ver Tabla de Notas" as UC_VER
+    usecase "Consultar Estadísticas" as UC_STATS
+}
+
+' RELACIONES PRINCIPALES
+Profesor --> UC_REGISTRAR
+Profesor --> UC_VER
+SistemaIA --> UC_IA
+
+' FLUJO DEL NÚCLEO
+UC_REGISTRAR ..> UC_VALIDAR : <<include>>
+UC_REGISTRAR ..> UC_CALCULAR : <<include>>
+UC_REGISTRAR ..> UC_IA : <<include>>
+
+UC_CALCULAR ..> UC_CONVERTIR : <<include>>
+UC_IA ..> UC_PATRONES : <<include>>
+
+UC_VER ..> UC_STATS : <<extend>>
+
+note right of UC_REGISTRAR
+    CORAZÓN DEL SISTEMA
+    
+    Proceso central que desencadena
+    validaciones, cálculos y IA
+end note
+
+note right of UC_IA
+    INTELIGENCIA ARTIFICIAL
+    
+    Estimaciones avanzadas con
+    análisis de patrones y momentum
+end note
+
+@enduml
