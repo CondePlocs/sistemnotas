@@ -18,6 +18,7 @@ import { ProfesorAsignacionModule } from './modules/profesor-asignacion/profesor
 import { EvaluacionModule } from './modules/evaluacion/evaluacion.module';
 import { RegistroNotaModule } from './modules/registro-nota/registro-nota.module';
 import { IaModule } from './modules/ia/ia.module';
+import { EstadisticasModule } from './modules/estadisticas/estadisticas.module';
 import { PrismaModule } from './providers/prisma.module';
 
 @Module({
@@ -39,7 +40,8 @@ import { PrismaModule } from './providers/prisma.module';
     ProfesorAsignacionModule,
     EvaluacionModule,
     RegistroNotaModule,
-    IaModule
+    IaModule,
+    EstadisticasModule
   ],
   controllers: [AppController],
   providers: [AppService],

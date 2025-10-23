@@ -3,6 +3,7 @@
 import Link from "next/link";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import DirectorSidebar from "@/components/layout/DirectorSidebar";
+import GraficosDirector from "@/components/graficos/GraficosDirector";
 
 function DirectorDashboardContent() {
   return (
@@ -213,6 +214,11 @@ function DirectorDashboardContent() {
             <div className="text-sm text-gray-600">Total Usuarios</div>
           </div>
         </div>
+
+        {/* 📊 NUEVA SECCIÓN: GRÁFICOS BI PARA DIRECTOR */}
+        <div className="mt-12">
+          <GraficosDirector />
+        </div>
       </main>
     </DirectorSidebar>
   );
@@ -220,7 +226,7 @@ function DirectorDashboardContent() {
 
 export default function DirectorDashboard() {
   return (
-    <ProtectedRoute requiredRole="DIRECTOR">
+    <ProtectedRoute requiredRole={["DIRECTOR", "ADMINISTRATIVO"]}>
       <DirectorDashboardContent />
     </ProtectedRoute>
   );

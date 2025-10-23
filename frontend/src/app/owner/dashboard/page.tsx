@@ -5,6 +5,7 @@ import OwnerSidebar from "@/components/layout/OwnerSidebar";
 import DashboardFooter from "@/components/layout/DashboardFooter";
 import ActionCard from "@/components/layout/ActionCard";
 import StatCard from "@/components/layout/StatCard";
+import GraficosOwner from "@/components/graficos/GraficosOwner";
 
 function OwnerDashboardContent() {
   return (
@@ -20,6 +21,11 @@ function OwnerDashboardContent() {
             Dashboard Owner
           </h1>
           <p className="text-[#666666]">Panel de control y gestión del sistema educativo</p>
+        </div>
+
+        {/* 📊 NUEVA SECCIÓN: GRÁFICOS BI */}
+        <div className="mb-8">
+          <GraficosOwner />
         </div>
         
         {/* Sección de Acciones Principales */}
