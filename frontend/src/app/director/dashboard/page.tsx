@@ -1,11 +1,69 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import DirectorSidebar from "@/components/layout/DirectorSidebar";
 import GraficosDirector from "@/components/graficos/GraficosDirector";
 
 function DirectorDashboardContent() {
+  const [descargandoReporte, setDescargandoReporte] = useState<string | null>(null);
+
+  /**
+   * Descarga el reporte de alumnos en riesgo
+   */
+  const descargarReporteAlumnosRiesgo = async (formato: 'excel' | 'pdf') => {
+    try {
+      setDescargandoReporte(formato);
+      
+      const response = await fetch(`/api/reportes/director/alumnos-riesgo?formato=${formato}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Accept': formato === 'excel' 
+            ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            : 'application/pdf'
+        }
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Error ${response.status}: ${errorText}`);
+      }
+
+      // Obtener el nombre del archivo del header Content-Disposition
+      const contentDisposition = response.headers.get('Content-Disposition');
+      let filename = `alumnos-riesgo-${new Date().toISOString().split('T')[0]}.${formato === 'excel' ? 'xlsx' : 'pdf'}`;
+      
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      // Crear blob y descargar
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      // Mostrar mensaje de éxito
+      alert(`¡Reporte descargado exitosamente! Archivo: ${filename}`);
+      
+    } catch (error) {
+      console.error('Error al descargar reporte:', error);
+      alert(`Error al generar el reporte: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+    } finally {
+      setDescargandoReporte(null);
+    }
+  };
+
   return (
     <DirectorSidebar>
       <main className="flex-1 p-8 overflow-auto">
@@ -212,6 +270,63 @@ function DirectorDashboardContent() {
           <div className="bg-white rounded-lg shadow-md p-4 text-center">
             <div className="text-2xl font-bold text-orange-600">0</div>
             <div className="text-sm text-gray-600">Total Usuarios</div>
+          </div>
+        </div>
+
+        {/* 🚨 SECCIÓN: REPORTES ACADÉMICOS */}
+        <div className="mt-8">
+          <h2 className="text-2xl font-bold text-[#333333] mb-6" style={{ fontFamily: 'var(--font-poppins)' }}>
+            Reportes Académicos
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Card: Alumnos en Riesgo */}
+            <div className="bg-gradient-to-br from-red-50 to-orange-50 border-l-4 border-red-500 rounded-lg shadow-lg p-6 hover:shadow-xl transition-all duration-300">
+              <div className="flex items-center mb-4">
+                <div className="bg-gradient-to-r from-red-500 to-orange-500 p-3 rounded-full shadow-md">
+                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                <div className="ml-4">
+                  <h3 className="text-xl font-bold text-gray-900">Alumnos en Riesgo</h3>
+                  <p className="text-sm text-gray-600">Período Académico Activo</p>
+                </div>
+              </div>
+              
+              <p className="text-gray-700 mb-6 text-sm leading-relaxed">
+                Genera un reporte detallado en Excel con los estudiantes que tienen promedio menor a 3.0 en cualquier curso del período académico actual.
+              </p>
+              
+              <div className="space-y-3">
+                <button 
+                  onClick={() => descargarReporteAlumnosRiesgo('excel')}
+                  disabled={descargandoReporte !== null}
+                  className={`w-full font-semibold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 shadow-md hover:shadow-lg ${
+                    descargandoReporte === 'excel'
+                      ? 'bg-gray-400 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white'
+                  }`}
+                >
+                  {descargandoReporte === 'excel' ? (
+                    <>
+                      <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <span>Generando Excel...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <span>Descargar Excel</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
