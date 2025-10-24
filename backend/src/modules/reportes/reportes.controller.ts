@@ -156,9 +156,113 @@ export class ReportesController {
     };
   }
 
-  // TODO: Agregar endpoints para otros roles cuando se implementen
-  // @Get('profesor/hoja-registro')
-  // @Get('profesor/intervencion-temprana')
+  /**
+   * PROFESOR: Genera hoja de registro Excel
+   */
+  @Get('profesor/hoja-registro')
+  @Roles('PROFESOR')
+  @ApiOperation({
+    summary: 'Hoja de registro Excel para profesores',
+    description: 'Genera un reporte Excel con la hoja de trabajo completa del profesor para una asignación específica.',
+  })
+  @ApiResponse({ status: 200, description: 'Reporte generado exitosamente' })
+  @ApiResponse({ status: 403, description: 'Acceso denegado - Solo PROFESOR' })
+  async reporteHojaRegistroProfesor(
+    @Request() req: any,
+    @Response() res: ExpressResponse,
+    @Query('profesorAsignacionId') profesorAsignacionId: string,
+  ) {
+    this.logger.log(`Profesor ${req.user.id} solicitando hoja de registro para asignación ${profesorAsignacionId}`);
+
+    if (!profesorAsignacionId) {
+      throw new Error('profesorAsignacionId es requerido');
+    }
+
+    const reporteRequest: ReporteRequestDto = {
+      tipo: TipoReporte.HOJA_REGISTRO_PROFESOR,
+      formato: FormatoReporte.EXCEL,
+      profesorAsignacionId,
+    };
+
+    // Extraer el rol principal del usuario (primer rol)
+    const rolPrincipal = req.user.roles?.[0]?.rol || 'UNKNOWN';
+    
+    const resultado = await this.reportesService.generarReporte(
+      reporteRequest,
+      req.user.id,
+      req.user.colegioId,
+      rolPrincipal,
+    );
+
+    // Configurar headers de descarga segura
+    res.setHeader('Content-Type', resultado.mimeType);
+    res.setHeader('Content-Disposition', `attachment; filename="${resultado.nombreArchivo}"`);
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+
+    // Log de auditoría
+    this.logger.log(
+      `Profesor ${req.user.id} descargó hoja de registro - ${resultado.nombreArchivo}`,
+    );
+
+    res.send(resultado.buffer);
+  }
+
+  /**
+   * PROFESOR: Genera informe de intervención temprana PDF
+   */
+  @Get('profesor/intervencion-temprana')
+  @Roles('PROFESOR')
+  @ApiOperation({
+    summary: 'Informe de intervención temprana PDF para profesores',
+    description: 'Genera un reporte PDF con alumnos en riesgo y gráficos de tendencia del salón.',
+  })
+  @ApiResponse({ status: 200, description: 'Reporte generado exitosamente' })
+  @ApiResponse({ status: 403, description: 'Acceso denegado - Solo PROFESOR' })
+  async reporteIntervencionTemprana(
+    @Request() req: any,
+    @Response() res: ExpressResponse,
+    @Query('profesorAsignacionId') profesorAsignacionId: string,
+  ) {
+    this.logger.log(`Profesor ${req.user.id} solicitando informe de intervención temprana para asignación ${profesorAsignacionId}`);
+
+    if (!profesorAsignacionId) {
+      throw new Error('profesorAsignacionId es requerido');
+    }
+
+    const reporteRequest: ReporteRequestDto = {
+      tipo: TipoReporte.INTERVENCION_TEMPRANA_PROFESOR,
+      formato: FormatoReporte.PDF,
+      profesorAsignacionId,
+    };
+
+    // Extraer el rol principal del usuario (primer rol)
+    const rolPrincipal = req.user.roles?.[0]?.rol || 'UNKNOWN';
+    
+    const resultado = await this.reportesService.generarReporte(
+      reporteRequest,
+      req.user.id,
+      req.user.colegioId,
+      rolPrincipal,
+    );
+
+    // Configurar headers de descarga segura
+    res.setHeader('Content-Type', resultado.mimeType);
+    res.setHeader('Content-Disposition', `attachment; filename="${resultado.nombreArchivo}"`);
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+
+    // Log de auditoría
+    this.logger.log(
+      `Profesor ${req.user.id} descargó informe de intervención temprana - ${resultado.nombreArchivo}`,
+    );
+
+    res.send(resultado.buffer);
+  }
+
+  // TODO: Agregar endpoints para padres cuando se implementen
   // @Get('padre/mini-libreta')
   // @Get('padre/top-cursos')
 }

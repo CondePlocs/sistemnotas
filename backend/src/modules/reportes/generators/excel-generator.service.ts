@@ -228,4 +228,132 @@ export class ExcelGeneratorService {
     
     return this.toBuffer(workbook);
   }
+
+  /**
+   * Genera Excel de hoja de trabajo del profesor
+   */
+  async generateHojaTrabajoExcel(datos: any): Promise<Buffer> {
+    const workbook = this.createWorkbook();
+    const worksheet = this.addWorksheet(workbook, 'Hoja de Trabajo');
+    
+    // Header del colegio y información de la asignación
+    let currentRow = this.addColegioHeader(
+      worksheet,
+      datos.asignacion?.colegioNombre || 'COLEGIO',
+      `Hoja de Trabajo - ${datos.asignacion?.cursoNombre || 'Curso'}`
+    );
+
+    // Información del profesor y salón
+    currentRow += 2;
+    worksheet.getCell(`A${currentRow}`).value = 'INFORMACIÓN DE LA ASIGNACIÓN';
+    worksheet.getCell(`A${currentRow}`).font = { bold: true, size: 12 };
+    currentRow++;
+
+    const infoData = [
+      ['Profesor:', `${datos.asignacion?.profesorNombres || ''} ${datos.asignacion?.profesorApellidos || ''}`],
+      ['Curso:', datos.asignacion?.cursoNombre || ''],
+      ['Grado y Sección:', `${datos.asignacion?.grado || ''}° ${datos.asignacion?.seccion || ''}`],
+      ['Nivel:', datos.asignacion?.nivelNombre || ''],
+      ['Turno:', datos.asignacion?.turno || ''],
+      ['Período Académico:', datos.periodoAcademico?.nombre || ''],
+      ['Total de Alumnos:', datos.estadisticas?.totalAlumnos || 0],
+      ['Total de Evaluaciones:', datos.estadisticas?.totalEvaluaciones || 0],
+      ['Promedio General:', datos.estadisticas?.promedioGeneral || 0],
+    ];
+
+    infoData.forEach(([label, value]) => {
+      worksheet.getCell(`A${currentRow}`).value = label;
+      worksheet.getCell(`A${currentRow}`).font = { bold: true };
+      worksheet.getCell(`B${currentRow}`).value = value;
+      currentRow++;
+    });
+
+    // Sección de Competencias
+    currentRow += 2;
+    worksheet.getCell(`A${currentRow}`).value = 'COMPETENCIAS DEL CURSO';
+    worksheet.getCell(`A${currentRow}`).font = { bold: true, size: 12 };
+    currentRow++;
+
+    if (datos.competencias && datos.competencias.length > 0) {
+      const compHeaders = ['Orden', 'Competencia'];
+      worksheet.addRow(compHeaders);
+      this.applyHeaderStyle(worksheet, currentRow, compHeaders.length);
+      currentRow++;
+
+      datos.competencias.forEach((comp: any) => {
+        worksheet.addRow([comp.orden, comp.nombre]);
+        currentRow++;
+      });
+    }
+
+    // Sección de Evaluaciones
+    currentRow += 2;
+    worksheet.getCell(`A${currentRow}`).value = 'EVALUACIONES REALIZADAS';
+    worksheet.getCell(`A${currentRow}`).font = { bold: true, size: 12 };
+    currentRow++;
+
+    if (datos.evaluaciones && datos.evaluaciones.length > 0) {
+      const evalHeaders = ['Evaluación', 'Competencia', 'Fecha'];
+      worksheet.addRow(evalHeaders);
+      this.applyHeaderStyle(worksheet, currentRow, evalHeaders.length);
+      currentRow++;
+
+      datos.evaluaciones.forEach((evaluacion: any) => {
+        const fecha = evaluacion.fechaEvaluacion ? new Date(evaluacion.fechaEvaluacion).toLocaleDateString() : 'Sin fecha';
+        worksheet.addRow([evaluacion.nombre, evaluacion.competenciaNombre, fecha]);
+        currentRow++;
+      });
+    }
+
+    // Sección de Alumnos y Notas
+    currentRow += 2;
+    worksheet.getCell(`A${currentRow}`).value = 'REGISTRO DE NOTAS POR ALUMNO';
+    worksheet.getCell(`A${currentRow}`).font = { bold: true, size: 12 };
+    currentRow++;
+
+    if (datos.alumnos && datos.alumnos.length > 0) {
+      // Crear headers dinámicos con evaluaciones
+      const alumnoHeaders = ['Alumno', 'DNI'];
+      const evaluacionesUnicas = [...new Set(datos.evaluaciones?.map((e: any) => e.nombre) || [])] as string[];
+      alumnoHeaders.push(...evaluacionesUnicas);
+      alumnoHeaders.push('Promedio');
+
+      worksheet.addRow(alumnoHeaders);
+      this.applyHeaderStyle(worksheet, currentRow, alumnoHeaders.length);
+      currentRow++;
+
+      // Agregar datos de cada alumno
+      datos.alumnos.forEach((alumno: any) => {
+        const row = [
+          `${alumno.apellidos}, ${alumno.nombres}`,
+          alumno.dni
+        ];
+
+        // Agregar notas por evaluación
+        evaluacionesUnicas.forEach((evalNombre: string) => {
+          const nota = datos.notas?.find((n: any) => 
+            n.alumnoId === alumno.id && n.evaluacionNombre === evalNombre
+          );
+          row.push(nota ? nota.nota : '-');
+        });
+
+        // Calcular promedio del alumno
+        const notasAlumno = datos.notas?.filter((n: any) => n.alumnoId === alumno.id) || [];
+        const promedio = notasAlumno.length > 0 
+          ? notasAlumno.reduce((sum: number, nota: any) => {
+              const valor = nota.nota === 'AD' ? 4 : nota.nota === 'A' ? 3 : nota.nota === 'B' ? 2 : nota.nota === 'C' ? 1 : 0;
+              return sum + valor;
+            }, 0) / notasAlumno.length
+          : 0;
+        
+        row.push(promedio > 0 ? promedio.toFixed(2) : '-');
+        
+        worksheet.addRow(row);
+        currentRow++;
+      });
+    }
+
+    this.autoFitColumns(worksheet);
+    return this.toBuffer(workbook);
+  }
 }

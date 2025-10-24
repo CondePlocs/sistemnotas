@@ -44,6 +44,13 @@ export class ReporteRequestDto {
   salonId?: string;
 
   @ApiPropertyOptional({
+    description: 'ID de la asignación del profesor (para reportes específicos)',
+  })
+  @IsOptional()
+  @IsString()
+  profesorAsignacionId?: string;
+
+  @ApiPropertyOptional({
     description: 'Fecha de inicio del período (opcional)',
   })
   @IsOptional()
