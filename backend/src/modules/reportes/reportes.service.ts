@@ -534,17 +534,19 @@ export class ReportesService {
       WITH datos_asignacion AS (
         SELECT 
           pa.id as asignacion_id,
-          p.nombres as profesor_nombres,
-          p.apellidos as profesor_apellidos,
+          u.nombres as profesor_nombres,
+          u.apellidos as profesor_apellidos,
           c.nombre as curso_nombre,
           s.grado,
           s.seccion,
-          s.turno,
+          s.turno::text,
           n.nombre as nivel_nombre,
           col.nombre as colegio_nombre,
           pa."asignadoEn" as fecha_asignacion
         FROM profesor_asignacion pa
         INNER JOIN profesor p ON pa."profesorId" = p.id
+        INNER JOIN usuario_rol ur ON p."usuarioRolId" = ur.id
+        INNER JOIN usuario u ON ur.usuario_id = u.id
         INNER JOIN curso c ON pa."cursoId" = c.id
         INNER JOIN salon s ON pa."salonId" = s.id
         INNER JOIN colegio_nivel cn ON s."colegioNivelId" = cn.id
@@ -604,88 +606,88 @@ export class ReportesService {
         da.nivel_nombre,
         da.colegio_nombre,
         da.fecha_asignacion,
-        NULL as alumno_id,
-        NULL as alumno_nombres,
-        NULL as alumno_apellidos,
-        NULL as alumno_dni,
-        NULL as competencia_id,
-        NULL as competencia_nombre,
-        NULL as competencia_orden,
-        NULL as evaluacion_id,
-        NULL as evaluacion_nombre,
-        NULL as fecha_evaluacion
+        NULL::integer as alumno_id,
+        NULL::text as alumno_nombres,
+        NULL::text as alumno_apellidos,
+        NULL::text as alumno_dni,
+        NULL::integer as competencia_id,
+        NULL::text as competencia_nombre,
+        NULL::integer as competencia_orden,
+        NULL::integer as evaluacion_id,
+        NULL::text as evaluacion_nombre,
+        NULL::timestamp as fecha_evaluacion
       FROM datos_asignacion da
       
       UNION ALL
       
       SELECT 
         'alumno' as tipo,
-        NULL as asignacion_id,
-        NULL as profesor_nombres,
-        NULL as profesor_apellidos,
-        NULL as curso_nombre,
-        NULL as grado,
-        NULL as seccion,
-        NULL as turno,
-        NULL as nivel_nombre,
-        NULL as colegio_nombre,
-        NULL as fecha_asignacion,
+        NULL::integer as asignacion_id,
+        NULL::text as profesor_nombres,
+        NULL::text as profesor_apellidos,
+        NULL::text as curso_nombre,
+        NULL::text as grado,
+        NULL::text as seccion,
+        NULL::text as turno,
+        NULL::text as nivel_nombre,
+        NULL::text as colegio_nombre,
+        NULL::timestamp as fecha_asignacion,
         als.alumno_id,
         als.alumno_nombres,
         als.alumno_apellidos,
         als.alumno_dni,
-        NULL as competencia_id,
-        NULL as competencia_nombre,
-        NULL as competencia_orden,
-        NULL as evaluacion_id,
-        NULL as evaluacion_nombre,
-        NULL as fecha_evaluacion
+        NULL::integer as competencia_id,
+        NULL::text as competencia_nombre,
+        NULL::integer as competencia_orden,
+        NULL::integer as evaluacion_id,
+        NULL::text as evaluacion_nombre,
+        NULL::timestamp as fecha_evaluacion
       FROM alumnos_salon als
       
       UNION ALL
       
       SELECT 
         'competencia' as tipo,
-        NULL as asignacion_id,
-        NULL as profesor_nombres,
-        NULL as profesor_apellidos,
-        NULL as curso_nombre,
-        NULL as grado,
-        NULL as seccion,
-        NULL as turno,
-        NULL as nivel_nombre,
-        NULL as colegio_nombre,
-        NULL as fecha_asignacion,
-        NULL as alumno_id,
-        NULL as alumno_nombres,
-        NULL as alumno_apellidos,
-        NULL as alumno_dni,
+        NULL::integer as asignacion_id,
+        NULL::text as profesor_nombres,
+        NULL::text as profesor_apellidos,
+        NULL::text as curso_nombre,
+        NULL::text as grado,
+        NULL::text as seccion,
+        NULL::text as turno,
+        NULL::text as nivel_nombre,
+        NULL::text as colegio_nombre,
+        NULL::timestamp as fecha_asignacion,
+        NULL::integer as alumno_id,
+        NULL::text as alumno_nombres,
+        NULL::text as alumno_apellidos,
+        NULL::text as alumno_dni,
         cc.competencia_id,
         cc.competencia_nombre,
         cc.competencia_orden,
-        NULL as evaluacion_id,
-        NULL as evaluacion_nombre,
-        NULL as fecha_evaluacion
+        NULL::integer as evaluacion_id,
+        NULL::text as evaluacion_nombre,
+        NULL::timestamp as fecha_evaluacion
       FROM competencias_curso cc
       
       UNION ALL
       
       SELECT 
         'evaluacion' as tipo,
-        NULL as asignacion_id,
-        NULL as profesor_nombres,
-        NULL as profesor_apellidos,
-        NULL as curso_nombre,
-        NULL as grado,
-        NULL as seccion,
-        NULL as turno,
-        NULL as nivel_nombre,
-        NULL as colegio_nombre,
-        NULL as fecha_asignacion,
-        NULL as alumno_id,
-        NULL as alumno_nombres,
-        NULL as alumno_apellidos,
-        NULL as alumno_dni,
+        NULL::integer as asignacion_id,
+        NULL::text as profesor_nombres,
+        NULL::text as profesor_apellidos,
+        NULL::text as curso_nombre,
+        NULL::text as grado,
+        NULL::text as seccion,
+        NULL::text as turno,
+        NULL::text as nivel_nombre,
+        NULL::text as colegio_nombre,
+        NULL::timestamp as fecha_asignacion,
+        NULL::integer as alumno_id,
+        NULL::text as alumno_nombres,
+        NULL::text as alumno_apellidos,
+        NULL::text as alumno_dni,
         ep."competenciaId" as competencia_id,
         ep.competencia_nombre,
         ep.competencia_orden,
@@ -869,7 +871,7 @@ export class ReportesService {
             WHEN rn.nota = 'C' THEN 1
             ELSE 0
           END
-        ) < 3
+        ) < 2.5
       )
       SELECT 
         alumno_id,
@@ -882,8 +884,9 @@ export class ReportesService {
         curso,
         ROUND(promedio_numerico::numeric, 2) as promedio,
         CASE 
-          WHEN promedio_numerico >= 2.5 THEN 'B'
-          WHEN promedio_numerico >= 1.5 THEN 'C'
+          WHEN promedio_numerico >= 3.5 THEN 'AD'
+          WHEN promedio_numerico >= 2.5 THEN 'A'
+          WHEN promedio_numerico >= 1.5 THEN 'B'
           ELSE 'C'
         END as nota_sugerida
       FROM promedios_alumnos
@@ -951,9 +954,12 @@ export class ReportesService {
         AND a.activo = true
     `;
 
-    const totalAlumnos = (totalAlumnosQuery as any[])[0]?.total || 0;
+    const totalAlumnos = Number((totalAlumnosQuery as any[])[0]?.total || 0);
     const alumnosEnRiesgoCount = (alumnosEnRiesgo as any[]).length;
     const porcentajeRiesgo = totalAlumnos > 0 ? Math.round((alumnosEnRiesgoCount / totalAlumnos) * 100) : 0;
+
+    this.logger.log(`📊 Alumnos en riesgo encontrados: ${alumnosEnRiesgoCount}`);
+    this.logger.log(`📊 Datos: ${JSON.stringify(alumnosEnRiesgo)}`);
 
     return {
       asignacion: asignacion ? {
@@ -970,7 +976,7 @@ export class ReportesService {
       alumnosRiesgo: alumnosEnRiesgo as any[],
       tendencias: (tendencias as any[]).reverse(), // Ordenar cronológicamente
       estadisticas: {
-        totalAlumnos: parseInt(totalAlumnos),
+        totalAlumnos: totalAlumnos,
         alumnosEnRiesgo: alumnosEnRiesgoCount,
         porcentajeRiesgo,
       },

@@ -482,7 +482,7 @@ export class PdfGeneratorService {
           <div class="recomendaciones">
             <h3>Recomendaciones de Intervención</h3>
             <ul>
-              <li><strong>Refuerzo académico personalizado:</strong> Implementar sesiones de apoyo individual para alumnos con promedio menor a 2.5</li>
+              <li><strong>Refuerzo académico personalizado:</strong> Implementar sesiones de apoyo individual para alumnos con calificación B (En Proceso) o C (En Inicio)</li>
               <li><strong>Comunicación con apoderados:</strong> Informar a los padres sobre la situación académica y establecer un plan de seguimiento</li>
               <li><strong>Estrategias pedagógicas diferenciadas:</strong> Adaptar metodologías de enseñanza según las necesidades específicas</li>
               <li><strong>Evaluación continua:</strong> Realizar seguimiento semanal del progreso de los alumnos en riesgo</li>
