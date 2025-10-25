@@ -10,6 +10,46 @@ export class EstadisticasService {
   constructor(private prisma: PrismaService) {}
 
   /**
+   * Convierte un valor de escala de cálculo (1.0-4.0) a categoría de logro
+   * Esta función unifica el tratamiento de notas alfabéticas y numéricas
+   */
+  private convertirEscalaACategoria(escala: number): string {
+    if (escala >= 3.5) return 'AD';
+    if (escala >= 2.5) return 'A';
+    if (escala >= 1.5) return 'B';
+    return 'C';
+  }
+
+  /**
+   * Obtiene el valor de escala de cálculo, con fallback para datos legacy
+   * Prioriza notaEscalaCalculo, pero calcula desde nota si es necesario
+   */
+  private obtenerEscalaCalculo(nota: string, notaEscalaCalculo: number | null): number {
+    // Si ya tenemos el valor calculado, lo usamos
+    if (notaEscalaCalculo !== null && notaEscalaCalculo > 0) {
+      return notaEscalaCalculo;
+    }
+
+    // Fallback para datos legacy o casos donde no se calculó
+    if (nota === 'AD') return 4.0;
+    if (nota === 'A') return 3.0;
+    if (nota === 'B') return 2.0;
+    if (nota === 'C') return 1.0;
+
+    // Para notas numéricas, convertir a escala 1.0-4.0
+    const notaNum = parseFloat(nota);
+    if (!isNaN(notaNum)) {
+      if (notaNum >= 0 && notaNum <= 20) {
+        // Conversión de escala 0-20 a 1.0-4.0
+        return Math.max(1.0, Math.min(4.0, 1.0 + (notaNum / 20) * 3.0));
+      }
+    }
+
+    // Valor por defecto para casos no reconocidos
+    return 1.0;
+  }
+
+  /**
    * Obtiene la distribución de logros (AD, A, B, C) por colegio
    * Solo para OWNER - Vista global del sistema
    */
@@ -43,23 +83,52 @@ export class EstadisticasService {
         };
       }
 
-      // Obtener datos más detallados con query manual
+      // Obtener datos usando notaEscalaCalculo para incluir TODAS las notas (alfabéticas + numéricas)
       const resultados = await this.prisma.$queryRaw`
         SELECT 
           c.id as colegio_id,
           c.nombre as colegio_nombre,
-          rn.nota,
-          COUNT(rn.nota)::int as cantidad
+          CASE 
+            WHEN COALESCE(rn."notaEscalaCalculo", 
+              CASE 
+                WHEN rn.nota = 'AD' THEN 4.0
+                WHEN rn.nota = 'A' THEN 3.0
+                WHEN rn.nota = 'B' THEN 2.0
+                WHEN rn.nota = 'C' THEN 1.0
+                ELSE GREATEST(1.0, LEAST(4.0, 1.0 + (CAST(rn.nota AS FLOAT) / 20.0) * 3.0))
+              END
+            ) >= 3.5 THEN 'AD'
+            WHEN COALESCE(rn."notaEscalaCalculo", 
+              CASE 
+                WHEN rn.nota = 'AD' THEN 4.0
+                WHEN rn.nota = 'A' THEN 3.0
+                WHEN rn.nota = 'B' THEN 2.0
+                WHEN rn.nota = 'C' THEN 1.0
+                ELSE GREATEST(1.0, LEAST(4.0, 1.0 + (CAST(rn.nota AS FLOAT) / 20.0) * 3.0))
+              END
+            ) >= 2.5 THEN 'A'
+            WHEN COALESCE(rn."notaEscalaCalculo", 
+              CASE 
+                WHEN rn.nota = 'AD' THEN 4.0
+                WHEN rn.nota = 'A' THEN 3.0
+                WHEN rn.nota = 'B' THEN 2.0
+                WHEN rn.nota = 'C' THEN 1.0
+                ELSE GREATEST(1.0, LEAST(4.0, 1.0 + (CAST(rn.nota AS FLOAT) / 20.0) * 3.0))
+              END
+            ) >= 1.5 THEN 'B'
+            ELSE 'C'
+          END as categoria_logro,
+          COUNT(*)::int as cantidad
         FROM registro_nota rn
         INNER JOIN alumno a ON rn."alumnoId" = a.id
         INNER JOIN colegio c ON a."colegioId" = c.id
-        WHERE rn.nota IN ('AD', 'A', 'B', 'C')
-        GROUP BY c.id, c.nombre, rn.nota
-        ORDER BY c.nombre, rn.nota
+        WHERE rn.nota IS NOT NULL AND rn.nota != ''
+        GROUP BY c.id, c.nombre, categoria_logro
+        ORDER BY c.nombre, categoria_logro
       ` as Array<{
         colegio_id: number;
         colegio_nombre: string;
-        nota: string;
+        categoria_logro: string;
         cantidad: number;
       }>;
 
@@ -77,7 +146,7 @@ export class EstadisticasService {
         }
 
         const colegio = colegiosMap.get(row.colegio_id)!;
-        colegio.logros[row.nota as keyof typeof colegio.logros] = row.cantidad;
+        colegio.logros[row.categoria_logro as keyof typeof colegio.logros] = row.cantidad;
         colegio.totalNotas += row.cantidad;
       });
 
@@ -143,7 +212,7 @@ export class EstadisticasService {
         };
       }
 
-      // Query para obtener estadísticas por curso (basada en promedio final de alumnos)
+      // Query usando notaEscalaCalculo para incluir TODAS las notas (alfabéticas + numéricas)
       const resultados = await this.prisma.$queryRaw`
         WITH promedios_alumnos AS (
           SELECT 
@@ -151,19 +220,21 @@ export class EstadisticasService {
             cur.nombre as curso_nombre,
             rn."alumnoId",
             AVG(
-              CASE 
-                WHEN rn.nota = 'AD' THEN 4
-                WHEN rn.nota = 'A' THEN 3
-                WHEN rn.nota = 'B' THEN 2
-                WHEN rn.nota = 'C' THEN 1
-                ELSE 0
-              END
+              COALESCE(rn."notaEscalaCalculo", 
+                CASE 
+                  WHEN rn.nota = 'AD' THEN 4.0
+                  WHEN rn.nota = 'A' THEN 3.0
+                  WHEN rn.nota = 'B' THEN 2.0
+                  WHEN rn.nota = 'C' THEN 1.0
+                  ELSE GREATEST(1.0, LEAST(4.0, 1.0 + (CAST(rn.nota AS FLOAT) / 20.0) * 3.0))
+                END
+              )
             ) as promedio_numerico
           FROM registro_nota rn
           INNER JOIN evaluacion e ON rn."evaluacionId" = e.id
           INNER JOIN competencia comp ON e."competenciaId" = comp.id
           INNER JOIN curso cur ON comp."cursoId" = cur.id
-          WHERE rn.nota IN ('AD', 'A', 'B', 'C')
+          WHERE rn.nota IS NOT NULL AND rn.nota != ''
           GROUP BY cur.id, cur.nombre, rn."alumnoId"
         )
         SELECT 
@@ -244,17 +315,46 @@ export class EstadisticasService {
       const resultados = await this.prisma.$queryRaw`
         SELECT 
           c.nombre as colegio_nombre,
-          rn.nota,
-          COUNT(rn.nota)::int as cantidad
+          CASE 
+            WHEN COALESCE(rn."notaEscalaCalculo", 
+              CASE 
+                WHEN rn.nota = 'AD' THEN 4.0
+                WHEN rn.nota = 'A' THEN 3.0
+                WHEN rn.nota = 'B' THEN 2.0
+                WHEN rn.nota = 'C' THEN 1.0
+                ELSE GREATEST(1.0, LEAST(4.0, 1.0 + (CAST(rn.nota AS FLOAT) / 20.0) * 3.0))
+              END
+            ) >= 3.5 THEN 'AD'
+            WHEN COALESCE(rn."notaEscalaCalculo", 
+              CASE 
+                WHEN rn.nota = 'AD' THEN 4.0
+                WHEN rn.nota = 'A' THEN 3.0
+                WHEN rn.nota = 'B' THEN 2.0
+                WHEN rn.nota = 'C' THEN 1.0
+                ELSE GREATEST(1.0, LEAST(4.0, 1.0 + (CAST(rn.nota AS FLOAT) / 20.0) * 3.0))
+              END
+            ) >= 2.5 THEN 'A'
+            WHEN COALESCE(rn."notaEscalaCalculo", 
+              CASE 
+                WHEN rn.nota = 'AD' THEN 4.0
+                WHEN rn.nota = 'A' THEN 3.0
+                WHEN rn.nota = 'B' THEN 2.0
+                WHEN rn.nota = 'C' THEN 1.0
+                ELSE GREATEST(1.0, LEAST(4.0, 1.0 + (CAST(rn.nota AS FLOAT) / 20.0) * 3.0))
+              END
+            ) >= 1.5 THEN 'B'
+            ELSE 'C'
+          END as categoria_logro,
+          COUNT(*)::int as cantidad
         FROM registro_nota rn
         INNER JOIN alumno a ON rn."alumnoId" = a.id
         INNER JOIN colegio c ON a."colegioId" = c.id
-        WHERE c.id = ${colegioId} AND rn.nota IN ('AD', 'A', 'B', 'C')
-        GROUP BY c.nombre, rn.nota
-        ORDER BY rn.nota
+        WHERE c.id = ${colegioId} AND rn.nota IS NOT NULL AND rn.nota != ''
+        GROUP BY c.nombre, categoria_logro
+        ORDER BY categoria_logro
       ` as Array<{
         colegio_nombre: string;
-        nota: string;
+        categoria_logro: string;
         cantidad: number;
       }>;
 
@@ -263,7 +363,7 @@ export class EstadisticasService {
 
       resultados.forEach((row) => {
         nombreColegio = row.colegio_nombre;
-        logros[row.nota as keyof typeof logros] = row.cantidad;
+        logros[row.categoria_logro as keyof typeof logros] = row.cantidad;
       });
 
       const totalNotas = Object.values(logros).reduce((sum, count) => sum + count, 0);
@@ -296,32 +396,40 @@ export class EstadisticasService {
 
     try {
       const resultados = await this.prisma.$queryRaw`
+        WITH notas_con_escala AS (
+          SELECT 
+            s.grado,
+            n.nombre as nivel,
+            rn."alumnoId",
+            COALESCE(rn."notaEscalaCalculo", 
+              CASE 
+                WHEN rn.nota = 'AD' THEN 4.0
+                WHEN rn.nota = 'A' THEN 3.0
+                WHEN rn.nota = 'B' THEN 2.0
+                WHEN rn.nota = 'C' THEN 1.0
+                ELSE GREATEST(1.0, LEAST(4.0, 1.0 + (CAST(rn.nota AS FLOAT) / 20.0) * 3.0))
+              END
+            ) as escala_calculo
+          FROM registro_nota rn
+          INNER JOIN alumno a ON rn."alumnoId" = a.id
+          INNER JOIN alumno_salon als ON a.id = als."alumnoId"
+          INNER JOIN salon s ON als."salonId" = s.id
+          INNER JOIN colegio_nivel cn ON s."colegioNivelId" = cn.id
+          INNER JOIN nivel n ON cn."nivelId" = n.id
+          WHERE a."colegioId" = ${colegioId} AND rn.nota IS NOT NULL AND rn.nota != ''
+        )
         SELECT 
-          s.grado,
-          n.nombre as nivel,
-          COUNT(DISTINCT rn."alumnoId")::int as total_alumnos,
-          COUNT(CASE WHEN rn.nota = 'AD' THEN 1 END)::int as logro_ad,
-          COUNT(CASE WHEN rn.nota = 'A' THEN 1 END)::int as logro_a,
-          COUNT(CASE WHEN rn.nota = 'B' THEN 1 END)::int as logro_b,
-          COUNT(CASE WHEN rn.nota = 'C' THEN 1 END)::int as logro_c,
-          CAST(AVG(
-            CASE 
-              WHEN rn.nota = 'AD' THEN 4
-              WHEN rn.nota = 'A' THEN 3
-              WHEN rn.nota = 'B' THEN 2
-              WHEN rn.nota = 'C' THEN 1
-              ELSE 0
-            END
-          ) AS DECIMAL(3,2)) as promedio_numerico
-        FROM registro_nota rn
-        INNER JOIN alumno a ON rn."alumnoId" = a.id
-        INNER JOIN alumno_salon als ON a.id = als."alumnoId"
-        INNER JOIN salon s ON als."salonId" = s.id
-        INNER JOIN colegio_nivel cn ON s."colegioNivelId" = cn.id
-        INNER JOIN nivel n ON cn."nivelId" = n.id
-        WHERE a."colegioId" = ${colegioId} AND rn.nota IN ('AD', 'A', 'B', 'C')
-        GROUP BY s.grado, n.nombre
-        ORDER BY n.nombre, s.grado
+          grado,
+          nivel,
+          COUNT(DISTINCT "alumnoId")::int as total_alumnos,
+          COUNT(CASE WHEN escala_calculo >= 3.5 THEN 1 END)::int as logro_ad,
+          COUNT(CASE WHEN escala_calculo >= 2.5 AND escala_calculo < 3.5 THEN 1 END)::int as logro_a,
+          COUNT(CASE WHEN escala_calculo >= 1.5 AND escala_calculo < 2.5 THEN 1 END)::int as logro_b,
+          COUNT(CASE WHEN escala_calculo < 1.5 THEN 1 END)::int as logro_c,
+          CAST(AVG(escala_calculo) AS DECIMAL(3,2)) as promedio_numerico
+        FROM notas_con_escala
+        GROUP BY grado, nivel
+        ORDER BY nivel, grado
       ` as Array<{
         grado: string;
         nivel: string;
@@ -402,13 +510,15 @@ export class EstadisticasService {
             n.nombre as nivel,
             rn."alumnoId",
             AVG(
-              CASE 
-                WHEN rn.nota = 'AD' THEN 4
-                WHEN rn.nota = 'A' THEN 3
-                WHEN rn.nota = 'B' THEN 2
-                WHEN rn.nota = 'C' THEN 1
-                ELSE 0
-              END
+              COALESCE(rn."notaEscalaCalculo", 
+                CASE 
+                  WHEN rn.nota = 'AD' THEN 4.0
+                  WHEN rn.nota = 'A' THEN 3.0
+                  WHEN rn.nota = 'B' THEN 2.0
+                  WHEN rn.nota = 'C' THEN 1.0
+                  ELSE GREATEST(1.0, LEAST(4.0, 1.0 + (CAST(rn.nota AS FLOAT) / 20.0) * 3.0))
+                END
+              )
             ) as promedio_numerico
           FROM registro_nota rn
           INNER JOIN evaluacion e ON rn."evaluacionId" = e.id
@@ -416,7 +526,7 @@ export class EstadisticasService {
           INNER JOIN curso cur ON comp."cursoId" = cur.id
           INNER JOIN nivel n ON cur."nivelId" = n.id
           INNER JOIN alumno a ON rn."alumnoId" = a.id
-          WHERE a."colegioId" = ${colegioId} AND rn.nota IN ('AD', 'A', 'B', 'C')
+          WHERE a."colegioId" = ${colegioId} AND rn.nota IS NOT NULL AND rn.nota != ''
           GROUP BY cur.id, cur.nombre, n.nombre, rn."alumnoId"
         )
         SELECT 
