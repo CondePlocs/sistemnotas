@@ -1,6 +1,8 @@
 // Tipos para el sistema de registro de notas
 
+// Tipo para notas: acepta tanto formato alfabético como numérico
 export type NotaLiteral = 'AD' | 'A' | 'B' | 'C';
+export type NotaInput = NotaLiteral | string; // Para input del usuario (incluye números como string)
 
 export interface RegistroNota {
   id: number;
@@ -15,11 +17,11 @@ export interface RegistroNota {
 export interface CrearRegistroNotaDto {
   alumnoId: number;
   evaluacionId: number;
-  nota: NotaLiteral;
+  nota: NotaInput; // Acepta tanto letras como números
 }
 
 export interface ActualizarRegistroNotaDto {
-  nota: NotaLiteral;
+  nota: NotaInput; // Acepta tanto letras como números
 }
 
 export interface GuardarNotasLoteDto {
@@ -60,7 +62,7 @@ export interface PromedioCurso {
 export interface NotaEstado {
   alumnoId: number;
   evaluacionId: number;
-  nota: NotaLiteral | null;
+  nota: NotaInput | null; // Acepta tanto letras como números
   guardada: boolean; // true si está guardada en BD, false si es cambio pendiente
-  original: NotaLiteral | null; // valor original de la BD
+  original: NotaInput | null; // valor original de la BD
 }

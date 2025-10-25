@@ -25,6 +25,7 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
 export interface EstimacionNotaDto {
   alumnoId: number;
   competenciaId: number;
+  profesorAsignacionId: number;
   proximaTarea: number;
 }
 
@@ -58,12 +59,13 @@ export const iaAPI = {
   /**
    * Verifica si un alumno tiene suficientes datos históricos para estimación
    */
-  async puedeEstimar(alumnoId: number, competenciaId: number): Promise<boolean> {
+  async puedeEstimar(alumnoId: number, competenciaId: number, profesorAsignacionId: number): Promise<boolean> {
     try {
       // Intentar estimar con tarea ficticia para verificar datos
       const resultado = await this.estimarNota({
         alumnoId,
         competenciaId,
+        profesorAsignacionId,
         proximaTarea: 999 // Número alto ficticio
       });
       

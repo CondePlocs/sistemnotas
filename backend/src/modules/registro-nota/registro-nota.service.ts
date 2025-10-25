@@ -37,9 +37,13 @@ export class RegistroNotaService {
       );
     }
 
+    // Calcular automáticamente la escala de cálculo
+    const notaEscalaCalculo = this.notaCalculoService.convertirAEscalaCalculo(createDto.nota);
+
     const nota = await this.prisma.registroNota.create({
       data: {
         ...createDto,
+        notaEscalaCalculo,
         registradoPor
       },
       include: {
@@ -86,9 +90,15 @@ export class RegistroNotaService {
       throw new ForbiddenException('No tienes permisos para modificar esta nota');
     }
 
+    // Si se está actualizando la nota, recalcular la escala de cálculo
+    const dataToUpdate: any = { ...updateDto };
+    if (updateDto.nota) {
+      dataToUpdate.notaEscalaCalculo = this.notaCalculoService.convertirAEscalaCalculo(updateDto.nota);
+    }
+
     const notaActualizada = await this.prisma.registroNota.update({
       where: { id },
-      data: updateDto,
+      data: dataToUpdate,
       include: {
         alumno: {
           select: { nombres: true, apellidos: true, dni: true }
@@ -132,20 +142,26 @@ export class RegistroNotaService {
 
           let nota;
           if (notaExistente) {
-            // Actualizar nota existente
+            // Actualizar nota existente con recálculo de escala
+            const notaEscalaCalculo = this.notaCalculoService.convertirAEscalaCalculo(notaDto.nota);
             nota = await prisma.registroNota.update({
               where: { id: notaExistente.id },
-              data: { nota: notaDto.nota },
+              data: { 
+                nota: notaDto.nota,
+                notaEscalaCalculo
+              },
               include: {
                 alumno: { select: { nombres: true, apellidos: true } },
                 evaluacion: { select: { nombre: true } }
               }
             });
           } else {
-            // Crear nueva nota
+            // Crear nueva nota con cálculo automático de escala
+            const notaEscalaCalculo = this.notaCalculoService.convertirAEscalaCalculo(notaDto.nota);
             nota = await prisma.registroNota.create({
               data: {
                 ...notaDto,
+                notaEscalaCalculo,
                 registradoPor
               },
               include: {
@@ -290,8 +306,12 @@ export class RegistroNotaService {
       }
     });
 
-    const notasLiterales = notas.map(n => n.nota);
-    const resultado = this.notaCalculoService.calcularPromedioCompetencia(notasLiterales);
+    // Convertir todas las notas a escala de cálculo (1.0-4.0) usando el nuevo sistema dual
+    const valoresEscalaCalculo = notas.map(n => 
+      this.notaCalculoService.convertirAEscalaCalculo(n.nota)
+    );
+    
+    const resultado = this.notaCalculoService.calcularPromedioEscalaCalculo(valoresEscalaCalculo);
 
     return {
       alumnoId,

@@ -9,13 +9,15 @@ interface UseEstimacionesIAProps {
   competencias: Competencia[];
   evaluaciones: Evaluacion[];
   notasExistentes: Map<string, NotaLiteral>; // Key: "alumnoId-evaluacionId"
+  profesorAsignacionId: number; // Para aislamiento por profesor
 }
 
 export const useEstimacionesIA = ({
   alumnos,
   competencias,
   evaluaciones,
-  notasExistentes
+  notasExistentes,
+  profesorAsignacionId
 }: UseEstimacionesIAProps) => {
   const [estado, setEstado] = useState<EstadoEstimacion>({
     cargando: false,
@@ -89,6 +91,7 @@ export const useEstimacionesIA = ({
                   const respuestaIA = await iaAPI.estimarNota({
                     alumnoId: alumno.id,
                     competenciaId: competencia.id,
+                    profesorAsignacionId,
                     proximaTarea
                   });
                   
@@ -129,7 +132,7 @@ export const useEstimacionesIA = ({
         error: 'Error al generar estimaciones de IA'
       }));
     }
-  }, [alumnos, competencias, evaluaciones, notasExistentes, contarNotasExistentes, obtenerProximaTarea]);
+  }, [alumnos, competencias, evaluaciones, notasExistentes, profesorAsignacionId, contarNotasExistentes, obtenerProximaTarea]);
 
   /**
    * Obtiene la estimación para un alumno y evaluación específica
@@ -167,7 +170,7 @@ export const useEstimacionesIA = ({
       
       return () => clearTimeout(timeoutId);
     }
-  }, [alumnos, competencias, evaluaciones, notasExistentes, generarEstimaciones]);
+  }, [alumnos, competencias, evaluaciones, notasExistentes, profesorAsignacionId, generarEstimaciones]);
 
   return {
     // Estado

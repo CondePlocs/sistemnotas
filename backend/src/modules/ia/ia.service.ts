@@ -32,8 +32,8 @@ export class IaService {
       // Validar entrada
       await this.validarEntidades(dto.alumnoId, dto.competenciaId);
       
-      // Obtener datos históricos
-      const datosHistoricos = await this.obtenerDatosHistoricos(dto.alumnoId, dto.competenciaId);
+      // Obtener datos históricos CON detección de formato Y filtro por profesor
+      const { datos: datosHistoricos, formatoDetectado } = await this.obtenerDatosHistoricos(dto.alumnoId, dto.competenciaId, dto.profesorAsignacionId);
       
       if (datosHistoricos.length < this.config.minimoNotasRequeridas) {
         return this.crearRespuestaInsuficiente(dto, datosHistoricos.length);
@@ -48,13 +48,16 @@ export class IaService {
       // Usar resultados del algoritmo mejorado
       const notaEstimada = estimacionMejorada.notaEstimada;
       const confianza = estimacionMejorada.confianza;
-      const notaLiteral = this.convertirANotaLiteral(notaEstimada);
+      
+      // CONVERSIÓN INTELIGENTE según formato detectado
+      const notaLiteral = this.convertirEstimacionAFormato(notaEstimada, formatoDetectado);
 
       const mensaje = this.generarMensaje(confianza, datosHistoricos.length);
 
       this.logger.log(`=== ESTIMACIÓN COMPLETADA ===`);
-      this.logger.log(`Alumno: ${dto.alumnoId}, Competencia: ${dto.competenciaId}`);
-      this.logger.log(`Datos históricos: ${datosHistoricos.length} notas`);
+      this.logger.log(`Alumno: ${dto.alumnoId}, Competencia: ${dto.competenciaId}, Profesor: ${dto.profesorAsignacionId}`);
+      this.logger.log(`Datos históricos: ${datosHistoricos.length} notas del cuaderno del profesor`);
+      this.logger.log(`Formato detectado: ${formatoDetectado}`);
       this.logger.log(`Regresión: pendiente=${regresion.pendiente.toFixed(3)}, intersección=${regresion.interseccion.toFixed(3)}, correlación=${regresion.coeficienteCorrelacion.toFixed(3)}`);
       this.logger.log(`Nota estimada: ${notaEstimada.toFixed(2)} -> ${notaLiteral}`);
       this.logger.log(`Confianza: ${(confianza * 100).toFixed(1)}%`);
@@ -97,12 +100,37 @@ export class IaService {
     }
   }
 
-  private async obtenerDatosHistoricos(alumnoId: number, competenciaId: number): Promise<DatosHistoricos[]> {
+  private async obtenerDatosHistoricos(alumnoId: number, competenciaId: number, profesorAsignacionId: number): Promise<{ datos: DatosHistoricos[], formatoDetectado: 'numerico' | 'literal' | 'mixto' }> {
+    // PRIMERO: Obtener el colegio del alumno para encontrar el período activo
+    const alumno = await this.prisma.alumno.findUnique({
+      where: { id: alumnoId },
+      select: { colegioId: true }
+    });
+
+    if (!alumno) {
+      throw new Error(`Alumno con ID ${alumnoId} no encontrado`);
+    }
+
+    // SEGUNDO: Obtener el período académico activo del colegio
+    const periodoActivo = await this.prisma.periodoAcademico.findFirst({
+      where: {
+        colegioId: alumno.colegioId,
+        activo: true
+      }
+    });
+
+    if (!periodoActivo) {
+      throw new Error(`No hay período académico activo para el colegio del alumno ${alumnoId}`);
+    }
+
+    // TERCERO: Consultar SOLO las notas de la competencia específica, período activo Y profesor específico
     const registros = await this.prisma.registroNota.findMany({
       where: {
         alumnoId: alumnoId,
         evaluacion: {
-          competenciaId: competenciaId
+          competenciaId: competenciaId,
+          periodoId: periodoActivo.id,              // 🎯 FILTRO: Solo período activo
+          profesorAsignacionId: profesorAsignacionId // 🎯 FILTRO CRÍTICO: Solo este profesor
         }
       },
       include: {
@@ -111,6 +139,7 @@ export class IaService {
             id: true,
             nombre: true,
             fechaEvaluacion: true,
+            periodoId: true,
             competencia: {
               select: {
                 nombre: true
@@ -126,21 +155,26 @@ export class IaService {
       }
     });
 
-    this.logger.debug(`Encontrados ${registros.length} registros históricos`);
+    this.logger.debug(`🎯 FILTROS APLICADOS: Alumno ${alumnoId}, Competencia ${competenciaId}, Período Activo ${periodoActivo.id}, Profesor ${profesorAsignacionId}`);
+    this.logger.debug(`Encontrados ${registros.length} registros históricos para el cuaderno del profesor`);
 
-    return registros.map((registro, index) => {
-      // Usar el ID de la evaluación como orden para mantener consistencia
-      // o usar la fecha de evaluación para orden cronológico
+    // Detectar formato predominante de las notas
+    const formatoDetectado = this.detectarFormatoNotas(registros.map(r => r.nota));
+    this.logger.debug(`Formato detectado: ${formatoDetectado}`);
+
+    const datos = registros.map((registro, index) => {
       const ordenTarea = index + 1;
-      const notaNumerica = this.convertirNotaLiteralANumerica(registro.nota);
+      const notaNumerica = this.convertirNotaAEscalaInterna(registro.nota);
       
-      this.logger.debug(`Registro ${index + 1}: Evaluación ${registro.evaluacion.nombre}, Nota: ${registro.nota} -> ${notaNumerica}`);
+      this.logger.debug(`Registro ${index + 1}: Evaluación ${registro.evaluacion.nombre} (Período: ${registro.evaluacion.periodoId}), Nota: ${registro.nota} -> ${notaNumerica}`);
       
       return {
         ordenTarea,
         notaNumerica
       };
     });
+
+    return { datos, formatoDetectado };
   }
 
   private calcularRegresion(datos: DatosHistoricos[]): ResultadoRegresion {
@@ -560,16 +594,99 @@ export class IaService {
     return 'Estimación con baja confianza, los datos muestran alta variabilidad';
   }
 
-  private convertirNotaLiteralANumerica(notaLiteral: string): number {
-    // Usar la MISMA conversión que NotaCalculoService para consistencia
-    const conversion = {
+  /**
+   * NUEVA FUNCIÓN: Detecta el formato predominante de las notas históricas
+   */
+  private detectarFormatoNotas(notas: string[]): 'numerico' | 'literal' | 'mixto' {
+    if (notas.length === 0) return 'literal'; // Default
+    
+    let numericas = 0;
+    let literales = 0;
+    
+    for (const nota of notas) {
+      if (this.esNotaNumerica(nota)) {
+        numericas++;
+      } else if (this.esNotaLiteral(nota)) {
+        literales++;
+      }
+    }
+    
+    const totalNotas = notas.length;
+    const porcentajeNumericas = numericas / totalNotas;
+    
+    // Si 80% o más son numéricas, formato numérico
+    if (porcentajeNumericas >= 0.8) return 'numerico';
+    // Si 80% o más son literales, formato literal
+    if (porcentajeNumericas <= 0.2) return 'literal';
+    // Si es mixto, usar formato numérico (más preciso)
+    return 'mixto';
+  }
+  
+  /**
+   * NUEVA FUNCIÓN: Verifica si una nota es numérica
+   */
+  private esNotaNumerica(nota: string): boolean {
+    const numero = parseFloat(nota);
+    return !isNaN(numero) && numero >= 0 && numero <= 20;
+  }
+  
+  /**
+   * NUEVA FUNCIÓN: Verifica si una nota es literal
+   */
+  private esNotaLiteral(nota: string): boolean {
+    return ['AD', 'A', 'B', 'C'].includes(nota.toUpperCase());
+  }
+  
+  /**
+   * FUNCIÓN REFACTORIZADA: Convierte cualquier nota (numérica o literal) a escala interna 1.0-4.0
+   */
+  private convertirNotaAEscalaInterna(nota: string): number {
+    // Primero intentar como número
+    if (this.esNotaNumerica(nota)) {
+      const numero = parseFloat(nota);
+      // Convertir escala 0-20 a escala 1.0-4.0 usando los MISMOS rangos que NotaCalculoService
+      if (numero >= 18) return 4.0;  // AD (18-20)
+      if (numero >= 14) return 3.0;  // A  (14-17)
+      if (numero >= 11) return 2.0;  // B  (11-13)
+      return 1.0;                     // C  (0-10)
+    }
+    
+    // Si no es numérica, tratar como literal
+    const notaUpper = nota.toUpperCase();
+    const conversionLiteral = {
       'AD': 4.0,  // Logro destacado
       'A': 3.0,   // Logro esperado
       'B': 2.0,   // En proceso
       'C': 1.0    // En inicio
     };
     
-    return conversion[notaLiteral] || 1.0;
+    return conversionLiteral[notaUpper] || 1.0;
+  }
+  
+  /**
+   * NUEVA FUNCIÓN: Convierte estimación de escala interna al formato apropiado
+   */
+  private convertirEstimacionAFormato(notaInterna: number, formato: 'numerico' | 'literal' | 'mixto'): string {
+    if (formato === 'numerico' || formato === 'mixto') {
+      // Convertir de escala 1.0-4.0 a escala 0-20
+      if (notaInterna >= 3.5) return '19';  // AD -> 19 (representativo de 18-20)
+      if (notaInterna >= 2.5) return '15';  // A  -> 15 (representativo de 14-17)
+      if (notaInterna >= 1.5) return '12';  // B  -> 12 (representativo de 11-13)
+      return '8';                           // C  -> 8  (representativo de 0-10)
+    }
+    
+    // Formato literal (comportamiento original)
+    if (notaInterna >= 3.5) return NotaLiteral.AD;
+    if (notaInterna >= 2.5) return NotaLiteral.A;
+    if (notaInterna >= 1.5) return NotaLiteral.B;
+    return NotaLiteral.C;
+  }
+  
+  /**
+   * FUNCIÓN LEGACY: Mantener para compatibilidad (ahora llama a la nueva función)
+   */
+  private convertirNotaLiteralANumerica(notaLiteral: string): number {
+    return this.convertirNotaAEscalaInterna(notaLiteral);
   }
 
   private crearRespuestaInsuficiente(dto: EstimacionNotaDto, cantidadDatos: number): EstimacionRespuesta {

@@ -24,6 +24,16 @@ export class EstimacionNotaDto {
   competenciaId: number;
 
   @ApiProperty({
+    description: 'ID de la asignación del profesor (para aislamiento de cuadernos)',
+    example: 45,
+    minimum: 1
+  })
+  @IsInt({ message: 'El ID de la asignación del profesor debe ser un número entero' })
+  @IsPositive({ message: 'El ID de la asignación del profesor debe ser positivo' })
+  @Type(() => Number)
+  profesorAsignacionId: number;
+
+  @ApiProperty({
     description: 'Número de la próxima tarea/evaluación a estimar',
     example: 4,
     minimum: 1

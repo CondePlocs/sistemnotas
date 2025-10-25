@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import { NotaEstado, NotaLiteral, CrearRegistroNotaDto } from '@/types/registro-nota';
+import { NotaEstado, NotaLiteral, NotaInput, CrearRegistroNotaDto } from '@/types/registro-nota';
 import { registroNotaAPI } from '@/lib/api/registro-nota';
 
 interface UseNotasStateProps {
@@ -18,7 +18,7 @@ export function useNotasState({ alumnos, evaluaciones }: UseNotasStateProps) {
   }, []);
 
   // Obtener nota por alumno y evaluación
-  const obtenerNota = useCallback((alumnoId: number, evaluacionId: number): NotaLiteral | null => {
+  const obtenerNota = useCallback((alumnoId: number, evaluacionId: number): NotaInput | null => {
     const clave = generarClave(alumnoId, evaluacionId);
     return notas.get(clave)?.nota || null;
   }, [notas, generarClave]);
@@ -31,7 +31,7 @@ export function useNotasState({ alumnos, evaluaciones }: UseNotasStateProps) {
   }, [notas, generarClave]);
 
   // Actualizar una nota (marca como no guardada)
-  const actualizarNota = useCallback((alumnoId: number, evaluacionId: number, nota: NotaLiteral | null) => {
+  const actualizarNota = useCallback((alumnoId: number, evaluacionId: number, nota: NotaInput | null) => {
     const clave = generarClave(alumnoId, evaluacionId);
     
     setNotas(prev => {
@@ -54,7 +54,7 @@ export function useNotasState({ alumnos, evaluaciones }: UseNotasStateProps) {
   const establecerNotasIniciales = useCallback((notasIniciales: Array<{
     alumnoId: number;
     evaluacionId: number;
-    nota: NotaLiteral;
+    nota: NotaInput;
   }>) => {
     setNotas(prev => {
       const nuevasNotas = new Map(prev);

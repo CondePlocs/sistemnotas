@@ -517,13 +517,14 @@ model Evaluacion {
 }
 
 model RegistroNota {
-  id            Int      @id @default(autoincrement())
-  alumnoId      Int
-  evaluacionId  Int
-  nota          String   // 'AD', 'A', 'B', 'C'
-  registradoPor Int
-  creadoEn      DateTime @default(now())
-  actualizadoEn DateTime @updatedAt
+  id                 Int      @id @default(autoincrement())
+  alumnoId           Int
+  evaluacionId       Int
+  nota               String   // Input original del profesor: 'AD', 'A', 'B', 'C' o '0-20'
+  notaEscalaCalculo  Float?   // Conversión automática a escala 1.0-4.0 para cálculos
+  registradoPor      Int
+  creadoEn           DateTime @default(now())
+  actualizadoEn      DateTime @updatedAt
 
   // Relaciones
   alumno      Alumno     @relation(fields: [alumnoId], references: [id], onDelete: Cascade)

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { ContextoTrabajo, CreateEvaluacionDto, Evaluacion } from '@/types/evaluaciones';
-import { NotaLiteral } from '@/types/registro-nota';
+import { NotaLiteral, NotaInput } from '@/types/registro-nota';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { useNotasState } from '@/hooks/useNotasState';
 import { useEstimacionesIA } from '@/hooks/useEstimacionesIA';
@@ -66,7 +66,8 @@ export default function TablaEvaluacionesReal({
     alumnos: contexto.alumnos,
     competencias: contexto.competencias,
     evaluaciones: contexto.evaluaciones,
-    notasExistentes: notasExistentesMap
+    notasExistentes: notasExistentesMap,
+    profesorAsignacionId: asignacionId
   });
 
   // Función para cargar notas desde la API
@@ -80,7 +81,7 @@ export default function TablaEvaluacionesReal({
       const notasFormateadas = notasExistentes.map(nota => ({
         alumnoId: nota.alumnoId,
         evaluacionId: nota.evaluacionId,
-        nota: nota.nota as NotaLiteral
+        nota: nota.nota as NotaInput // Ahora acepta tanto letras como números
       }));
       
       establecerNotasIniciales(notasFormateadas);
@@ -193,9 +194,28 @@ export default function TablaEvaluacionesReal({
     setPromediosCurso(nuevosPromedios);
   };
 
-  // Validar que la nota sea una letra válida
-  const esNotaValida = (nota: string): nota is NotaLiteral => {
-    return ['AD', 'A', 'B', 'C'].includes(nota);
+  // Validar que la nota sea válida (alfabética o numérica)
+  const esNotaValida = (nota: string): boolean => {
+    if (!nota || typeof nota !== 'string') {
+      return false;
+    }
+
+    const notaLimpia = nota.trim().toUpperCase();
+    
+    // Verificar si es alfabético (AD, A, B, C)
+    const esAlfabetico = /^(AD|A|B|C)$/i.test(notaLimpia);
+    if (esAlfabetico) {
+      return true;
+    }
+    
+    // Verificar si es numérico (0-20, incluyendo decimales)
+    const esNumerico = /^\d+(\.\d+)?$/.test(notaLimpia);
+    if (esNumerico) {
+      const valor = parseFloat(notaLimpia);
+      return valor >= 0 && valor <= 20;
+    }
+    
+    return false;
   };
 
   // Manejar cambio de nota
@@ -214,11 +234,31 @@ export default function TablaEvaluacionesReal({
     setModalCrearAbierto(true);
   };
 
-  // Obtener color de rendimiento para notas literales (versión mejorada)
-  const getColorNotaMejorado = (nota: NotaLiteral | null, esEstimacion: boolean = false): string => {
+  // Obtener color de rendimiento para notas (versión mejorada) - acepta letras y números
+  const getColorNotaMejorado = (nota: string | null, esEstimacion: boolean = false): string => {
+    // Convertir nota numérica a equivalente alfabético para colores
+    const convertirALetra = (valor: string): NotaLiteral | null => {
+      // Si ya es una letra, devolverla
+      if (['AD', 'A', 'B', 'C'].includes(valor)) {
+        return valor as NotaLiteral;
+      }
+      
+      // Si es un número, convertir a letra equivalente
+      const num = parseFloat(valor);
+      if (!isNaN(num)) {
+        if (num >= 18) return 'AD';
+        if (num >= 14) return 'A';
+        if (num >= 11) return 'B';
+        return 'C';
+      }
+      
+      return null;
+    };
+    
+    const notaParaColor = nota ? convertirALetra(nota) : null;
     if (esEstimacion) {
       // Colores especiales para estimaciones de IA
-      switch (nota) {
+      switch (notaParaColor) {
         case 'AD': return 'bg-gradient-to-br from-purple-400 to-purple-500 text-white border-purple-500 hover:from-purple-500 hover:to-purple-600 ring-2 ring-purple-300';
         case 'A': return 'bg-gradient-to-br from-indigo-400 to-indigo-500 text-white border-indigo-500 hover:from-indigo-500 hover:to-indigo-600 ring-2 ring-indigo-300';
         case 'B': return 'bg-gradient-to-br from-pink-400 to-pink-500 text-white border-pink-500 hover:from-pink-500 hover:to-pink-600 ring-2 ring-pink-300';
@@ -227,8 +267,8 @@ export default function TablaEvaluacionesReal({
       }
     }
     
-    if (nota === null) return 'bg-white/80 text-[#666666] border-[#E9E1C9] hover:bg-[#FCE0C1] hover:border-[#8D2C1D]';
-    switch (nota) {
+    if (notaParaColor === null) return 'bg-white/80 text-[#666666] border-[#E9E1C9] hover:bg-[#FCE0C1] hover:border-[#8D2C1D]';
+    switch (notaParaColor) {
       case 'AD': return 'bg-gradient-to-br from-green-400 to-green-500 text-white border-green-500 hover:from-green-500 hover:to-green-600';
       case 'A': return 'bg-gradient-to-br from-blue-400 to-blue-500 text-white border-blue-500 hover:from-blue-500 hover:to-blue-600';
       case 'B': return 'bg-gradient-to-br from-yellow-400 to-yellow-500 text-white border-yellow-500 hover:from-yellow-500 hover:to-yellow-600';
@@ -392,7 +432,11 @@ export default function TablaEvaluacionesReal({
                                       type="text"
                                       value={nota || ''}
                                       onChange={(e) => {
-                                        const valor = e.target.value.toUpperCase();
+                                        let valor = e.target.value.trim();
+                                        // Solo convertir a mayúsculas si parece ser una letra
+                                        if (isNaN(Number(valor))) {
+                                          valor = valor.toUpperCase();
+                                        }
                                         manejarCambioNota(alumno.id, evaluacion.id, valor);
                                       }}
                                       onBlur={() => setEditando(null)}
@@ -400,8 +444,8 @@ export default function TablaEvaluacionesReal({
                                         if (e.key === 'Enter') setEditando(null);
                                       }}
                                       className="w-full text-center text-sm border-2 border-[#8D2C1D] rounded-lg px-2 py-1 font-bold focus:ring-2 focus:ring-[#8D2C1D]"
-                                      placeholder="AD,A,B,C"
-                                      maxLength={2}
+                                      placeholder="AD,A,B,C o 0-20"
+                                      maxLength={4}
                                       autoFocus
                                     />
                                   ) : (
