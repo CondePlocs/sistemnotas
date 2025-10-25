@@ -356,4 +356,120 @@ export class ExcelGeneratorService {
     this.autoFitColumns(worksheet);
     return this.toBuffer(workbook);
   }
+
+  /**
+   * Genera Excel de mini libreta del alumno
+   */
+  async generateMiniLibretaExcel(datos: any): Promise<Buffer> {
+    const workbook = this.createWorkbook();
+    const worksheet = this.addWorksheet(workbook, 'Mini Libreta');
+    
+    // Header del colegio y información del alumno
+    let currentRow = this.addColegioHeader(
+      worksheet,
+      datos.alumno?.colegioNombre || 'COLEGIO',
+      `Mini Libreta - ${datos.alumno?.nombres || ''} ${datos.alumno?.apellidos || ''}`
+    );
+
+    // Información del alumno
+    currentRow += 2;
+    worksheet.getCell(`A${currentRow}`).value = 'INFORMACIÓN DEL ALUMNO';
+    worksheet.getCell(`A${currentRow}`).font = { bold: true, size: 12 };
+    currentRow++;
+
+    const infoData = [
+      ['Nombres:', `${datos.alumno?.nombres || ''} ${datos.alumno?.apellidos || ''}`],
+      ['DNI:', datos.alumno?.dni || 'No registrado'],
+      ['Código:', datos.alumno?.codigoAlumno || 'No asignado'],
+      ['Salón:', datos.alumno?.salon ? `${datos.alumno.salon.grado}° ${datos.alumno.salon.seccion} - ${datos.alumno.salon.turno}` : 'No asignado'],
+      ['Nivel:', datos.alumno?.salon?.nivelNombre || 'No definido'],
+      ['Período Académico:', datos.periodoAcademico?.nombre || ''],
+      ['Total de Cursos:', datos.estadisticas?.totalCursos || 0],
+      ['Total de Evaluaciones:', datos.estadisticas?.totalEvaluaciones || 0],
+      ['Promedio General:', datos.estadisticas?.promedioGeneral || 0],
+    ];
+
+    infoData.forEach(([label, value]) => {
+      worksheet.getCell(`A${currentRow}`).value = label;
+      worksheet.getCell(`A${currentRow}`).font = { bold: true };
+      worksheet.getCell(`B${currentRow}`).value = value;
+      currentRow++;
+    });
+
+    // Sección de Profesores
+    currentRow += 2;
+    worksheet.getCell(`A${currentRow}`).value = 'PROFESORES ASIGNADOS';
+    worksheet.getCell(`A${currentRow}`).font = { bold: true, size: 12 };
+    currentRow++;
+
+    if (datos.profesores && datos.profesores.length > 0) {
+      const profHeaders = ['Profesor', 'Curso'];
+      worksheet.addRow(profHeaders);
+      this.applyHeaderStyle(worksheet, currentRow, profHeaders.length);
+      currentRow++;
+
+      datos.profesores.forEach((prof: any) => {
+        worksheet.addRow([
+          `${prof.nombres} ${prof.apellidos}`,
+          prof.cursoNombre
+        ]);
+        currentRow++;
+      });
+    }
+
+    // Sección de Cursos y Competencias
+    currentRow += 2;
+    worksheet.getCell(`A${currentRow}`).value = 'CURSOS Y COMPETENCIAS';
+    worksheet.getCell(`A${currentRow}`).font = { bold: true, size: 12 };
+    currentRow++;
+
+    if (datos.cursos && datos.cursos.length > 0) {
+      datos.cursos.forEach((curso: any) => {
+        // Título del curso
+        currentRow++;
+        worksheet.getCell(`A${currentRow}`).value = `CURSO: ${curso.nombre}`;
+        worksheet.getCell(`A${currentRow}`).font = { bold: true, color: { argb: 'FF2563eb' } };
+        currentRow++;
+
+        if (curso.competencias && curso.competencias.length > 0) {
+          const compHeaders = ['Orden', 'Competencia'];
+          worksheet.addRow(compHeaders);
+          this.applyHeaderStyle(worksheet, currentRow, compHeaders.length);
+          currentRow++;
+
+          curso.competencias.forEach((comp: any) => {
+            worksheet.addRow([comp.orden, comp.nombre]);
+            currentRow++;
+          });
+        }
+      });
+    }
+
+    // Sección de Evaluaciones y Notas
+    currentRow += 2;
+    worksheet.getCell(`A${currentRow}`).value = 'EVALUACIONES Y NOTAS';
+    worksheet.getCell(`A${currentRow}`).font = { bold: true, size: 12 };
+    currentRow++;
+
+    if (datos.notas && datos.notas.length > 0) {
+      const notasHeaders = ['Curso', 'Competencia', 'Evaluación', 'Nota', 'Fecha'];
+      worksheet.addRow(notasHeaders);
+      this.applyHeaderStyle(worksheet, currentRow, notasHeaders.length);
+      currentRow++;
+
+      datos.notas.forEach((nota: any) => {
+        worksheet.addRow([
+          nota.cursoNombre,
+          nota.competenciaNombre,
+          nota.evaluacionNombre,
+          nota.nota,
+          nota.fechaRegistro ? new Date(nota.fechaRegistro).toLocaleDateString('es-PE') : ''
+        ]);
+        currentRow++;
+      });
+    }
+
+    this.autoFitColumns(worksheet);
+    return this.toBuffer(workbook);
+  }
 }

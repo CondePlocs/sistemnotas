@@ -2,6 +2,7 @@ import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nest
 import { PrismaService } from '../../providers/prisma.service';
 import { PdfGeneratorService } from './generators/pdf-generator.service';
 import { ExcelGeneratorService } from './generators/excel-generator.service';
+import { NotaCalculoService } from '../registro-nota/services/nota-calculo.service';
 import { TipoReporte, FormatoReporte, ReporteRequestDto } from './dto/reporte-request.dto';
 
 @Injectable()
@@ -12,6 +13,7 @@ export class ReportesService {
     private readonly prisma: PrismaService,
     private readonly pdfGenerator: PdfGeneratorService,
     private readonly excelGenerator: ExcelGeneratorService,
+    private readonly notaCalculoService: NotaCalculoService,
   ) {
     // Registrar helpers de Handlebars al inicializar el servicio
     this.pdfGenerator.registerHandlebarsHelpers();
@@ -486,7 +488,22 @@ export class ReportesService {
     usuarioId: number, 
     colegioId: number
   ): Promise<{ buffer: Buffer; nombreArchivo: string; mimeType: string }> {
-    throw new Error('Reporte de mini libreta no implementado aún');
+    this.logger.log(`Generando mini libreta ${formato} para alumno ${alumnoId}`);
+
+    try {
+      // Obtener datos completos del alumno
+      const datosAlumno = await this.obtenerDatosMiniLibreta(parseInt(alumnoId), colegioId, usuarioId);
+
+      // Generar según el formato solicitado
+      if (formato === FormatoReporte.EXCEL) {
+        return this.generarExcelMiniLibreta(datosAlumno);
+      } else {
+        throw new Error('Formato no soportado para mini libreta. Use el endpoint mini-libreta-completa para PDF.');
+      }
+    } catch (error) {
+      this.logger.error(`Error al generar mini libreta para alumno ${alumnoId}`, error);
+      throw new Error('No se pudo generar la mini libreta del alumno');
+    }
   }
 
   private async generarReporteTopCursos(
@@ -495,7 +512,22 @@ export class ReportesService {
     usuarioId: number, 
     colegioId: number
   ): Promise<{ buffer: Buffer; nombreArchivo: string; mimeType: string }> {
-    throw new Error('Reporte de top cursos no implementado aún');
+    this.logger.log(`Generando mini libreta completa PDF para alumno ${alumnoId}`);
+
+    try {
+      // Obtener datos completos del alumno + top cursos
+      const datosCompletos = await this.obtenerDatosMiniLibretaCompleta(parseInt(alumnoId), colegioId, usuarioId);
+
+      // Solo generar PDF para este reporte
+      if (formato === FormatoReporte.PDF) {
+        return this.generarPdfMiniLibretaCompleta(datosCompletos);
+      } else {
+        throw new Error('Formato no soportado para mini libreta completa. Solo PDF disponible.');
+      }
+    } catch (error) {
+      this.logger.error(`Error al generar mini libreta completa para alumno ${alumnoId}`, error);
+      throw new Error('No se pudo generar la mini libreta completa del alumno');
+    }
   }
 
   /**
@@ -997,6 +1029,330 @@ export class ReportesService {
     return {
       buffer,
       nombreArchivo: `intervencion-temprana_${curso}_${grado}_${fecha}.pdf`,
+      mimeType: 'application/pdf',
+    };
+  }
+
+  /**
+   * Obtiene datos completos del alumno para la mini libreta
+   */
+  private async obtenerDatosMiniLibreta(alumnoId: number, colegioId: number, usuarioId?: number) {
+    this.logger.log(`Obteniendo datos de mini libreta para alumno ${alumnoId}`);
+
+    // Verificar relación apoderado-alumno si es necesario
+    if (usuarioId) {
+      const relacion = await this.prisma.$queryRaw`
+        SELECT aa.id 
+        FROM apoderado_alumno aa
+        INNER JOIN apoderado ap ON aa."apoderadoId" = ap.id
+        INNER JOIN usuario_rol ur ON ap."usuarioRolId" = ur.id
+        INNER JOIN rol r ON ur.rol_id = r.id
+        WHERE aa."alumnoId" = ${alumnoId}
+          AND ur.usuario_id = ${usuarioId}
+          AND ur.colegio_id = ${colegioId}
+          AND r.nombre = 'APODERADO'
+          AND aa.activo = true
+        LIMIT 1
+      `;
+
+      if (!relacion || (relacion as any[]).length === 0) {
+        this.logger.warn(`Usuario ${usuarioId} no tiene relación con alumno ${alumnoId}`);
+        throw new Error('No tienes permisos para acceder a la información de este alumno');
+      }
+    }
+
+    // Obtener período académico activo
+    const periodoActivo = await this.prisma.periodoAcademico.findFirst({
+      where: { 
+        colegioId: colegioId,
+        activo: true 
+      },
+    });
+
+    if (!periodoActivo) {
+      return {
+        alumno: null,
+        cursos: [],
+        profesores: [],
+        evaluaciones: [],
+        notas: [],
+        estadisticas: {
+          totalCursos: 0,
+          totalEvaluaciones: 0,
+          promedioGeneral: 0,
+        },
+        periodoAcademico: null,
+        fechaGeneracion: new Date(),
+      };
+    }
+
+    // Query SQL para obtener datos completos del alumno
+    const datosAlumno = await this.prisma.$queryRaw<any[]>`
+      SELECT 
+        -- Datos del alumno
+        a.id as alumno_id,
+        a.nombres as alumno_nombres,
+        a.apellidos as alumno_apellidos,
+        a.dni as alumno_dni,
+        a."codigoAlumno" as codigo_alumno,
+        
+        -- Datos del salón actual
+        s.id as salon_id,
+        CONCAT(s.grado, ' ', s.seccion, ' - ', s.turno) as salon_nombre,
+        s.grado,
+        s.seccion,
+        s.turno,
+        cn."nivelId" as nivel_id,
+        n.nombre as nivel_nombre,
+        
+        -- Datos del colegio
+        c.nombre as colegio_nombre,
+        
+        -- Datos del curso
+        cur.id as curso_id,
+        cur.nombre as curso_nombre,
+        cur.descripcion as curso_descripcion,
+        
+        -- Datos del profesor asignado
+        pa.id as profesor_asignacion_id,
+        u_prof.nombres as profesor_nombres,
+        u_prof.apellidos as profesor_apellidos,
+        
+        -- Datos de competencias
+        comp.id as competencia_id,
+        comp.nombre as competencia_nombre,
+        comp.orden as competencia_orden,
+        
+        -- Datos de evaluaciones
+        e.id as evaluacion_id,
+        e.nombre as evaluacion_nombre,
+        e."fechaEvaluacion" as fecha_evaluacion,
+        
+        -- Notas del alumno
+        rn.id as nota_id,
+        rn.nota,
+        rn."creadoEn" as nota_fecha
+        
+      FROM alumno a
+      LEFT JOIN alumno_salon als ON a.id = als."alumnoId"
+      LEFT JOIN salon s ON als."salonId" = s.id
+      LEFT JOIN colegio_nivel cn ON s."colegioNivelId" = cn.id
+      LEFT JOIN nivel n ON cn."nivelId" = n.id
+      LEFT JOIN colegio c ON cn."colegioId" = c.id
+      LEFT JOIN salon_curso sc ON s.id = sc."salonId" AND sc.activo = true
+      LEFT JOIN curso cur ON sc."cursoId" = cur.id
+      LEFT JOIN profesor_asignacion pa ON pa."salonId" = s.id AND pa."cursoId" = cur.id AND pa.activo = true
+      LEFT JOIN profesor p ON pa."profesorId" = p.id
+      LEFT JOIN usuario_rol ur_prof ON p."usuarioRolId" = ur_prof.id
+      LEFT JOIN usuario u_prof ON ur_prof.usuario_id = u_prof.id
+      LEFT JOIN competencia comp ON comp."cursoId" = cur.id
+      LEFT JOIN evaluacion e ON e."competenciaId" = comp.id AND e."periodoId" = ${periodoActivo.id}
+      LEFT JOIN registro_nota rn ON rn."evaluacionId" = e.id AND rn."alumnoId" = a.id
+      
+      WHERE a.id = ${alumnoId} 
+        AND a."colegioId" = ${colegioId}
+        AND a.activo = true
+      
+      ORDER BY cur.nombre, comp.orden, e."fechaEvaluacion"
+    `;
+
+    // Procesar datos del alumno
+    const alumno = datosAlumno.length > 0 ? {
+      id: datosAlumno[0].alumno_id,
+      nombres: datosAlumno[0].alumno_nombres,
+      apellidos: datosAlumno[0].alumno_apellidos,
+      dni: datosAlumno[0].alumno_dni,
+      codigoAlumno: datosAlumno[0].codigo_alumno,
+      salon: datosAlumno[0].salon_id ? {
+        id: datosAlumno[0].salon_id,
+        nombre: datosAlumno[0].salon_nombre,
+        grado: datosAlumno[0].grado,
+        seccion: datosAlumno[0].seccion,
+        turno: datosAlumno[0].turno,
+        nivelNombre: datosAlumno[0].nivel_nombre,
+      } : null,
+      colegioNombre: datosAlumno[0].colegio_nombre,
+    } : null;
+
+    // Agrupar cursos con sus profesores, competencias y evaluaciones
+    const cursosMap = new Map();
+    const profesoresMap = new Map();
+    const evaluacionesMap = new Map();
+    const notasArray: any[] = [];
+
+    datosAlumno.forEach((row: any) => {
+      // Procesar cursos
+      if (row.curso_id && !cursosMap.has(row.curso_id)) {
+        cursosMap.set(row.curso_id, {
+          id: row.curso_id,
+          nombre: row.curso_nombre,
+          descripcion: row.curso_descripcion,
+          competencias: [],
+        });
+      }
+
+      // Procesar profesores
+      if (row.profesor_asignacion_id && !profesoresMap.has(row.profesor_asignacion_id)) {
+        profesoresMap.set(row.profesor_asignacion_id, {
+          id: row.profesor_asignacion_id,
+          nombres: row.profesor_nombres,
+          apellidos: row.profesor_apellidos,
+          cursoId: row.curso_id,
+          cursoNombre: row.curso_nombre,
+        });
+      }
+
+      // Procesar competencias
+      if (row.competencia_id) {
+        const curso = cursosMap.get(row.curso_id);
+        if (curso && !curso.competencias.find((c: any) => c.id === row.competencia_id)) {
+          curso.competencias.push({
+            id: row.competencia_id,
+            nombre: row.competencia_nombre,
+            orden: row.competencia_orden,
+          });
+        }
+      }
+
+      // Procesar evaluaciones
+      if (row.evaluacion_id && !evaluacionesMap.has(row.evaluacion_id)) {
+        evaluacionesMap.set(row.evaluacion_id, {
+          id: row.evaluacion_id,
+          nombre: row.evaluacion_nombre,
+          fechaEvaluacion: row.fecha_evaluacion,
+          competenciaId: row.competencia_id,
+          competenciaNombre: row.competencia_nombre,
+          cursoId: row.curso_id,
+          cursoNombre: row.curso_nombre,
+        });
+      }
+
+      // Procesar notas
+      if (row.nota_id) {
+        notasArray.push({
+          id: row.nota_id,
+          nota: row.nota, // Mantener la nota como letra (AD, A, B, C)
+          notaNumerico: row.nota ? this.notaCalculoService.convertirLetraANumero(row.nota) : 0,
+          fechaRegistro: row.nota_fecha,
+          evaluacionId: row.evaluacion_id,
+          evaluacionNombre: row.evaluacion_nombre,
+          competenciaId: row.competencia_id,
+          competenciaNombre: row.competencia_nombre,
+          cursoId: row.curso_id,
+          cursoNombre: row.curso_nombre,
+        });
+      }
+    });
+
+    const cursos = Array.from(cursosMap.values());
+    const profesores = Array.from(profesoresMap.values());
+    const evaluaciones = Array.from(evaluacionesMap.values());
+
+    // Calcular estadísticas usando el sistema de notas alfabético
+    const totalCursos = cursos.length;
+    const totalEvaluaciones = evaluaciones.length;
+    const promedioGeneral = notasArray.length > 0 
+      ? this.notaCalculoService.calcularPromedioNumerico(notasArray.map(nota => nota.nota))
+      : 0;
+
+    return {
+      alumno,
+      cursos,
+      profesores,
+      evaluaciones,
+      notas: notasArray,
+      estadisticas: {
+        totalCursos,
+        totalEvaluaciones,
+        promedioGeneral: Math.round(promedioGeneral * 100) / 100,
+        promedioGeneralLiteral: this.notaCalculoService.convertirNumeroALetra(promedioGeneral),
+      },
+      periodoAcademico: periodoActivo,
+      fechaGeneracion: new Date(),
+    };
+  }
+
+  /**
+   * Obtiene datos completos del alumno para la mini libreta + top cursos
+   */
+  private async obtenerDatosMiniLibretaCompleta(alumnoId: number, colegioId: number, usuarioId?: number) {
+    this.logger.log(`Obteniendo datos completos de mini libreta para alumno ${alumnoId}`);
+
+    // Obtener datos base de la mini libreta
+    const datosBase = await this.obtenerDatosMiniLibreta(alumnoId, colegioId, usuarioId);
+
+    // Calcular top cursos si hay notas
+    let topMejores: any[] = [];
+    let topPeores: any[] = [];
+
+    if (datosBase.notas.length > 0) {
+      // Agrupar notas por curso y calcular promedios
+      const promediosPorCurso = new Map();
+      
+      datosBase.notas.forEach(nota => {
+        if (!promediosPorCurso.has(nota.cursoId)) {
+          promediosPorCurso.set(nota.cursoId, {
+            cursoId: nota.cursoId,
+            cursoNombre: nota.cursoNombre,
+            notas: [],
+            promedio: 0,
+          });
+        }
+        promediosPorCurso.get(nota.cursoId).notas.push(nota.nota);
+      });
+
+      // Calcular promedios finales usando el sistema de notas alfabético
+      const cursosConPromedio = Array.from(promediosPorCurso.values()).map(curso => {
+        const resultadoPromedio = this.notaCalculoService.calcularPromedioCompetencia(curso.notas);
+        return {
+          ...curso,
+          promedio: resultadoPromedio.promedioNumerico,
+          promedioLiteral: resultadoPromedio.propuestaLiteral,
+          totalEvaluaciones: curso.notas.length,
+        };
+      });
+
+      // Ordenar y obtener top 3
+      const cursosOrdenados = cursosConPromedio.sort((a, b) => b.promedio - a.promedio);
+      topMejores = cursosOrdenados.slice(0, 3);
+      topPeores = cursosOrdenados.slice(-3).reverse(); // Los 3 peores
+    }
+
+    return {
+      ...datosBase,
+      topCursos: {
+        mejores: topMejores,
+        peores: topPeores,
+      },
+    };
+  }
+
+  /**
+   * Genera Excel de mini libreta del alumno
+   */
+  private async generarExcelMiniLibreta(datos: any): Promise<{ buffer: Buffer; nombreArchivo: string; mimeType: string }> {
+    const buffer = await this.excelGenerator.generateMiniLibretaExcel(datos);
+    const fecha = new Date().toISOString().split('T')[0];
+    const alumno = datos.alumno ? `${datos.alumno.nombres}_${datos.alumno.apellidos}`.replace(/\s+/g, '-') : 'alumno';
+
+    return {
+      buffer,
+      nombreArchivo: `mini-libreta_${alumno}_${fecha}.xlsx`,
+      mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    };
+  }
+
+  /**
+   * Genera PDF de mini libreta completa del alumno
+   */
+  private async generarPdfMiniLibretaCompleta(datos: any): Promise<{ buffer: Buffer; nombreArchivo: string; mimeType: string }> {
+    const buffer = await this.pdfGenerator.generateMiniLibretaCompletaPdf(datos);
+    const fecha = new Date().toISOString().split('T')[0];
+    const alumno = datos.alumno ? `${datos.alumno.nombres}_${datos.alumno.apellidos}`.replace(/\s+/g, '-') : 'alumno';
+
+    return {
+      buffer,
+      nombreArchivo: `mini-libreta-completa_${alumno}_${fecha}.pdf`,
       mimeType: 'application/pdf',
     };
   }

@@ -517,4 +517,399 @@ export class PdfGeneratorService {
       await browser.close();
     }
   }
+
+  /**
+   * Genera PDF de mini libreta completa del alumno con top cursos
+   */
+  async generateMiniLibretaCompletaPdf(datos: any): Promise<Buffer> {
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    });
+
+    try {
+      const page = await browser.newPage();
+      
+      // Generar gráfico de top cursos (datos para Chart.js)
+      const topMejoresData = datos.topCursos?.mejores?.map((curso: any) => ({
+        curso: curso.cursoNombre,
+        promedio: curso.promedio,
+        evaluaciones: curso.totalEvaluaciones
+      })) || [];
+
+      const topPeoresData = datos.topCursos?.peores?.map((curso: any) => ({
+        curso: curso.cursoNombre,
+        promedio: curso.promedio,
+        evaluaciones: curso.totalEvaluaciones
+      })) || [];
+
+      const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Mini Libreta Completa</title>
+          <style>
+            body { 
+              font-family: Arial, sans-serif; 
+              margin: 0; 
+              padding: 20px; 
+              font-size: 11px;
+              line-height: 1.3;
+            }
+            .header {
+              text-align: center;
+              border-bottom: 2px solid #333;
+              padding-bottom: 15px;
+              margin-bottom: 20px;
+            }
+            .header h1 {
+              margin: 0;
+              color: #2563eb;
+              font-size: 16px;
+            }
+            .header h2 {
+              margin: 5px 0;
+              color: #666;
+              font-size: 12px;
+              font-weight: normal;
+            }
+            .info-section {
+              background: #f8f9fa;
+              padding: 12px;
+              border-radius: 6px;
+              margin-bottom: 15px;
+            }
+            .info-section h3 {
+              margin: 0 0 8px 0;
+              color: #2563eb;
+              font-size: 12px;
+            }
+            .info-grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 8px;
+              font-size: 10px;
+            }
+            .info-item {
+              display: flex;
+            }
+            .info-label {
+              font-weight: bold;
+              min-width: 80px;
+            }
+            .section {
+              margin-bottom: 20px;
+              page-break-inside: avoid;
+            }
+            .section-title {
+              background: #2563eb;
+              color: white;
+              padding: 8px 12px;
+              margin: 0 0 10px 0;
+              font-size: 12px;
+              font-weight: bold;
+            }
+            .table {
+              width: 100%;
+              border-collapse: collapse;
+              font-size: 9px;
+              margin-bottom: 10px;
+            }
+            .table th {
+              background: #e5e7eb;
+              padding: 6px;
+              text-align: left;
+              border: 1px solid #d1d5db;
+              font-weight: bold;
+            }
+            .table td {
+              padding: 5px 6px;
+              border: 1px solid #d1d5db;
+            }
+            .table tr:nth-child(even) {
+              background: #f9fafb;
+            }
+            .top-section {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 15px;
+              margin-bottom: 20px;
+            }
+            .top-card {
+              border: 2px solid #e5e7eb;
+              border-radius: 8px;
+              padding: 12px;
+            }
+            .top-mejores {
+              border-color: #10b981;
+            }
+            .top-peores {
+              border-color: #ef4444;
+            }
+            .top-title {
+              font-weight: bold;
+              margin-bottom: 8px;
+              font-size: 11px;
+            }
+            .top-mejores .top-title {
+              color: #10b981;
+            }
+            .top-peores .top-title {
+              color: #ef4444;
+            }
+            .curso-item {
+              display: flex;
+              justify-content: space-between;
+              padding: 4px 0;
+              border-bottom: 1px solid #e5e7eb;
+              font-size: 9px;
+            }
+            .curso-item:last-child {
+              border-bottom: none;
+            }
+            .curso-nombre {
+              font-weight: bold;
+            }
+            .curso-promedio {
+              color: #666;
+            }
+            .estadisticas {
+              background: #fef3c7;
+              padding: 12px;
+              border-radius: 6px;
+              border-left: 4px solid #f59e0b;
+              margin-bottom: 15px;
+            }
+            .estadisticas h3 {
+              margin: 0 0 8px 0;
+              color: #92400e;
+              font-size: 12px;
+            }
+            .stats-grid {
+              display: grid;
+              grid-template-columns: repeat(3, 1fr);
+              gap: 10px;
+              font-size: 10px;
+            }
+            .stat-item {
+              text-align: center;
+            }
+            .stat-value {
+              font-size: 14px;
+              font-weight: bold;
+              color: #92400e;
+            }
+            .stat-label {
+              color: #666;
+              margin-top: 2px;
+            }
+            .curso-detail {
+              background: #f0f9ff;
+              padding: 8px;
+              margin: 8px 0;
+              border-left: 3px solid #0ea5e9;
+              border-radius: 4px;
+            }
+            .curso-detail h4 {
+              margin: 0 0 6px 0;
+              color: #0c4a6e;
+              font-size: 11px;
+            }
+            .footer {
+              margin-top: 30px;
+              text-align: center;
+              font-size: 8px;
+              color: #666;
+              border-top: 1px solid #e5e7eb;
+              padding-top: 10px;
+            }
+          </style>
+        </head>
+        <body>
+          <!-- Header -->
+          <div class="header">
+            <h1>${datos.alumno?.colegioNombre || 'COLEGIO'}</h1>
+            <h2>Mini Libreta Completa - ${datos.alumno?.nombres || ''} ${datos.alumno?.apellidos || ''}</h2>
+            <p style="margin: 5px 0; font-size: 10px;">Período: ${datos.periodoAcademico?.nombre || ''} | Generado: ${new Date().toLocaleDateString('es-PE')}</p>
+          </div>
+
+          <!-- Información del Alumno -->
+          <div class="info-section">
+            <h3>📋 Información del Alumno</h3>
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="info-label">Nombres:</span>
+                <span>${datos.alumno?.nombres || ''} ${datos.alumno?.apellidos || ''}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">DNI:</span>
+                <span>${datos.alumno?.dni || 'No registrado'}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Código:</span>
+                <span>${datos.alumno?.codigoAlumno || 'No asignado'}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Salón:</span>
+                <span>${datos.alumno?.salon ? `${datos.alumno.salon.grado}° ${datos.alumno.salon.seccion} - ${datos.alumno.salon.turno}` : 'No asignado'}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Estadísticas Generales -->
+          <div class="estadisticas">
+            <h3>📊 Estadísticas Generales</h3>
+            <div class="stats-grid">
+              <div class="stat-item">
+                <div class="stat-value">${datos.estadisticas?.totalCursos || 0}</div>
+                <div class="stat-label">Cursos</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">${datos.estadisticas?.totalEvaluaciones || 0}</div>
+                <div class="stat-label">Evaluaciones</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">${datos.estadisticas?.promedioGeneral || 0}</div>
+                <div class="stat-label">Promedio General</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Top Cursos -->
+          ${topMejoresData.length > 0 || topPeoresData.length > 0 ? `
+          <div class="top-section">
+            <div class="top-card top-mejores">
+              <div class="top-title">🏆 Top 3 Mejores Cursos</div>
+              ${topMejoresData.map((curso: any, index: number) => `
+                <div class="curso-item">
+                  <span class="curso-nombre">${index + 1}. ${curso.curso}</span>
+                  <span class="curso-promedio">${curso.promedio} (${curso.evaluaciones} eval.)</span>
+                </div>
+              `).join('')}
+              ${topMejoresData.length === 0 ? '<p style="color: #666; font-size: 9px;">No hay datos suficientes</p>' : ''}
+            </div>
+            
+            <div class="top-card top-peores">
+              <div class="top-title">📉 Top 3 Cursos a Mejorar</div>
+              ${topPeoresData.map((curso: any, index: number) => `
+                <div class="curso-item">
+                  <span class="curso-nombre">${index + 1}. ${curso.curso}</span>
+                  <span class="curso-promedio">${curso.promedio} (${curso.evaluaciones} eval.)</span>
+                </div>
+              `).join('')}
+              ${topPeoresData.length === 0 ? '<p style="color: #666; font-size: 9px;">No hay datos suficientes</p>' : ''}
+            </div>
+          </div>
+          ` : ''}
+
+          <!-- Profesores Asignados -->
+          ${datos.profesores && datos.profesores.length > 0 ? `
+          <div class="section">
+            <h2 class="section-title">👨‍🏫 Profesores Asignados</h2>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Profesor</th>
+                  <th>Curso</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${datos.profesores.map((prof: any) => `
+                  <tr>
+                    <td>${prof.nombres} ${prof.apellidos}</td>
+                    <td>${prof.cursoNombre}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+          ` : ''}
+
+          <!-- Cursos y Competencias -->
+          ${datos.cursos && datos.cursos.length > 0 ? `
+          <div class="section">
+            <h2 class="section-title">📚 Cursos y Competencias</h2>
+            ${datos.cursos.map((curso: any) => `
+              <div class="curso-detail">
+                <h4>${curso.nombre}</h4>
+                ${curso.competencias && curso.competencias.length > 0 ? `
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th style="width: 60px;">Orden</th>
+                        <th>Competencia</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${curso.competencias.map((comp: any) => `
+                        <tr>
+                          <td>${comp.orden}</td>
+                          <td>${comp.nombre}</td>
+                        </tr>
+                      `).join('')}
+                    </tbody>
+                  </table>
+                ` : '<p style="color: #666; font-size: 9px;">No hay competencias registradas</p>'}
+              </div>
+            `).join('')}
+          </div>
+          ` : ''}
+
+          <!-- Evaluaciones y Notas -->
+          ${datos.notas && datos.notas.length > 0 ? `
+          <div class="section">
+            <h2 class="section-title">📝 Evaluaciones y Notas</h2>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Curso</th>
+                  <th>Competencia</th>
+                  <th>Evaluación</th>
+                  <th style="width: 60px;">Nota</th>
+                  <th style="width: 80px;">Fecha</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${datos.notas.map((nota: any) => `
+                  <tr>
+                    <td>${nota.cursoNombre}</td>
+                    <td>${nota.competenciaNombre}</td>
+                    <td>${nota.evaluacionNombre}</td>
+                    <td style="text-align: center; font-weight: bold;">${nota.nota}</td>
+                    <td>${nota.fechaRegistro ? new Date(nota.fechaRegistro).toLocaleDateString('es-PE') : ''}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+          ` : ''}
+
+          <!-- Footer -->
+          <div class="footer">
+            <p>Este documento contiene información académica confidencial del estudiante.</p>
+            <p>Generado automáticamente por el Sistema de Notas - ${new Date().toLocaleString('es-PE')}</p>
+          </div>
+        </body>
+        </html>
+      `;
+
+      await page.setContent(html, { waitUntil: 'networkidle0' });
+      
+      const pdf = await page.pdf({
+        format: 'A4',
+        printBackground: true,
+        margin: {
+          top: '15mm',
+          right: '15mm',
+          bottom: '15mm',
+          left: '15mm',
+        },
+      });
+
+      return Buffer.from(pdf);
+    } finally {
+      await browser.close();
+    }
+  }
 }

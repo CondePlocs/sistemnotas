@@ -262,7 +262,109 @@ export class ReportesController {
     res.send(resultado.buffer);
   }
 
-  // TODO: Agregar endpoints para padres cuando se implementen
-  // @Get('padre/mini-libreta')
-  // @Get('padre/top-cursos')
+  /**
+   * PADRE: Genera mini libreta Excel del alumno
+   */
+  @Get('padre/mini-libreta')
+  @Roles('APODERADO')
+  @ApiOperation({
+    summary: 'Mini libreta Excel para padres de familia',
+    description: 'Genera un reporte Excel con la libreta completa del alumno: cursos, competencias, evaluaciones y notas.',
+  })
+  @ApiResponse({ status: 200, description: 'Reporte generado exitosamente' })
+  @ApiResponse({ status: 403, description: 'Acceso denegado - Solo PADRE' })
+  async reporteMiniLibretaExcel(
+    @Request() req: any,
+    @Response() res: ExpressResponse,
+    @Query('alumnoId') alumnoId: string,
+  ) {
+    this.logger.log(`Padre ${req.user.id} solicitando mini libreta Excel para alumno ${alumnoId}`);
+
+    if (!alumnoId) {
+      throw new Error('alumnoId es requerido');
+    }
+
+    const reporteRequest: ReporteRequestDto = {
+      tipo: TipoReporte.MINI_LIBRETA_PADRE,
+      formato: FormatoReporte.EXCEL,
+      alumnoId,
+    };
+
+    // Extraer el rol principal del usuario (primer rol)
+    const rolPrincipal = req.user.roles?.[0]?.rol || 'UNKNOWN';
+    
+    const resultado = await this.reportesService.generarReporte(
+      reporteRequest,
+      req.user.id,
+      req.user.colegioId,
+      rolPrincipal,
+    );
+
+    // Configurar headers de descarga segura
+    res.setHeader('Content-Type', resultado.mimeType);
+    res.setHeader('Content-Disposition', `attachment; filename="${resultado.nombreArchivo}"`);
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+
+    // Log de auditoría
+    this.logger.log(
+      `Padre ${req.user.id} descargó mini libreta Excel - ${resultado.nombreArchivo}`,
+    );
+
+    res.send(resultado.buffer);
+  }
+
+  /**
+   * PADRE: Genera mini libreta PDF del alumno con top cursos
+   */
+  @Get('padre/mini-libreta-completa')
+  @Roles('APODERADO')
+  @ApiOperation({
+    summary: 'Mini libreta PDF completa para padres de familia',
+    description: 'Genera un reporte PDF con la libreta del alumno + top 3 mejores y peores cursos.',
+  })
+  @ApiResponse({ status: 200, description: 'Reporte generado exitosamente' })
+  @ApiResponse({ status: 403, description: 'Acceso denegado - Solo PADRE' })
+  async reporteMiniLibretaCompletaPDF(
+    @Request() req: any,
+    @Response() res: ExpressResponse,
+    @Query('alumnoId') alumnoId: string,
+  ) {
+    this.logger.log(`Padre ${req.user.id} solicitando mini libreta PDF completa para alumno ${alumnoId}`);
+
+    if (!alumnoId) {
+      throw new Error('alumnoId es requerido');
+    }
+
+    const reporteRequest: ReporteRequestDto = {
+      tipo: TipoReporte.TOP_CURSOS_PADRE,
+      formato: FormatoReporte.PDF,
+      alumnoId,
+    };
+
+    // Extraer el rol principal del usuario (primer rol)
+    const rolPrincipal = req.user.roles?.[0]?.rol || 'UNKNOWN';
+    
+    const resultado = await this.reportesService.generarReporte(
+      reporteRequest,
+      req.user.id,
+      req.user.colegioId,
+      rolPrincipal,
+    );
+
+    // Configurar headers de descarga segura
+    res.setHeader('Content-Type', resultado.mimeType);
+    res.setHeader('Content-Disposition', `attachment; filename="${resultado.nombreArchivo}"`);
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+
+    // Log de auditoría
+    this.logger.log(
+      `Padre ${req.user.id} descargó mini libreta PDF completa - ${resultado.nombreArchivo}`,
+    );
+
+    res.send(resultado.buffer);
+  }
 }

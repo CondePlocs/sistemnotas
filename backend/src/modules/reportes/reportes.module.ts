@@ -4,9 +4,10 @@ import { ReportesService } from './reportes.service';
 import { PdfGeneratorService } from './generators/pdf-generator.service';
 import { ExcelGeneratorService } from './generators/excel-generator.service';
 import { PrismaModule } from '../../providers/prisma.module';
+import { RegistroNotaModule } from '../registro-nota/registro-nota.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, RegistroNotaModule],
   controllers: [ReportesController],
   providers: [
     ReportesService,
