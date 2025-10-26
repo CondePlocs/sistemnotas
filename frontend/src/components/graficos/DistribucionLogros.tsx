@@ -21,28 +21,42 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-lg border border-[#E9E1C9]">
-        <p className="font-semibold text-[#8D2C1D] mb-2">{data.nombre}</p>
-        <div className="space-y-1">
-          <p className="text-sm">
-            <span className="inline-block w-3 h-3 bg-[#22C55E] rounded mr-2"></span>
-            AD: {data.AD} ({data.porcentajes.AD}%)
-          </p>
-          <p className="text-sm">
-            <span className="inline-block w-3 h-3 bg-[#3B82F6] rounded mr-2"></span>
-            A: {data.A} ({data.porcentajes.A}%)
-          </p>
-          <p className="text-sm">
-            <span className="inline-block w-3 h-3 bg-[#F59E0B] rounded mr-2"></span>
-            B: {data.B} ({data.porcentajes.B}%)
-          </p>
-          <p className="text-sm">
-            <span className="inline-block w-3 h-3 bg-[#EF4444] rounded mr-2"></span>
-            C: {data.C} ({data.porcentajes.C}%)
-          </p>
-          <p className="text-sm font-medium border-t pt-1 mt-2">
-            Total: {data.totalNotas} notas
-          </p>
+      <div className="bg-white p-4 rounded-lg shadow-xl border border-gray-200">
+        <p className="font-bold text-lg text-[#8D2C1D] mb-3">{data.name}</p>
+        <div className="space-y-2 bg-gray-50 p-3 rounded-lg">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-green-50 p-2 rounded">
+              <div className="flex items-center gap-2">
+                <span className="inline-block w-3 h-3 bg-[#22C55E] rounded"></span>
+                <p className="text-sm font-semibold text-gray-900">Logro AD</p>
+              </div>
+              <p className="text-sm mt-1 text-gray-700">{data.logros.AD} ({data.porcentajes.AD}%)</p>
+            </div>
+            <div className="bg-blue-50 p-2 rounded">
+              <div className="flex items-center gap-2">
+                <span className="inline-block w-3 h-3 bg-[#3B82F6] rounded"></span>
+                <p className="text-sm font-semibold text-gray-900">Logro A</p>
+              </div>
+              <p className="text-sm mt-1 text-gray-700">{data.logros.A} ({data.porcentajes.A}%)</p>
+            </div>
+            <div className="bg-yellow-50 p-2 rounded">
+              <div className="flex items-center gap-2">
+                <span className="inline-block w-3 h-3 bg-[#F59E0B] rounded"></span>
+                <p className="text-sm font-semibold text-gray-900">Logro B</p>
+              </div>
+              <p className="text-sm mt-1 text-gray-700">{data.logros.B} ({data.porcentajes.B}%)</p>
+            </div>
+            <div className="bg-red-50 p-2 rounded">
+              <div className="flex items-center gap-2">
+                <span className="inline-block w-3 h-3 bg-[#EF4444] rounded"></span>
+                <p className="text-sm font-semibold text-gray-900">Logro C</p>
+              </div>
+              <p className="text-sm mt-1 text-gray-700">{data.logros.C} ({data.porcentajes.C}%)</p>
+            </div>
+          </div>
+          <div className="pt-2 mt-1 border-t text-center">
+            <p className="text-sm font-bold text-gray-900">Total: {data.value} notas</p>
+          </div>
         </div>
       </div>
     );
@@ -78,19 +92,14 @@ export default function DistribucionLogros({ colegios, isLoading = false }: Dist
     );
   }
 
-  // Preparar datos para el gráfico de pastel
-  const datosGrafico = colegios.map((colegio) => ({
-    nombre: colegio.nombre,
-    AD: colegio.logros.AD,
-    A: colegio.logros.A,
-    B: colegio.logros.B,
-    C: colegio.logros.C,
-    totalNotas: colegio.totalNotas,
+  // Preparar datos para el gráfico de pastel - Mostrar por colegio
+  const datosGrafico = colegios.map((colegio, index) => ({
+    name: colegio.nombre,
+    value: colegio.totalNotas,
+    logros: colegio.logros,
     porcentajes: colegio.porcentajes,
+    color: `hsl(${(index * 137.5) % 360}, 70%, 60%)`
   }));
-
-  // Datos para múltiples pasteles (uno por tipo de logro)
-  const tiposLogro = ['AD', 'A', 'B', 'C'];
   
   return (
     <div className="bg-white/95 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-[#E9E1C9]">
@@ -106,7 +115,6 @@ export default function DistribucionLogros({ colegios, isLoading = false }: Dist
       <div className="h-80">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
-            {/* Pastel principal con todos los datos */}
             <Pie
               data={datosGrafico}
               cx="50%"
@@ -114,23 +122,29 @@ export default function DistribucionLogros({ colegios, isLoading = false }: Dist
               outerRadius={100}
               innerRadius={40}
               paddingAngle={2}
-              dataKey="totalNotas"
+              dataKey="value"
+              nameKey="name"
+              label={false}
             >
               {datosGrafico.map((entry, index) => (
                 <Cell 
                   key={`cell-${index}`} 
-                  fill={`hsl(${(index * 137.5) % 360}, 70%, 60%)`}
+                  fill={entry.color}
                 />
               ))}
             </Pie>
             
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={<CustomTooltip />} wrapperStyle={{ zIndex: 100 }} />
             <Legend 
-              verticalAlign="bottom" 
-              height={36}
-              formatter={(value) => (
-                <span className="text-sm text-gray-700">{value}</span>
+              verticalAlign="bottom"
+              height={60}
+              formatter={(value, entry: any) => (
+                <span className="text-sm text-gray-800 font-medium flex items-center gap-2">
+                  <span className="inline-block w-3 h-3 rounded" style={{ backgroundColor: entry.color }}></span>
+                  {value}
+                </span>
               )}
+              onClick={undefined}
             />
           </PieChart>
         </ResponsiveContainer>

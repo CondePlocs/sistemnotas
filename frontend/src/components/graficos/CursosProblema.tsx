@@ -21,26 +21,62 @@ const COLORES_BARRAS = [
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
+
+    // Función para obtener el color y texto según el porcentaje
+    const getStatusInfo = (porcentaje: number) => {
+      if (porcentaje >= 70) return { color: 'text-red-600 bg-red-50', text: 'Crítico' };
+      if (porcentaje >= 50) return { color: 'text-yellow-600 bg-yellow-50', text: 'Alto' };
+      if (porcentaje >= 30) return { color: 'text-blue-600 bg-blue-50', text: 'Moderado' };
+      return { color: 'text-green-600 bg-green-50', text: 'Bajo' };
+    };
+
+    const statusInfo = getStatusInfo(data.porcentajeProblema);
+
     return (
-      <div className="bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-lg border border-[#E9E1C9]">
-        <p className="font-semibold text-[#8D2C1D] mb-2">{data.nombre}</p>
-        <div className="space-y-1">
-          <p className="text-sm">
-            <span className="font-medium">Nivel:</span> {data.nivel}
-          </p>
-          <p className="text-sm">
-            <span className="font-medium">Total alumnos:</span> {data.totalAlumnos}
-          </p>
-          <p className="text-sm">
-            <span className="font-medium">Con problemas:</span> {data.alumnosProblema}
-          </p>
-          <p className="text-sm">
-            <span className="font-medium">Porcentaje:</span> {data.porcentajeProblema}%
-          </p>
-          <div className="border-t pt-2 mt-2">
-            <p className="text-xs text-gray-600">Desglose problemas:</p>
-            <p className="text-xs">Nota B: {data.detalleProblemas.B}</p>
-            <p className="text-xs">Nota C: {data.detalleProblemas.C}</p>
+      <div className="bg-white p-4 rounded-lg shadow-xl border border-gray-200 max-w-[320px]">
+        <div className="mb-3">
+          <p className="font-bold text-lg text-[#8D2C1D] mb-1">{data.nombreCompleto}</p>
+          <div className={`inline-block px-2 py-1 rounded text-sm font-medium ${statusInfo.color}`}>
+            Nivel de Riesgo: {statusInfo.text}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <div className="bg-gray-50 p-2 rounded">
+            <p className="text-xs text-gray-600 mb-1">Nivel</p>
+            <p className="text-sm font-bold text-gray-900">{data.nivel}</p>
+          </div>
+          <div className={`${statusInfo.color} p-2 rounded`}>
+            <p className="text-xs text-gray-600 mb-1">Índice Problema</p>
+            <p className="text-sm font-bold">{data.porcentajeProblema}%</p>
+          </div>
+          <div className="bg-gray-50 p-2 rounded">
+            <p className="text-xs text-gray-600 mb-1">Total Alumnos</p>
+            <p className="text-sm font-bold text-gray-900">{data.totalAlumnos}</p>
+          </div>
+          <div className="bg-gray-50 p-2 rounded">
+            <p className="text-xs text-gray-600 mb-1">Con Dificultades</p>
+            <p className="text-sm font-bold text-gray-900">{data.alumnosProblema}</p>
+          </div>
+        </div>
+
+        <div className="bg-gray-50 p-3 rounded">
+          <p className="text-sm font-semibold text-gray-900 mb-2">Desglose de Dificultades:</p>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-yellow-50 p-2 rounded">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="inline-block w-2 h-2 bg-yellow-500 rounded"></span>
+                <p className="text-xs font-medium text-gray-700">Logro B</p>
+              </div>
+              <p className="text-sm font-bold text-yellow-700">{data.detalleProblemas.B} alumnos</p>
+            </div>
+            <div className="bg-red-50 p-2 rounded">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="inline-block w-2 h-2 bg-red-500 rounded"></span>
+                <p className="text-xs font-medium text-gray-700">Logro C</p>
+              </div>
+              <p className="text-sm font-bold text-red-700">{data.detalleProblemas.C} alumnos</p>
+            </div>
           </div>
         </div>
       </div>
@@ -77,9 +113,32 @@ export default function CursosProblema({ cursos, isLoading = false }: CursosProb
     );
   }
 
+  // Función para acortar nombres de manera inteligente
+  const acortarNombre = (nombre: string) => {
+    if (nombre.length <= 20) return nombre;
+    
+    // Dividir en palabras
+    const palabras = nombre.split(' ');
+    
+    if (palabras.length === 1) {
+      return nombre.substring(0, 18) + '...';
+    }
+
+    // Si tiene más de una palabra, intentar abreviar
+    const primerasPalabras = palabras[0];
+    const ultimaPalabra = palabras[palabras.length - 1];
+    
+    // Si las primeras palabras son muy largas, acortarlas
+    const inicio = primerasPalabras.length > 12 
+      ? primerasPalabras.substring(0, 10) + '...'
+      : primerasPalabras;
+      
+    return `${inicio} ${ultimaPalabra}`;
+  };
+
   // Preparar datos para el gráfico (tomar solo los primeros 8 para mejor visualización)
   const datosGrafico = cursos.slice(0, 8).map((curso, index) => ({
-    nombre: curso.nombre.length > 15 ? curso.nombre.substring(0, 15) + '...' : curso.nombre,
+    nombre: acortarNombre(curso.nombre),
     nombreCompleto: curso.nombre,
     porcentajeProblema: curso.porcentajeProblema,
     totalAlumnos: curso.totalAlumnos,
@@ -108,7 +167,7 @@ export default function CursosProblema({ cursos, isLoading = false }: CursosProb
             margin={{
               top: 5,
               right: 30,
-              left: 80,
+              left: 120,
               bottom: 5,
             }}
           >
@@ -122,14 +181,31 @@ export default function CursosProblema({ cursos, isLoading = false }: CursosProb
             <YAxis 
               type="category" 
               dataKey="nombre"
-              width={75}
+              width={110}
               stroke="#666666"
-              fontSize={12}
+              tick={{
+                fill: '#374151',
+                fontSize: 12,
+                fontWeight: 500
+              }}
             />
-            <Tooltip content={<CustomTooltip />} />
-            <Bar dataKey="porcentajeProblema" radius={[0, 4, 4, 0]}>
+            <Tooltip 
+              content={<CustomTooltip />} 
+              wrapperStyle={{ zIndex: 100 }} 
+              cursor={{ fill: 'rgba(147, 197, 253, 0.1)' }}
+            />
+            <Bar 
+              dataKey="porcentajeProblema" 
+              radius={[0, 4, 4, 0]}
+              barSize={20}
+            >
               {datosGrafico.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
+                <Cell 
+                  key={`cell-${index}`} 
+                  fill={entry.porcentajeProblema >= 70 ? '#EF4444' : 
+                        entry.porcentajeProblema >= 50 ? '#F59E0B' : 
+                        entry.porcentajeProblema >= 30 ? '#3B82F6' : '#22C55E'}
+                />
               ))}
             </Bar>
           </BarChart>
