@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import OwnerSidebar from '@/components/layout/OwnerSidebar';
-import DashboardFooter from '@/components/layout/DashboardFooter';
 import ModalDirector from '@/components/modals/ModalDirector';
 import ModalDetallesDirector from '@/components/modals/ModalDetallesDirector';
 
@@ -256,9 +255,6 @@ function GestionDirectoresContent() {
             )}
           </>
         )}
-
-        {/* Footer */}
-        <DashboardFooter />
       </main>
 
       {/* Modales */}

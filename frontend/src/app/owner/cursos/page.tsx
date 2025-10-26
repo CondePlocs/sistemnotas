@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import OwnerSidebar from '@/components/layout/OwnerSidebar';
-import DashboardFooter from '@/components/layout/DashboardFooter';
 import ModalConfirmarPassword from '@/components/modals/ModalConfirmarPassword';
 import ModalCurso from '@/components/owner/ModalCurso';
 import ModalCompetenciasCurso from '@/components/owner/ModalCompetenciasCurso';
@@ -358,8 +357,6 @@ function CursosListContent() {
           </>
         )}
 
-        {/* Footer */}
-        <DashboardFooter />
       </main>
 
       {/* Modales */}

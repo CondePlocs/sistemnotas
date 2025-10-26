@@ -364,6 +364,7 @@ export default function ModalDirector({ isOpen, onClose, onSuccess, directorId }
                                   name="email"
                                   value={formData.email}
                                   onChange={handleChange}
+                                  
                                   className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 transition-all ${
                                     errors.email
                                       ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
@@ -420,7 +421,7 @@ export default function ModalDirector({ isOpen, onClose, onSuccess, directorId }
                                   name="telefono"
                                   value={formData.telefono}
                                   onChange={handleChange}
-                                  className="w-full px-4 py-3 border-2 border-[#E9E1C9] rounded-lg focus:outline-none focus:border-[#8D2C1D] focus:ring-2 focus:ring-[#8D2C1D]/20 transition-all"
+                                  className="w-full px-4 py-3 border-2 border-[#E9E1C9] rounded-lg focus:outline-none focus:border-[#8D2C1D] focus:ring-2 focus:ring-[#8D2C1D]/20 transition-all text-black"
                                 />
                               </div>
 

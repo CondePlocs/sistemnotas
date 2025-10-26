@@ -25,6 +25,11 @@ body {
   font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
+/* Asegurar que todos los inputs tengan texto negro */
+input, select, textarea {
+  color: black !important;
+}
+
 /* Aplicar Poppins a títulos */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-poppins), system-ui, -apple-system, sans-serif;

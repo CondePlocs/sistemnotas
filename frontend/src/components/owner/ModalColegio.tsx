@@ -369,7 +369,7 @@ export default function ModalColegio({ isOpen, onClose, onSuccess, colegioId }: 
                                 name="nombre"
                                 value={formData.nombre}
                                 onChange={handleChange}
-                                className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 transition-all ${
+                                className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 transition-all text-black ${
                                   errors.nombre
                                     ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
                                     : 'border-[#E9E1C9] focus:border-[#8D2C1D] focus:ring-[#8D2C1D]/20'
@@ -388,7 +388,7 @@ export default function ModalColegio({ isOpen, onClose, onSuccess, colegioId }: 
                                 name="codigoModular"
                                 value={formData.codigoModular}
                                 onChange={handleChange}
-                                className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 transition-all ${
+                                className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 transition-all text-black ${
                                   errors.codigoModular
                                     ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
                                     : 'border-[#E9E1C9] focus:border-[#8D2C1D] focus:ring-[#8D2C1D]/20'
