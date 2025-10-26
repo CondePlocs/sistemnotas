@@ -915,6 +915,7 @@ export class ReportesService {
         nivel,
         curso,
         ROUND(promedio_numerico::numeric, 2) as promedio,
+        -- Usando exactamente la misma lógica que NotaCalculoService.convertirNumeroALetra
         CASE 
           WHEN promedio_numerico >= 3.5 THEN 'AD'
           WHEN promedio_numerico >= 2.5 THEN 'A'
