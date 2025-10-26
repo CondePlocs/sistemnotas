@@ -83,7 +83,20 @@ export class EstadisticasService {
         };
       }
 
+      // Obtener periodos activos por colegio
+      const periodosActivos = await this.prisma.periodoAcademico.findMany({
+        where: { activo: true },
+        select: { id: true, colegioId: true }
+      });
+
+      // Crear un mapa de colegioId -> periodoActivoId para uso en la consulta
+      const mapaPeriodosActivos = new Map<number, number>();
+      periodosActivos.forEach(periodo => {
+        mapaPeriodosActivos.set(periodo.colegioId, periodo.id);
+      });
+
       // Obtener datos usando notaEscalaCalculo para incluir TODAS las notas (alfabéticas + numéricas)
+      // Filtrando por el periodo académico activo de cada colegio
       const resultados = await this.prisma.$queryRaw`
         SELECT 
           c.id as colegio_id,
@@ -122,7 +135,10 @@ export class EstadisticasService {
         FROM registro_nota rn
         INNER JOIN alumno a ON rn."alumnoId" = a.id
         INNER JOIN colegio c ON a."colegioId" = c.id
+        INNER JOIN evaluacion e ON rn."evaluacionId" = e.id
+        INNER JOIN periodo_academico pa ON e."periodoId" = pa.id
         WHERE rn.nota IS NOT NULL AND rn.nota != ''
+        AND pa.activo = true
         GROUP BY c.id, c.nombre, categoria_logro
         ORDER BY c.nombre, categoria_logro
       ` as Array<{
@@ -213,6 +229,7 @@ export class EstadisticasService {
       }
 
       // Query usando notaEscalaCalculo para incluir TODAS las notas (alfabéticas + numéricas)
+      // Filtrando por periodos académicos activos
       const resultados = await this.prisma.$queryRaw`
         WITH promedios_alumnos AS (
           SELECT 
@@ -234,7 +251,9 @@ export class EstadisticasService {
           INNER JOIN evaluacion e ON rn."evaluacionId" = e.id
           INNER JOIN competencia comp ON e."competenciaId" = comp.id
           INNER JOIN curso cur ON comp."cursoId" = cur.id
+          INNER JOIN periodo_academico pa ON e."periodoId" = pa.id
           WHERE rn.nota IS NOT NULL AND rn.nota != ''
+          AND pa.activo = true
           GROUP BY cur.id, cur.nombre, rn."alumnoId"
         )
         SELECT 
@@ -349,7 +368,10 @@ export class EstadisticasService {
         FROM registro_nota rn
         INNER JOIN alumno a ON rn."alumnoId" = a.id
         INNER JOIN colegio c ON a."colegioId" = c.id
+        INNER JOIN evaluacion e ON rn."evaluacionId" = e.id
+        INNER JOIN periodo_academico pa ON e."periodoId" = pa.id
         WHERE c.id = ${colegioId} AND rn.nota IS NOT NULL AND rn.nota != ''
+        AND pa.activo = true
         GROUP BY c.nombre, categoria_logro
         ORDER BY categoria_logro
       ` as Array<{
@@ -416,7 +438,10 @@ export class EstadisticasService {
           INNER JOIN salon s ON als."salonId" = s.id
           INNER JOIN colegio_nivel cn ON s."colegioNivelId" = cn.id
           INNER JOIN nivel n ON cn."nivelId" = n.id
+          INNER JOIN evaluacion e ON rn."evaluacionId" = e.id
+          INNER JOIN periodo_academico pa ON e."periodoId" = pa.id
           WHERE a."colegioId" = ${colegioId} AND rn.nota IS NOT NULL AND rn.nota != ''
+          AND pa.activo = true
         )
         SELECT 
           grado,
@@ -526,7 +551,9 @@ export class EstadisticasService {
           INNER JOIN curso cur ON comp."cursoId" = cur.id
           INNER JOIN nivel n ON cur."nivelId" = n.id
           INNER JOIN alumno a ON rn."alumnoId" = a.id
+          INNER JOIN periodo_academico pa ON e."periodoId" = pa.id
           WHERE a."colegioId" = ${colegioId} AND rn.nota IS NOT NULL AND rn.nota != ''
+          AND pa.activo = true
           GROUP BY cur.id, cur.nombre, n.nombre, rn."alumnoId"
         )
         SELECT 
