@@ -13,14 +13,6 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-:: Verificar si PostgreSQL está instalado
-psql --version >nul 2>&1
-if %errorlevel% neq 0 (
-    echo ❌ ERROR: PostgreSQL no está instalado
-    echo Descarga PostgreSQL desde: https://www.postgresql.org/download/
-    pause
-    exit /b 1
-)
 
 echo ✅ Requisitos verificados correctamente
 echo.

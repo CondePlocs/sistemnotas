@@ -1232,8 +1232,8 @@ export class ReportesService {
       if (row.nota_id) {
         notasArray.push({
           id: row.nota_id,
-          nota: row.nota, // Mantener la nota como letra (AD, A, B, C)
-          notaNumerico: row.nota ? this.notaCalculoService.convertirLetraANumero(row.nota) : 0,
+          nota: row.nota, // Mantener la nota original (letras: AD, A, B, C o números: 0-20)
+          notaNumerico: row.nota ? this.notaCalculoService.convertirAEscalaCalculo(row.nota) : 0,
           fechaRegistro: row.nota_fecha,
           evaluacionId: row.evaluacion_id,
           evaluacionNombre: row.evaluacion_nombre,
@@ -1249,12 +1249,14 @@ export class ReportesService {
     const profesores = Array.from(profesoresMap.values());
     const evaluaciones = Array.from(evaluacionesMap.values());
 
-    // Calcular estadísticas usando el sistema de notas alfabético
+    // Calcular estadísticas usando el sistema de notas mixtas (letras + números)
     const totalCursos = cursos.length;
     const totalEvaluaciones = evaluaciones.length;
-    const promedioGeneral = notasArray.length > 0 
-      ? this.notaCalculoService.calcularPromedioNumerico(notasArray.map(nota => nota.nota))
-      : 0;
+    const resultadoPromedio = notasArray.length > 0 
+      ? this.notaCalculoService.calcularPromedioEscalaCalculo(
+          notasArray.map(nota => this.notaCalculoService.convertirAEscalaCalculo(nota.nota))
+        )
+      : { promedioNumerico: 0, propuestaLiteral: 'C', cantidadNotas: 0 };
 
     return {
       alumno,
@@ -1265,8 +1267,8 @@ export class ReportesService {
       estadisticas: {
         totalCursos,
         totalEvaluaciones,
-        promedioGeneral: Math.round(promedioGeneral * 100) / 100,
-        promedioGeneralLiteral: this.notaCalculoService.convertirNumeroALetra(promedioGeneral),
+        promedioGeneral: Math.round(resultadoPromedio.promedioNumerico * 100) / 100,
+        promedioGeneralLiteral: resultadoPromedio.propuestaLiteral,
       },
       periodoAcademico: periodoActivo,
       fechaGeneracion: new Date(),
@@ -1302,9 +1304,11 @@ export class ReportesService {
         promediosPorCurso.get(nota.cursoId).notas.push(nota.nota);
       });
 
-      // Calcular promedios finales usando el sistema de notas alfabético
+      // Calcular promedios finales usando el sistema de notas mixtas (letras + números)
       const cursosConPromedio = Array.from(promediosPorCurso.values()).map(curso => {
-        const resultadoPromedio = this.notaCalculoService.calcularPromedioCompetencia(curso.notas);
+        const resultadoPromedio = this.notaCalculoService.calcularPromedioEscalaCalculo(
+          curso.notas.map(nota => this.notaCalculoService.convertirAEscalaCalculo(nota))
+        );
         return {
           ...curso,
           promedio: resultadoPromedio.promedioNumerico,

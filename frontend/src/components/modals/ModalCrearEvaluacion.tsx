@@ -140,22 +140,6 @@ export default function ModalCrearEvaluacion({
             />
           </div>
 
-          {/* Descripción (opcional) */}
-          <div className="mb-6">
-            <label className="block text-sm font-semibold text-[#333333] mb-2">
-              📝 Descripción (opcional)
-            </label>
-            <textarea
-              value={descripcion}
-              onChange={(e) => setDescripcion(e.target.value)}
-              placeholder="Descripción adicional sobre la evaluación..."
-              rows={3}
-              className="w-full px-4 py-3 border-2 border-[#E9E1C9] rounded-xl focus:ring-2 focus:ring-[#8D2C1D] focus:border-[#8D2C1D] resize-none transition-all duration-300 font-medium"
-              disabled={loading}
-              maxLength={500}
-            />
-          </div>
-
           {/* Botones */}
           <div className="flex gap-3">
             <button

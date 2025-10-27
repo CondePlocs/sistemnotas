@@ -269,139 +269,93 @@ export default function ProfesorEvaluacionesPage() {
 
         {/* Contenido principal */}
         <div className="flex-1 p-4 sm:p-6">
-          {/* Navegación ya incluida en SimpleHeader */}
-
-          {/* 📊 SECCIÓN: REPORTES DE TRABAJO */}
-          <div className="mb-6 bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border-2 border-[#E9E1C9] p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-3">
-                <div className="bg-gradient-to-r from-[#8D2C1D] to-[#D96924] p-3 rounded-lg shadow-md">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-[#333333]" style={{ fontFamily: 'var(--font-poppins)' }}>
-                    Reportes de Trabajo
-                  </h2>
-                  <p className="text-sm text-[#666666]">
-                    Descarga tu hoja de registro o informe de intervención
-                  </p>
-                </div>
-              </div>
+          {/* Título Principal con Botones de Reportes */}
+          <div className="mb-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-[#8D2C1D] mb-2" style={{ fontFamily: 'var(--font-poppins)' }}>
+                📚 Gestión de Evaluaciones
+              </h1>
+              <p className="text-lg text-[#666666]">
+                Administra las evaluaciones de tus estudiantes y descarga reportes de trabajo
+              </p>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Botón: Hoja de Registro Excel */}
+            
+            {/* Botones de Reportes - Horizontales y Compactos */}
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-[#666666] mr-2">Reportes:</span>
+              
+              {/* Botón Excel - Compacto */}
               <button
                 onClick={descargarHojaRegistroExcel}
                 disabled={descargandoReporte !== null}
-                className={`group relative overflow-hidden rounded-xl p-6 transition-all duration-300 transform hover:scale-105 ${
+                className={`group relative overflow-hidden rounded-lg px-4 py-2.5 transition-all duration-300 transform hover:scale-105 ${
                   descargandoReporte === 'excel'
                     ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 shadow-lg hover:shadow-xl'
+                    : 'bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 shadow-md hover:shadow-lg'
                 }`}
               >
-                <div className="relative z-10 flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className="bg-white/20 p-3 rounded-lg backdrop-blur-sm">
-                      {descargandoReporte === 'excel' ? (
-                        <svg className="animate-spin w-8 h-8 text-white" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                      ) : (
-                        <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                      )}
-                    </div>
-                    <div className="text-left">
-                      <h3 className="text-lg font-bold text-white mb-1">
-                        {descargandoReporte === 'excel' ? 'Generando...' : 'Hoja de Registro'}
-                      </h3>
-                      <p className="text-sm text-white/90">
-                        Formato Excel (.xlsx)
-                      </p>
-                    </div>
+                <div className="relative z-10 flex items-center space-x-2">
+                  <div className="bg-white/20 p-1.5 rounded backdrop-blur-sm">
+                    {descargandoReporte === 'excel' ? (
+                      <svg className="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    ) : (
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    )}
                   </div>
-                  <svg className="w-6 h-6 text-white/80 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
+                  <span className="text-sm font-bold text-white">
+                    {descargandoReporte === 'excel' ? 'Generando...' : 'Excel'}
+                  </span>
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 transform -skew-x-12 group-hover:translate-x-full transition-transform duration-1000"></div>
               </button>
 
-              {/* Botón: Informe de Intervención PDF */}
+              {/* Botón PDF - Compacto */}
               <button
                 onClick={descargarInformeIntervencionPDF}
                 disabled={descargandoReporte !== null}
-                className={`group relative overflow-hidden rounded-xl p-6 transition-all duration-300 transform hover:scale-105 ${
+                className={`group relative overflow-hidden rounded-lg px-4 py-2.5 transition-all duration-300 transform hover:scale-105 ${
                   descargandoReporte === 'pdf'
                     ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-gradient-to-br from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 shadow-lg hover:shadow-xl'
+                    : 'bg-gradient-to-br from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 shadow-md hover:shadow-lg'
                 }`}
               >
-                <div className="relative z-10 flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className="bg-white/20 p-3 rounded-lg backdrop-blur-sm">
-                      {descargandoReporte === 'pdf' ? (
-                        <svg className="animate-spin w-8 h-8 text-white" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                      ) : (
-                        <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                        </svg>
-                      )}
-                    </div>
-                    <div className="text-left">
-                      <h3 className="text-lg font-bold text-white mb-1">
-                        {descargandoReporte === 'pdf' ? 'Generando...' : 'Informe de Intervención'}
-                      </h3>
-                      <p className="text-sm text-white/90">
-                        Formato PDF (.pdf)
-                      </p>
-                    </div>
+                <div className="relative z-10 flex items-center space-x-2">
+                  <div className="bg-white/20 p-1.5 rounded backdrop-blur-sm">
+                    {descargandoReporte === 'pdf' ? (
+                      <svg className="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    ) : (
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                    )}
                   </div>
-                  <svg className="w-6 h-6 text-white/80 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
+                  <span className="text-sm font-bold text-white">
+                    {descargandoReporte === 'pdf' ? 'Generando...' : 'PDF'}
+                  </span>
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 transform -skew-x-12 group-hover:translate-x-full transition-transform duration-1000"></div>
               </button>
             </div>
-
-            {/* Descripción de los reportes */}
-            <div className="mt-4 pt-4 border-t border-[#E9E1C9]">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-[#666666]">
-                <div className="flex items-start space-x-2">
-                  <svg className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <p>
-                    <strong className="text-[#333333]">Hoja de Registro:</strong> Matriz completa de alumnos × evaluaciones con notas y promedios
-                  </p>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <svg className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <p>
-                    <strong className="text-[#333333]">Informe de Intervención:</strong> Alumnos en riesgo con gráficos de tendencia y recomendaciones
-                  </p>
-                </div>
-              </div>
-            </div>
           </div>
 
-          <SistemaEvaluaciones
-            contexto={contexto}
-            onCrearEvaluacion={handleCrearEvaluacion}
-            asignacionId={parseInt(asignacionId!)}
-            periodoId={parseInt(periodoId!)}
-          />
+          {/* Contenido principal - Sistema de Evaluaciones */}
+          <div>
+
+            <SistemaEvaluaciones
+              contexto={contexto}
+              onCrearEvaluacion={handleCrearEvaluacion}
+              asignacionId={parseInt(asignacionId!)}
+              periodoId={parseInt(periodoId!)}
+            />
+          </div>
         </div>
 
         {/* Footer Reutilizable */}

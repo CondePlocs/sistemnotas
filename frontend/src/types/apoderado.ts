@@ -222,12 +222,14 @@ export interface CursoDetalle {
     nombres: string;
     apellidos: string;
   };
+  promedioGeneral?: string | null; // Promedio calculado por el backend
   competencias: CompetenciaDetalle[];
 }
 
 export interface CompetenciaDetalle {
   id: number;
   nombre: string;
+  promedio?: string | null; // Promedio calculado por el backend
   evaluaciones: EvaluacionDetalle[];
 }
 

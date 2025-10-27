@@ -46,35 +46,8 @@ export default function CursoDetalle() {
     router.push(`/apoderado/alumno/${alumnoId}`);
   };
 
-  const calcularPromedioGeneral = () => {
-    if (!curso?.competencias.length) return null;
-
-    const notasValidas = curso.competencias
-      .flatMap(comp => comp.evaluaciones)
-      .map(evaluacion => evaluacion.nota)
-      .filter(nota => nota !== null && nota !== undefined);
-
-    if (notasValidas.length === 0) return null;
-
-    // Convertir notas a números para calcular promedio
-    const valores = notasValidas.map(nota => {
-      switch (nota) {
-        case 'AD': return 4;
-        case 'A': return 3;
-        case 'B': return 2;
-        case 'C': return 1;
-        default: return 0;
-      }
-    });
-
-    const promedio = valores.reduce((sum: number, val: number) => sum + val, 0) / valores.length;
-    
-    // Convertir de vuelta a escala literal
-    if (promedio >= 3.5) return 'AD';
-    if (promedio >= 2.5) return 'A';
-    if (promedio >= 1.5) return 'B';
-    return 'C';
-  };
+  // Ya no necesitamos calcular el promedio manualmente
+  // El backend lo calcula usando NotaCalculoService con la refactorización de notas mixtas
 
   if (loading) {
     return (
@@ -135,7 +108,7 @@ export default function CursoDetalle() {
           {/* Información del Curso */}
           <CursoInfo 
             curso={curso} 
-            promedioGeneral={calcularPromedioGeneral()}
+            promedioGeneral={curso.promedioGeneral}
           />
 
           {/* Lista de Competencias */}

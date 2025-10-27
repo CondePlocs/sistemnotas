@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException, ConflictException, ForbiddenException, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, ForbiddenException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../../providers/prisma.service';
+import { NotaCalculoService } from '../registro-nota/services/nota-calculo.service';
 import { CreateApoderadoDto, UpdateApoderadoDto, RelacionApoderadoAlumnoDto, CrearRelacionesDto, ActualizarRelacionDto } from './dto';
 import * as bcrypt from 'bcrypt';
 
@@ -7,7 +8,10 @@ import * as bcrypt from 'bcrypt';
 export class ApoderadoService {
   private readonly logger = new Logger(ApoderadoService.name);
   
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notaCalculoService: NotaCalculoService
+  ) {}
 
   async crearApoderado(createApoderadoDto: CreateApoderadoDto, userId: number) {
     // 1. Determinar si es director o administrativo y obtener el colegio
@@ -1256,6 +1260,51 @@ export class ApoderadoService {
       this.logger.log(`Competencia "${competencia.nombre}": ${competencia.evaluaciones.length} evaluaciones`);
     });
 
+    // 7. Calcular promedios usando NotaCalculoService
+    const competenciasConPromedios = curso.competencias.map(competencia => {
+      const evaluacionesConNotas = competencia.evaluaciones.map(evaluacion => ({
+        id: evaluacion.id,
+        nombre: evaluacion.nombre,
+        fechaEvaluacion: evaluacion.fechaEvaluacion,
+        nota: evaluacion.notas[0]?.nota || null
+      }));
+
+      // Calcular promedio de la competencia usando el servicio de cálculo
+      const notasValidas = evaluacionesConNotas
+        .map(e => e.nota)
+        .filter(nota => nota !== null && nota !== undefined) as string[];
+      
+      let promedioCompetencia: string | null = null;
+      if (notasValidas.length > 0) {
+        const valoresEscala = notasValidas.map(nota => 
+          this.notaCalculoService.convertirAEscalaCalculo(nota)
+        );
+        const resultado = this.notaCalculoService.calcularPromedioEscalaCalculo(valoresEscala);
+        promedioCompetencia = resultado.propuestaLiteral;
+      }
+
+      return {
+        id: competencia.id,
+        nombre: competencia.nombre,
+        promedio: promedioCompetencia,
+        evaluaciones: evaluacionesConNotas
+      };
+    });
+
+    // 8. Calcular promedio general del curso
+    const promediosCompetencias = competenciasConPromedios
+      .map(c => c.promedio)
+      .filter(p => p !== null) as string[];
+    
+    let promedioGeneral: string | null = null;
+    if (promediosCompetencias.length > 0) {
+      const valoresEscala = promediosCompetencias.map(nota => 
+        this.notaCalculoService.convertirAEscalaCalculo(nota)
+      );
+      const resultado = this.notaCalculoService.calcularPromedioCurso(valoresEscala);
+      promedioGeneral = resultado.propuestaLiteral;
+    }
+
     return {
       success: true,
       data: {
@@ -1264,16 +1313,8 @@ export class ApoderadoService {
         descripcion: curso.descripcion,
         color: curso.color,
         profesor: profesor,
-        competencias: curso.competencias.map(competencia => ({
-          id: competencia.id,
-          nombre: competencia.nombre,
-          evaluaciones: competencia.evaluaciones.map(evaluacion => ({
-            id: evaluacion.id,
-            nombre: evaluacion.nombre,
-            fechaEvaluacion: evaluacion.fechaEvaluacion,
-            nota: evaluacion.notas[0]?.nota || null
-          }))
-        }))
+        promedioGeneral: promedioGeneral,
+        competencias: competenciasConPromedios
       }
     };
   }
