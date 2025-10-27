@@ -90,7 +90,7 @@ const GraficosDirector: React.FC = () => {
             📊 Estadísticas de Mi Colegio
           </h2>
           <p className="text-gray-600 mt-1">
-            Vista táctica del rendimiento académico de tu institución educativa
+            Revisa el avance de tu institución educativa
           </p>
         </div>
         <button
