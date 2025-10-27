@@ -33,7 +33,7 @@ export interface CursoProblema {
   nombre: string;
   totalAlumnos: number;
   alumnosProblema: number;
-  porcentajeProblema: number;
+  porcentajeProblema: number | string;  // Puede venir como string desde el backend
   detalleProblemas: {
     B: number;
     C: number;

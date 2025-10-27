@@ -138,13 +138,16 @@ export default function DistribucionLogros({ colegios, isLoading = false }: Dist
             <Legend 
               verticalAlign="bottom"
               height={60}
+              iconType="circle"
               formatter={(value, entry: any) => (
-                <span className="text-sm text-gray-800 font-medium flex items-center gap-2">
-                  <span className="inline-block w-3 h-3 rounded" style={{ backgroundColor: entry.color }}></span>
+                <span className="text-sm text-gray-800 font-medium">
                   {value}
                 </span>
               )}
               onClick={undefined}
+              wrapperStyle={{
+                paddingTop: '10px'
+              }}
             />
           </PieChart>
         </ResponsiveContainer>

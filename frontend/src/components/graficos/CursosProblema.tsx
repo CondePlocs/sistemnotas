@@ -30,7 +30,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
       return { color: 'text-green-600 bg-green-50', text: 'Bajo' };
     };
 
-    const statusInfo = getStatusInfo(data.porcentajeProblema);
+    const statusInfo = getStatusInfo(Number(data.porcentajeProblema));
 
     return (
       <div className="bg-white p-4 rounded-lg shadow-xl border border-gray-200 max-w-[320px]">
@@ -136,20 +136,44 @@ export default function CursosProblema({ cursos, isLoading = false }: CursosProb
     return `${inicio} ${ultimaPalabra}`;
   };
 
-  // Preparar datos para el gráfico (tomar solo los primeros 8 para mejor visualización)
-  const datosGrafico = cursos.slice(0, 8).map((curso, index) => ({
-    nombre: acortarNombre(curso.nombre),
-    nombreCompleto: curso.nombre,
-    porcentajeProblema: curso.porcentajeProblema,
-    totalAlumnos: curso.totalAlumnos,
-    alumnosProblema: curso.alumnosProblema,
-    nivel: curso.nivel,
-    detalleProblemas: curso.detalleProblemas,
-    color: COLORES_BARRAS[index % COLORES_BARRAS.length],
-  }));
+  console.log('Datos de cursos recibidos:', cursos);
+  
+  console.log('Cursos sin procesar:', cursos);
+  
+  // Asegurarnos de que siempre haya al menos un espacio para mostrar datos
+  let datosGrafico = cursos.length === 0 ? [{
+    nombre: 'Sin datos',
+    nombreCompleto: 'Sin datos disponibles',
+    porcentajeProblema: 0,
+    totalAlumnos: 0,
+    alumnosProblema: 0,
+    nivel: '-',
+    detalleProblemas: { B: 0, C: 0 },
+  }] : cursos.slice(0, 8).map((curso, index) => {
+    // Asegurarnos de que porcentajeProblema sea un número
+    const porcentaje = typeof curso.porcentajeProblema === 'string' 
+      ? parseFloat(curso.porcentajeProblema) 
+      : curso.porcentajeProblema || 0; // Añadimos || 0 para manejar undefined
+      
+    const porcentajeNumerico = Number(porcentaje.toFixed(2));
+    console.log('Porcentaje convertido:', porcentajeNumerico);
+    
+    const resultado = {
+      nombre: acortarNombre(curso.nombre),
+      nombreCompleto: curso.nombre,
+      porcentajeProblema: porcentajeNumerico,
+      totalAlumnos: Number(curso.totalAlumnos) || 0,
+      alumnosProblema: Number(curso.alumnosProblema) || 0,
+      nivel: curso.nivel || '-',
+      detalleProblemas: curso.detalleProblemas || { B: 0, C: 0 }
+    };
+    
+    console.log('Datos procesados para gráfico:', resultado);
+    return resultado;
+  });
 
   return (
-    <div className="bg-white/95 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-[#E9E1C9]">
+    <div className="bg-white/95 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-[#E9E1C9] w-full">
       <div className="mb-6">
         <h3 className="text-lg font-semibold text-[#8D2C1D] mb-2">
           Top Cursos Problema
@@ -159,52 +183,108 @@ export default function CursosProblema({ cursos, isLoading = false }: CursosProb
         </p>
       </div>
 
-      <div className="h-80">
-        <ResponsiveContainer width="100%" height="100%">
+      <div className="w-full" style={{ height: '400px' }}>
+        <ResponsiveContainer width="100%" height={400}>
           <BarChart
             data={datosGrafico}
             layout="horizontal"
             margin={{
-              top: 5,
-              right: 30,
-              left: 120,
-              bottom: 5,
+              top: 20,
+              right: 60,
+              left: 140,
+              bottom: 20,
             }}
+            barCategoryGap={8}
+            maxBarSize={40}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#E9E1C9" />
+            <defs>
+              {/* Gradientes para las barras */}
+              <linearGradient id="colorCritico" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#EF4444" />
+                <stop offset="100%" stopColor="#DC2626" />
+              </linearGradient>
+              <linearGradient id="colorAlto" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#F59E0B" />
+                <stop offset="100%" stopColor="#D97706" />
+              </linearGradient>
+              <linearGradient id="colorModerado" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#3B82F6" />
+                <stop offset="100%" stopColor="#2563EB" />
+              </linearGradient>
+              <linearGradient id="colorBajo" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#10B981" />
+                <stop offset="100%" stopColor="#059669" />
+              </linearGradient>
+            </defs>
+            
+            <CartesianGrid 
+              strokeDasharray="3 3" 
+              stroke="#E5E7EB" 
+              horizontal={true}
+              vertical={false}
+            />
+            
             <XAxis 
               type="number" 
               domain={[0, 100]}
               tickFormatter={(value) => `${value}%`}
-              stroke="#666666"
+              stroke="#374151"
+              tick={{ fill: '#374151', fontSize: 12 }}
+              axisLine={{ stroke: '#9CA3AF' }}
+              tickLine={{ stroke: '#9CA3AF' }}
+              ticks={[0, 20, 40, 60, 80, 100]}
             />
+            
             <YAxis 
               type="category" 
               dataKey="nombre"
-              width={110}
-              stroke="#666666"
+              width={130}
+              stroke="#374151"
               tick={{
-                fill: '#374151',
-                fontSize: 12,
+                fill: '#111827',
+                fontSize: 13,
                 fontWeight: 500
               }}
+              axisLine={{ stroke: '#9CA3AF' }}
             />
+            
             <Tooltip 
               content={<CustomTooltip />} 
               wrapperStyle={{ zIndex: 100 }} 
               cursor={{ fill: 'rgba(147, 197, 253, 0.1)' }}
             />
+            
             <Bar 
               dataKey="porcentajeProblema" 
-              radius={[0, 4, 4, 0]}
-              barSize={20}
+              radius={[0, 6, 6, 0]}
+              barSize={35}
+              minPointSize={35}
+              animationDuration={1500}
+              animationBegin={200}
+              background={{ fill: '#f3f4f6' }}
+              label={{
+                position: 'right',
+                fill: '#374151',
+                fontSize: 13,
+                fontWeight: 600,
+                formatter: (value: any) => `${value}%`,
+                dx: 5
+              }}
             >
               {datosGrafico.map((entry, index) => (
                 <Cell 
-                  key={`cell-${index}`} 
-                  fill={entry.porcentajeProblema >= 70 ? '#EF4444' : 
-                        entry.porcentajeProblema >= 50 ? '#F59E0B' : 
-                        entry.porcentajeProblema >= 30 ? '#3B82F6' : '#22C55E'}
+                  key={`cell-${index}`}
+                  fill={`url(#${
+                    entry.porcentajeProblema >= 70 ? 'colorCritico' :
+                    entry.porcentajeProblema >= 50 ? 'colorAlto' :
+                    entry.porcentajeProblema >= 30 ? 'colorModerado' :
+                    'colorBajo'
+                  })`}
+                  stroke={entry.porcentajeProblema >= 70 ? '#991B1B' : 
+                         entry.porcentajeProblema >= 50 ? '#92400E' : 
+                         entry.porcentajeProblema >= 30 ? '#1E40AF' : 
+                         '#047857'}
+                  strokeWidth={1}
                 />
               ))}
             </Bar>
@@ -221,12 +301,12 @@ export default function CursosProblema({ cursos, isLoading = false }: CursosProb
           <div className="text-sm text-gray-700">Cursos Analizados</div>
         </div>
         <div className="text-center p-3 bg-gradient-to-r from-[#8D2C1D]/10 to-[#D96924]/10 rounded-lg">
-          <div className="text-2xl font-bold text-[#8D2C1D]">
-            {cursos.length > 0 ? Math.round(cursos.reduce((sum, c) => sum + c.porcentajeProblema, 0) / cursos.length) : 0}%
+      <div className="text-2xl font-bold text-[#8D2C1D]">
+            {cursos.length > 0 ? Math.round(cursos.reduce((sum, c) => sum + Number(c.porcentajeProblema), 0) / cursos.length) : 0}%
           </div>
           <div className="text-sm text-gray-700">Promedio Problemas</div>
         </div>
-        <div className="text-center p-3 bg-gradient-to-r from-[#8D2C1D]/10 to-[#D96924]/10 rounded-lg">
+        <div className="text-center p-3 bg-gradient-to-r from-[#8D2C1D]/10 to-[#D96924]/10 rounded-lg">"
           <div className="text-2xl font-bold text-[#8D2C1D]">
             {cursos.reduce((sum, c) => sum + c.totalAlumnos, 0)}
           </div>
@@ -237,26 +317,38 @@ export default function CursosProblema({ cursos, isLoading = false }: CursosProb
       {/* Lista de cursos más problemáticos */}
       {cursos.length > 0 && (
         <div className="mt-6">
-          <h4 className="text-sm font-medium text-[#8D2C1D] mb-3">
+          <h4 className="text-base font-semibold text-[#8D2C1D] mb-3 flex items-center gap-2">
+            <span className="inline-block w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
             Cursos que requieren atención inmediata:
           </h4>
           <div className="space-y-2">
-            {cursos.slice(0, 3).map((curso, index) => (
-              <div key={index} className="flex items-center justify-between p-2 bg-red-50 rounded-lg">
-                <div>
-                  <span className="font-medium text-sm">{curso.nombre}</span>
-                  <span className="text-xs text-gray-600 ml-2">({curso.nivel})</span>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm font-bold text-red-600">
-                    {curso.porcentajeProblema}%
+            {cursos.slice(0, 3).map((curso, index) => {
+              const porcentaje = Number(curso.porcentajeProblema);
+              const bgColor = porcentaje >= 70 ? 'bg-red-50' : 
+                            porcentaje >= 50 ? 'bg-yellow-50' : 
+                            porcentaje >= 30 ? 'bg-blue-50' : 'bg-green-50';
+              
+              const textColor = porcentaje >= 70 ? 'text-red-800' : 
+                              porcentaje >= 50 ? 'text-yellow-800' : 
+                              porcentaje >= 30 ? 'text-blue-800' : 'text-green-800';
+
+              return (
+                <div key={index} className={`flex items-center justify-between p-3 ${bgColor} rounded-lg border border-gray-200`}>
+                  <div>
+                    <span className={`font-semibold text-sm ${textColor}`}>{curso.nombre}</span>
+                    <span className="text-xs text-gray-600 ml-2">({curso.nivel})</span>
                   </div>
-                  <div className="text-xs text-gray-600">
-                    {curso.alumnosProblema}/{curso.totalAlumnos}
+                  <div className="text-right">
+                    <div className={`text-sm font-bold ${textColor}`}>
+                      {curso.porcentajeProblema}%
+                    </div>
+                    <div className="text-xs text-gray-600">
+                      {curso.alumnosProblema}/{curso.totalAlumnos} alumnos
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
