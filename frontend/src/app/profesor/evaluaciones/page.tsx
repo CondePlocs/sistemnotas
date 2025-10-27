@@ -267,8 +267,8 @@ export default function ProfesorEvaluacionesPage() {
         />
 
 
-        {/* Contenido principal */}
-        <div className="flex-1 p-4 sm:p-6">
+        {/* Contenido principal - Ancho completo */}
+        <div className="flex-1 px-2 sm:px-4 lg:px-6 py-4">
           {/* Título Principal con Botones de Reportes */}
           <div className="mb-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
@@ -346,9 +346,8 @@ export default function ProfesorEvaluacionesPage() {
             </div>
           </div>
 
-          {/* Contenido principal - Sistema de Evaluaciones */}
-          <div>
-
+          {/* Contenido principal - Sistema de Evaluaciones con ancho completo */}
+          <div className="w-full">
             <SistemaEvaluaciones
               contexto={contexto}
               onCrearEvaluacion={handleCrearEvaluacion}

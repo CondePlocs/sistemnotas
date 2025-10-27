@@ -32,7 +32,7 @@ export default function SistemaEvaluaciones({
   }, []);
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="w-full">
       {isMobile ? (
         <VistaMobile 
           contexto={contexto}

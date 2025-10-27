@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ContextoTrabajo, CreateEvaluacionDto, Evaluacion } from '@/types/evaluaciones';
 import { NotaLiteral, NotaInput } from '@/types/registro-nota';
 import { PlusIcon } from '@heroicons/react/24/outline';
@@ -27,6 +27,8 @@ export default function TablaEvaluacionesReal({
   const [editando, setEditando] = useState<string | null>(null);
   const [modalCrearAbierto, setModalCrearAbierto] = useState(false);
   const [competenciaSeleccionada, setCompetenciaSeleccionada] = useState<number | null>(null);
+  const [filaSeleccionada, setFilaSeleccionada] = useState<number | null>(null);
+  const [columnaSeleccionada, setColumnaSeleccionada] = useState<number | null>(null);
 
   // Hook para gestionar estado de notas
   const {
@@ -312,68 +314,92 @@ export default function TablaEvaluacionesReal({
         onDescartar={descartarCambios}
       />
 
-      <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-xl border-2 border-[#E9E1C9] overflow-hidden">
-        {/* Header mejorado con paleta corporativa */}
-        <div className="bg-gradient-to-r from-[#8D2C1D] to-[#D96924] px-6 py-5">
-          <div className="flex justify-between items-center">
-            <div>
-              <h2 className="text-xl font-bold text-white mb-1">
+      <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-xl border-4 border-[#8D2C1D]/30 overflow-hidden w-full">
+        {/* Header mejorado con paleta corporativa - Más compacto */}
+        <div className="bg-gradient-to-r from-[#8D2C1D] to-[#D96924] px-4 py-4 border-b-4 border-[#8D2C1D]/40">
+          <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-3">
+            <div className="flex-1">
+              <h2 className="text-lg font-bold text-white mb-1">
                 📚 {contexto.asignacion.curso} - {contexto.asignacion.salon}
               </h2>
               <p className="text-[#FCE0C1] text-sm font-medium">
                 🗺️ {contexto.periodo.tipo} {contexto.periodo.nombre} - {contexto.periodo.anioAcademico}
               </p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
-              <div className="text-white text-sm font-semibold text-center">
-                <div>{contexto.alumnos.length} estudiantes</div>
-                <div>{contexto.competencias.length} competencias</div>
-                {totalEstimaciones > 0 && (
-                  <div className="flex items-center justify-center gap-1 mt-1">
-                    <span>🤖</span>
-                    <span>{totalEstimaciones} estimaciones IA</span>
+            <div className="flex gap-4">
+              <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-2">
+                <div className="text-white text-xs font-semibold text-center">
+                  <div className="flex items-center gap-1">
+                    <span>👥</span>
+                    <span>{contexto.alumnos.length} estudiantes</span>
                   </div>
-                )}
+                </div>
               </div>
+              <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-2">
+                <div className="text-white text-xs font-semibold text-center">
+                  <div className="flex items-center gap-1">
+                    <span>🎯</span>
+                    <span>{contexto.competencias.length} competencias</span>
+                  </div>
+                </div>
+              </div>
+              {totalEstimaciones > 0 && (
+                <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-2">
+                  <div className="text-white text-xs font-semibold text-center">
+                    <div className="flex items-center gap-1">
+                      <span>🤖</span>
+                      <span>{totalEstimaciones} IA</span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Tabla mejorada */}
-        <div className="overflow-x-auto">
-          <table className="w-full">
+        {/* Tabla mejorada - Ancho completo con scroll horizontal */}
+        <div className="overflow-x-auto w-full">
+          <table className="w-full min-w-max">
             <thead>
-              <tr className="bg-gradient-to-r from-[#FCE0C1] to-[#E9E1C9]">
-                <th className="px-6 py-4 text-left text-sm font-bold text-[#8D2C1D] border-r border-[#E9E1C9] sticky left-0 bg-gradient-to-r from-[#FCE0C1] to-[#E9E1C9] z-10">
+              <tr className="bg-gradient-to-r from-[#FCE0C1] to-[#E9E1C9] border-b-4 border-[#8D2C1D]/30">
+                <th className="px-4 py-4 text-left text-sm font-bold text-[#8D2C1D] border-r-4 border-[#8D2C1D]/30 sticky left-0 bg-gradient-to-r from-[#FCE0C1] to-[#E9E1C9] z-10 min-w-[200px]">
                   👥 ESTUDIANTE
                 </th>
-                {contexto.competencias.map(competencia => {
+                {contexto.competencias.map((competencia, compIndex) => {
                   const evaluacionesCompetencia = obtenerEvaluacionesPorCompetencia(competencia.id);
                   return (
-                    <th key={competencia.id} className="border-r border-[#E9E1C9] min-w-[200px]">
+                    <th 
+                      key={competencia.id} 
+                      className={`border-r-4 border-[#8D2C1D]/30 min-w-[400px] max-w-[600px] transition-all duration-200 cursor-pointer ${
+                        columnaSeleccionada === compIndex 
+                          ? 'bg-[#8D2C1D]/30 shadow-lg border-t-4 border-t-[#8D2C1D]' 
+                          : 'hover:bg-[#FCE0C1]/10'
+                      }`}
+                      onClick={() => setColumnaSeleccionada(columnaSeleccionada === compIndex ? null : compIndex)}
+                    >
                       <div className="px-3 py-4">
-                        <div className="text-center text-sm font-bold text-white px-4 py-2 rounded-xl bg-gradient-to-r from-[#8D2C1D] to-[#D96924] shadow-lg mb-3">
+                        <div className="text-center text-sm font-bold text-white px-3 py-2 rounded-xl bg-gradient-to-r from-[#8D2C1D] to-[#D96924] shadow-lg mb-3 mx-1">
                           🎯 {competencia.nombre}
                         </div>
                         <div className="flex items-center gap-1">
                           {evaluacionesCompetencia.map(evaluacion => (
-                            <div key={evaluacion.id} className="flex-1 min-w-[60px]">
-                              <div className="text-xs text-[#666666] text-center font-semibold p-2 bg-white/50 rounded-lg border border-[#E9E1C9]">
+                            <div key={evaluacion.id} className="flex-1 min-w-[80px]">
+                              <div className="text-xs text-[#666666] text-center font-semibold p-1.5 bg-white/50 rounded-lg border border-[#E9E1C9]">
                                 {evaluacion.nombre}
                               </div>
                             </div>
                           ))}
-                          <div className="w-10 flex justify-center">
+                          <div className="w-8 flex justify-center">
                             <button
                               onClick={() => handleCrearEvaluacion(competencia.id)}
-                              className="text-[#8D2C1D] hover:text-[#7A2518] hover:bg-[#FCE0C1] p-2 rounded-lg transition-all duration-300 hover:scale-110 shadow-sm hover:shadow-md"
+                              className="text-[#8D2C1D] hover:text-[#7A2518] hover:bg-[#FCE0C1] p-1.5 rounded-lg transition-all duration-300 hover:scale-110 shadow-sm hover:shadow-md"
                               title="Agregar evaluación"
                             >
-                              <PlusIcon className="w-5 h-5" />
+                              <PlusIcon className="w-3 h-3" />
                             </button>
                           </div>
                           <div className="w-20">
-                            <div className="text-xs text-[#8D2C1D] text-center font-bold bg-white/70 rounded-lg p-2 border border-[#E9E1C9]">
+                            <div className="text-xs text-[#8D2C1D] text-center font-bold bg-white/70 rounded-lg p-1.5 border border-[#E9E1C9]">
                               📈 Promedio
                             </div>
                           </div>
@@ -382,17 +408,31 @@ export default function TablaEvaluacionesReal({
                     </th>
                   );
                 })}
-                <th className="px-6 py-4 text-center text-sm font-bold text-[#8D2C1D] bg-gradient-to-r from-[#FCE0C1] to-[#E9E1C9] sticky right-0 z-10">
+                <th className="px-4 py-4 text-center text-sm font-bold text-[#8D2C1D] bg-gradient-to-r from-[#FCE0C1] to-[#E9E1C9] sticky right-0 z-10 min-w-[150px] border-l-4 border-[#8D2C1D]/30">
                   🏆 PROMEDIO FINAL
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#E9E1C9]">
+            <tbody className="divide-y-2 divide-[#8D2C1D]/20">
               {contexto.alumnos.map((alumno, index) => (
-                <tr key={alumno.id} className={`hover:bg-[#FCE0C1]/30 transition-all duration-300 ${
-                  index % 2 === 0 ? 'bg-white/50' : 'bg-[#FCE0C1]/10'
-                }`}>
-                  <td className="px-6 py-4 border-r border-[#E9E1C9] sticky left-0 z-10 bg-inherit">
+                <React.Fragment key={`alumno-${alumno.id}`}>
+                  {/* Línea de separación cada 5 estudiantes */}
+                  {index > 0 && index % 5 === 0 && (
+                    <tr className="h-2">
+                      <td colSpan={contexto.competencias.length + 2} className="h-2 bg-gradient-to-r from-[#8D2C1D]/10 via-[#8D2C1D]/20 to-[#8D2C1D]/10 border-y-2 border-[#8D2C1D]/30"></td>
+                    </tr>
+                  )}
+                <tr 
+                  className={`transition-all duration-200 border-l-4 cursor-pointer ${
+                    filaSeleccionada === alumno.id 
+                      ? 'bg-[#8D2C1D]/30 border-l-[#8D2C1D] shadow-lg' 
+                      : index % 2 === 0 
+                        ? 'bg-white/50 border-l-[#8D2C1D]/20 hover:bg-[#FCE0C1]/10' 
+                        : 'bg-[#FCE0C1]/10 border-l-[#8D2C1D]/20 hover:bg-[#FCE0C1]/15'
+                  }`}
+                  onClick={() => setFilaSeleccionada(filaSeleccionada === alumno.id ? null : alumno.id)}
+                >
+                  <td className="px-4 py-3 border-r-4 border-[#8D2C1D]/30 sticky left-0 z-10 bg-inherit">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-gradient-to-br from-[#8D2C1D] to-[#D96924] rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
                         {alumno.nombres.charAt(0)}{alumno.apellidos.charAt(0)}
@@ -412,8 +452,15 @@ export default function TablaEvaluacionesReal({
                   {contexto.competencias.map(competencia => {
                     const evaluacionesCompetencia = obtenerEvaluacionesPorCompetencia(competencia.id);
                     return (
-                      <td key={competencia.id} className="border-r border-[#E9E1C9] p-2">
-                        <div className="flex items-center gap-1">
+                      <td 
+                        key={competencia.id} 
+                        className={`border-r-4 border-[#8D2C1D]/30 p-1 transition-all duration-200 ${
+                          columnaSeleccionada === contexto.competencias.findIndex(c => c.id === competencia.id)
+                            ? 'bg-[#8D2C1D]/30'
+                            : ''
+                        }`}
+                      >
+                        <div className="flex items-center gap-0.5">
                           {evaluacionesCompetencia.map(evaluacion => {
                             const nota = obtenerNota(alumno.id, evaluacion.id);
                             const estimacion = obtenerEstimacion(alumno.id, evaluacion.id);
@@ -425,7 +472,7 @@ export default function TablaEvaluacionesReal({
                             const esEstimacion = mostrarEstimacion && !nota;
                             
                             return (
-                              <div key={evaluacion.id} className="flex-1 min-w-[60px]">
+                              <div key={evaluacion.id} className="flex-1 min-w-[80px]">
                                 <div className="text-center relative">
                                   {editando === key ? (
                                     <input
@@ -452,7 +499,7 @@ export default function TablaEvaluacionesReal({
                                     <>
                                       <button
                                         onClick={() => setEditando(key)}
-                                        className={`w-full h-10 text-sm font-bold rounded-lg transition-all duration-300 hover:scale-105 shadow-sm hover:shadow-md border-2 ${getColorNotaMejorado(valorMostrar, !!esEstimacion)}`}
+                                        className={`w-full h-9 text-sm font-bold rounded-lg transition-all duration-300 hover:scale-105 shadow-sm hover:shadow-md border-2 ${getColorNotaMejorado(valorMostrar, !!esEstimacion)}`}
                                         title={esEstimacion ? `🤖 Estimación IA (${Math.round(estimacion!.confianza * 100)}% confianza): ${estimacion!.mensaje}` : undefined}
                                       >
                                         {esEstimacion ? (
@@ -475,10 +522,10 @@ export default function TablaEvaluacionesReal({
                               </div>
                             );
                           })}
-                          <div className="w-10"></div>
+                          <div className="w-8"></div>
                           <div className="w-20">
                             <div className="text-center">
-                              <span className={`px-3 py-2 rounded-lg text-xs font-bold shadow-sm ${getColorPromedio(calcularPromedioCompetencia(alumno.id, competencia.id))}`}>
+                              <span className={`px-2 py-1.5 rounded-lg text-xs font-bold shadow-sm ${getColorPromedio(calcularPromedioCompetencia(alumno.id, competencia.id))}`}>
                                 {calcularPromedioCompetencia(alumno.id, competencia.id)}
                               </span>
                             </div>
@@ -487,14 +534,15 @@ export default function TablaEvaluacionesReal({
                       </td>
                     );
                   })}
-                  <td className="px-6 py-4 text-center border-l-2 border-[#8D2C1D] sticky right-0 z-10 bg-inherit">
+                  <td className="px-4 py-3 text-center border-l-4 border-[#8D2C1D] sticky right-0 z-10 bg-inherit">
                     <div className="flex items-center justify-center">
-                      <span className={`px-4 py-3 rounded-xl text-sm font-bold shadow-lg ${getColorPromedioFinal(calcularPromedio(alumno.id))}`}>
+                      <span className={`px-3 py-2 rounded-xl text-sm font-bold shadow-lg ${getColorPromedioFinal(calcularPromedio(alumno.id))}`}>
                         🏆 {calcularPromedio(alumno.id)}
                       </span>
                     </div>
                   </td>
                 </tr>
+                </React.Fragment>
               ))}
             </tbody>
           </table>

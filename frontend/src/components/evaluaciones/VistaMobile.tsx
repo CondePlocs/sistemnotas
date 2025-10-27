@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { ContextoTrabajo, CreateEvaluacionDto, Evaluacion } from '@/types/evaluaciones';
-import { NotaLiteral } from '@/types/registro-nota';
+import { NotaLiteral, NotaInput } from '@/types/registro-nota';
 import { PlusIcon, ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { useNotasState } from '@/hooks/useNotasState';
+import { useEstimacionesIA } from '@/hooks/useEstimacionesIA';
+import { EstimacionUtils } from '@/types/ia';
 import ModalCrearEvaluacion from '../modals/ModalCrearEvaluacion';
 import BotonGuardarNotas from './BotonGuardarNotas';
 import { registroNotaAPI } from '@/lib/api/registro-nota';
@@ -36,10 +38,37 @@ export default function VistaMobile({
     descartarCambios,
     hayCambiosPendientes,
     cantidadPendientes,
-    guardando
+    guardando,
+    todasLasNotas
   } = useNotasState({
     alumnos: contexto.alumnos,
     evaluaciones: contexto.evaluaciones
+  });
+
+  // Convertir notas a Map para el hook de estimaciones
+  const notasExistentesMap = useMemo(() => {
+    const mapa = new Map<string, NotaLiteral>();
+    todasLasNotas.forEach((nota: any) => {
+      if (nota.nota) {
+        const clave = EstimacionUtils.generarClave(nota.alumnoId, nota.evaluacionId);
+        mapa.set(clave, nota.nota);
+      }
+    });
+    return mapa;
+  }, [todasLasNotas]);
+
+  // Hook para gestionar estimaciones de IA
+  const {
+    obtenerEstimacion,
+    tieneEstimacion,
+    cargando: cargandoEstimaciones,
+    totalEstimaciones
+  } = useEstimacionesIA({
+    alumnos: contexto.alumnos,
+    competencias: contexto.competencias,
+    evaluaciones: contexto.evaluaciones,
+    notasExistentes: notasExistentesMap,
+    profesorAsignacionId: asignacionId
   });
 
   // Función para cargar notas desde la API
@@ -53,7 +82,7 @@ export default function VistaMobile({
       const notasFormateadas = notasExistentes.map(nota => ({
         alumnoId: nota.alumnoId,
         evaluacionId: nota.evaluacionId,
-        nota: nota.nota as NotaLiteral
+        nota: nota.nota as NotaInput // Ahora acepta tanto letras como números
       }));
       
       establecerNotasIniciales(notasFormateadas);
@@ -162,9 +191,28 @@ export default function VistaMobile({
     return promediosCurso.get(alumnoId) || '-';
   };
 
-  // Validar que la nota sea una letra válida
-  const esNotaValida = (nota: string): nota is NotaLiteral => {
-    return ['AD', 'A', 'B', 'C'].includes(nota);
+  // Validar que la nota sea válida (alfabética o numérica)
+  const esNotaValida = (nota: string): boolean => {
+    if (!nota || typeof nota !== 'string') {
+      return false;
+    }
+
+    const notaLimpia = nota.trim().toUpperCase();
+    
+    // Verificar si es alfabético (AD, A, B, C)
+    const esAlfabetico = /^(AD|A|B|C)$/i.test(notaLimpia);
+    if (esAlfabetico) {
+      return true;
+    }
+    
+    // Verificar si es numérico (0-20, incluyendo decimales)
+    const esNumerico = /^\d+(\.\d+)?$/.test(notaLimpia);
+    if (esNumerico) {
+      const valor = parseFloat(notaLimpia);
+      return valor >= 0 && valor <= 20;
+    }
+    
+    return false;
   };
 
   // Manejar cambio de nota
@@ -174,6 +222,7 @@ export default function VistaMobile({
     } else if (esNotaValida(valor)) {
       actualizarNota(alumnoId, evaluacionId, valor);
     }
+    // Si no es válida, no hacer nada (el input no se actualiza)
   };
 
   // Manejar creación de nueva evaluación
@@ -182,16 +231,47 @@ export default function VistaMobile({
     setModalCrearAbierto(true);
   };
 
-  // Obtener color de rendimiento para notas literales
-  const getColorNota = (nota: NotaLiteral | null): string => {
-    if (nota === null) return 'bg-gray-100 text-gray-400';
-    switch (nota) {
-      case 'AD': return 'bg-green-100 text-green-800';
-      case 'A': return 'bg-blue-100 text-blue-800';
-      case 'B': return 'bg-yellow-100 text-yellow-800';
-      case 'C': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-400';
+  // Obtener color de rendimiento para notas (versión mejorada) - acepta letras y números
+  const getColorNotaMejorado = (nota: string | null, esEstimacion: boolean = false): string => {
+    // Convertir nota numérica a equivalente alfabético para colores
+    const convertirALetra = (valor: string): NotaLiteral | null => {
+      // Si ya es una letra, devolverla
+      if (['AD', 'A', 'B', 'C'].includes(valor)) {
+        return valor as NotaLiteral;
+      }
+      
+      // Si es un número, convertir a letra equivalente
+      const num = parseFloat(valor);
+      if (!isNaN(num)) {
+        if (num >= 18) return 'AD';
+        if (num >= 14) return 'A';
+        if (num >= 11) return 'B';
+        return 'C';
+      }
+      
+      return null;
+    };
+
+    if (!nota) {
+      return 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-500 border-2 border-gray-300';
     }
+
+    const letraEquivalente = convertirALetra(nota);
+    const baseClasses = esEstimacion ? 'border-2 border-dashed' : 'border-2';
+    
+    switch (letraEquivalente) {
+      case 'AD': return `bg-gradient-to-br from-emerald-400 to-green-500 text-white ${baseClasses} border-emerald-600`;
+      case 'A': return `bg-gradient-to-br from-blue-400 to-indigo-500 text-white ${baseClasses} border-blue-600`;
+      case 'B': return `bg-gradient-to-br from-amber-400 to-orange-500 text-white ${baseClasses} border-amber-600`;
+      case 'C': return `bg-gradient-to-br from-red-400 to-rose-500 text-white ${baseClasses} border-red-600`;
+      default: return `bg-gradient-to-br from-gray-200 to-gray-300 text-gray-600 ${baseClasses} border-gray-400`;
+    }
+  };
+
+  // Obtener color para promedios
+  const getColorPromedio = (promedio: string): string => {
+    if (promedio === '-') return 'bg-gray-100 text-gray-500';
+    return getColorNotaMejorado(promedio).replace('border-2', 'border');
   };
 
   return (
@@ -205,22 +285,43 @@ export default function VistaMobile({
         onDescartar={descartarCambios}
       />
 
-      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-        {/* Header */}
-        <div className="bg-gray-50 px-4 py-3 border-b">
-          <h2 className="text-lg font-semibold text-gray-900">
-            📚 {contexto.asignacion.curso}
-          </h2>
-          <p className="text-sm text-gray-600">
-            {contexto.asignacion.salon} | {contexto.periodo.tipo} {contexto.periodo.nombre} - {contexto.periodo.anioAcademico}
-          </p>
-          <div className="text-xs text-gray-500 mt-1">
-            {contexto.alumnos.length} estudiantes • {contexto.competencias.length} competencias
+      <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-xl border-4 border-[#8D2C1D]/30 overflow-hidden">
+        {/* Header con paleta corporativa */}
+        <div className="bg-gradient-to-r from-[#8D2C1D] to-[#D96924] px-4 py-4 border-b-4 border-[#8D2C1D]/40">
+          <div className="flex flex-col gap-2">
+            <h2 className="text-lg font-bold text-white">
+              📚 {contexto.asignacion.curso} - {contexto.asignacion.salon}
+            </h2>
+            <p className="text-[#FCE0C1] text-sm font-medium">
+              🗺️ {contexto.periodo.tipo} {contexto.periodo.nombre} - {contexto.periodo.anioAcademico}
+            </p>
+            <div className="flex gap-3 mt-2">
+              <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1">
+                <div className="text-white text-xs font-semibold flex items-center gap-1">
+                  <span>👥</span>
+                  <span>{contexto.alumnos.length} estudiantes</span>
+                </div>
+              </div>
+              <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1">
+                <div className="text-white text-xs font-semibold flex items-center gap-1">
+                  <span>🎯</span>
+                  <span>{contexto.competencias.length} competencias</span>
+                </div>
+              </div>
+              {totalEstimaciones > 0 && (
+                <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1">
+                  <div className="text-white text-xs font-semibold flex items-center gap-1">
+                    <span>🤖</span>
+                    <span>{totalEstimaciones} IA</span>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Lista de alumnos */}
-        <div className="divide-y divide-gray-200">
+        <div className="divide-y-2 divide-[#8D2C1D]/20">
           {contexto.alumnos.map((alumno) => (
             <div key={alumno.id} className="p-4">
               {/* Header del alumno */}
@@ -256,53 +357,78 @@ export default function VistaMobile({
                   {contexto.competencias.map((competencia) => {
                     const evaluacionesCompetencia = obtenerEvaluacionesPorCompetencia(competencia.id);
                     return (
-                      <div key={competencia.id} className="bg-gray-50 rounded-lg p-3">
+                      <div key={competencia.id} className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border-3 border-[#8D2C1D]/25 p-4">
                         <div className="flex items-center justify-between mb-3">
-                          <h4 className="text-sm font-medium text-gray-900">
-                            {competencia.nombre}
+                          <h4 className="text-sm font-bold text-[#8D2C1D]">
+                            🎯 {competencia.nombre}
                           </h4>
                           <button
                             onClick={() => handleCrearEvaluacion(competencia.id)}
-                            className="text-gray-400 hover:text-blue-600 transition-colors p-1"
+                            className="text-[#8D2C1D] hover:text-[#7A2518] hover:bg-[#FCE0C1] p-2 rounded-lg transition-all duration-300 hover:scale-110"
                             title="Agregar evaluación"
                           >
                             <PlusIcon className="w-4 h-4" />
                           </button>
                         </div>
                         
-                        <div className="grid grid-cols-2 gap-2">
-                          {evaluacionesCompetencia.map((evaluacion) => {
+                        {/* Evaluaciones de la competencia */}
+                        <div className="grid grid-cols-2 gap-2 mb-3">
+                          {evaluacionesCompetencia.map(evaluacion => {
                             const nota = obtenerNota(alumno.id, evaluacion.id);
+                            const estimacion = obtenerEstimacion(alumno.id, evaluacion.id);
                             const key = `${alumno.id}-${evaluacion.id}`;
+                            
+                            // Determinar qué mostrar: nota real o estimación
+                            const mostrarEstimacion = !nota && estimacion;
+                            const valorMostrar = nota || (mostrarEstimacion ? estimacion.notaEstimada : null);
+                            const esEstimacion = mostrarEstimacion && !nota;
+                            
                             return (
                               <div key={evaluacion.id} className="text-center">
-                                <div className="text-xs text-gray-600 mb-1">
-                                  {evaluacion.nombre}
-                                </div>
+                                <div className="text-xs text-[#666666] mb-1 font-medium">{evaluacion.nombre}</div>
                                 {editando === key ? (
                                   <input
                                     type="text"
                                     value={nota || ''}
                                     onChange={(e) => {
-                                      const valor = e.target.value.toUpperCase();
+                                      let valor = e.target.value.trim();
+                                      // Solo convertir a mayúsculas si parece ser una letra
+                                      if (isNaN(Number(valor))) {
+                                        valor = valor.toUpperCase();
+                                      }
                                       manejarCambioNota(alumno.id, evaluacion.id, valor);
                                     }}
                                     onBlur={() => setEditando(null)}
                                     onKeyDown={(e) => {
                                       if (e.key === 'Enter') setEditando(null);
                                     }}
-                                    className="w-full text-center text-sm border rounded px-2 py-1"
-                                    placeholder="AD,A,B,C"
-                                    maxLength={2}
+                                    className="w-full text-center text-sm border-2 border-[#8D2C1D] rounded-lg px-2 py-1 font-bold focus:ring-2 focus:ring-[#8D2C1D]"
+                                    placeholder="AD,A,B,C o 0-20"
+                                    maxLength={4}
                                     autoFocus
                                   />
                                 ) : (
-                                  <button
-                                    onClick={() => setEditando(key)}
-                                    className={`w-full h-8 text-sm rounded transition-colors ${getColorNota(nota)}`}
-                                  >
-                                    {nota || '-'}
-                                  </button>
+                                  <div className="relative">
+                                    <button
+                                      onClick={() => setEditando(key)}
+                                      className={`w-full h-9 text-sm font-bold rounded-lg transition-all duration-300 hover:scale-105 shadow-sm hover:shadow-md ${getColorNotaMejorado(valorMostrar, !!esEstimacion)}`}
+                                      title={esEstimacion ? `🤖 Estimación IA (${Math.round(estimacion!.confianza * 100)}% confianza): ${estimacion!.mensaje}` : undefined}
+                                    >
+                                      {esEstimacion ? (
+                                        <div className="flex items-center justify-center gap-1">
+                                          <span className="text-xs">🤖</span>
+                                          <span>{valorMostrar}</span>
+                                        </div>
+                                      ) : (
+                                        valorMostrar || '➕'
+                                      )}
+                                    </button>
+                                    {esEstimacion && (
+                                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-purple-500 rounded-full flex items-center justify-center">
+                                        <span className="text-white text-xs font-bold">AI</span>
+                                      </div>
+                                    )}
+                                  </div>
                                 )}
                               </div>
                             );
@@ -310,10 +436,10 @@ export default function VistaMobile({
                         </div>
                         
                         {/* Promedio de la competencia */}
-                        <div className="mt-3 pt-2 border-t border-gray-200">
+                        <div className="pt-3 border-t-2 border-[#8D2C1D]/25">
                           <div className="flex justify-between items-center">
-                            <span className="text-xs font-medium text-gray-600">Promedio:</span>
-                            <span className="px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                            <span className="text-xs font-medium text-[#666666]">📈 Promedio:</span>
+                            <span className={`px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm ${getColorPromedio(calcularPromedioCompetencia(alumno.id, competencia.id))}`}>
                               {calcularPromedioCompetencia(alumno.id, competencia.id)}
                             </span>
                           </div>
