@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import SimpleHeader from '@/components/layout/SimpleHeader';
-import DashboardFooter from '@/components/layout/DashboardFooter';
 import AlumnoInfo from '@/components/apoderado/AlumnoInfo';
 import CursosList from '@/components/apoderado/CursosList';
 import { apoderadoAPI } from '@/lib/api/apoderado';
@@ -364,7 +363,6 @@ export default function AlumnoDetalle() {
           />
         </main>
 
-        <DashboardFooter />
       </div>
     </ProtectedRoute>
   );

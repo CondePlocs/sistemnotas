@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import SimpleHeader from '@/components/layout/SimpleHeader';
-import DashboardFooter from '@/components/layout/DashboardFooter';
 import FiltroAlumnos from '@/components/apoderado/FiltroAlumnos';
 import ListadoAlumnos from '@/components/apoderado/ListadoAlumnos';
 import { apoderadoAPI } from '@/lib/api/apoderado';
@@ -77,7 +76,7 @@ export default function ApoderadoDashboard() {
               <p className="mt-4 text-[#666666] font-medium">Cargando información de sus hijos...</p>
             </div>
           </div>
-          <DashboardFooter />
+
         </div>
       </ProtectedRoute>
     );
@@ -105,7 +104,6 @@ export default function ApoderadoDashboard() {
               </button>
             </div>
           </div>
-          <DashboardFooter />
         </div>
       </ProtectedRoute>
     );
@@ -198,8 +196,7 @@ export default function ApoderadoDashboard() {
           />
         </div>
 
-        {/* Footer Reutilizable */}
-        <DashboardFooter />
+        
       </div>
     </ProtectedRoute>
   );

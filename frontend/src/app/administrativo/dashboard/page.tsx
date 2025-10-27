@@ -182,7 +182,7 @@ function AdministrativoDashboardContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9]">
+    <div className="min-h-screen bg-gradient-to-br from-[#FBE7D8] via-[#FCE7D6] to-[#FDF1E7] text-gray-800">
       {/* SimpleHeader */}
       <SimpleHeader 
         title="Panel Administrativo"
@@ -194,7 +194,7 @@ function AdministrativoDashboardContent() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Funciones Disponibles</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Funciones Disponibles</h2>
           <p className="text-gray-600">
             Estas son las funciones que tienes habilitadas según los permisos otorgados por el director.
           </p>
@@ -204,24 +204,24 @@ function AdministrativoDashboardContent() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           
           {/* Card Registrar Profesores */}
-          <div className={`bg-white rounded-lg shadow-md border-2 transition-all duration-200 ${
+          <div className={`rounded-lg shadow-md transition-all duration-200 ${
             permisos?.puedeRegistrarProfesores 
-              ? 'border-green-200 hover:border-green-300 hover:shadow-lg cursor-pointer' 
-              : 'border-gray-200 opacity-50 cursor-not-allowed'
+              ? 'bg-white hover:shadow-lg cursor-pointer transform hover:-translate-y-1 border border-[#8D2C1D]/10' 
+              : 'bg-gray-50 opacity-75 cursor-not-allowed border border-gray-200'
           }`}>
             <div className="p-6">
               <div className="flex items-center mb-4">
                 <div className={`p-3 rounded-full ${
-                  permisos?.puedeRegistrarProfesores ? 'bg-green-100' : 'bg-gray-100'
+                  permisos?.puedeRegistrarProfesores ? 'bg-[#8D2C1D]/10' : 'bg-gray-100'
                 }`}>
                   <svg className={`w-6 h-6 ${
-                    permisos?.puedeRegistrarProfesores ? 'text-green-600' : 'text-gray-400'
+                    permisos?.puedeRegistrarProfesores ? 'text-[#8D2C1D]' : 'text-gray-400'
                   }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                   </svg>
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Registrar Profesores</h3>
+                  <h3 className="text-lg font-semibold text-gray-800">Gestionar Profesores</h3>
                   <p className="text-sm text-gray-600">Agregar nuevos profesores al sistema</p>
                 </div>
               </div>
@@ -229,7 +229,7 @@ function AdministrativoDashboardContent() {
               {permisos?.puedeRegistrarProfesores ? (
                 <button
                   onClick={() => navegarA('/director/profesores')}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md text-sm font-medium transition-colors"
+                  className="w-full bg-[#8D2C1D] hover:bg-[#7C271A] text-white py-2 px-4 rounded-md text-sm font-medium transition-colors"
                 >
                   Acceder
                 </button>
@@ -242,24 +242,24 @@ function AdministrativoDashboardContent() {
           </div>
 
           {/* Card Registrar Apoderados */}
-          <div className={`bg-white rounded-lg shadow-md border-2 transition-all duration-200 ${
+          <div className={`rounded-lg shadow-md transition-all duration-200 ${
             permisos?.puedeRegistrarApoderados 
-              ? 'border-blue-200 hover:border-blue-300 hover:shadow-lg cursor-pointer' 
-              : 'border-gray-200 opacity-50 cursor-not-allowed'
+              ? 'bg-white hover:shadow-lg cursor-pointer transform hover:-translate-y-1 border border-[#8D2C1D]/10' 
+              : 'bg-gray-50 opacity-75 cursor-not-allowed border border-gray-200'
           }`}>
             <div className="p-6">
               <div className="flex items-center mb-4">
                 <div className={`p-3 rounded-full ${
-                  permisos?.puedeRegistrarApoderados ? 'bg-blue-100' : 'bg-gray-100'
+                  permisos?.puedeRegistrarApoderados ? 'bg-[#8D2C1D]/10' : 'bg-gray-100'
                 }`}>
                   <svg className={`w-6 h-6 ${
-                    permisos?.puedeRegistrarApoderados ? 'text-blue-600' : 'text-gray-400'
+                    permisos?.puedeRegistrarApoderados ? 'text-[#8D2C1D]' : 'text-gray-400'
                   }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Registrar Apoderados</h3>
+                  <h3 className="text-lg font-semibold text-gray-800">Gestionar Apoderados</h3>
                   <p className="text-sm text-gray-600">Agregar nuevos apoderados al sistema</p>
                 </div>
               </div>
@@ -267,7 +267,7 @@ function AdministrativoDashboardContent() {
               {permisos?.puedeRegistrarApoderados ? (
                 <button
                   onClick={() => navegarA('/director/apoderados')}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm font-medium transition-colors"
+                  className="w-full bg-[#8D2C1D] hover:bg-[#7C271A] text-white py-2 px-4 rounded-md text-sm font-medium transition-colors"
                 >
                   Acceder
                 </button>
@@ -280,24 +280,24 @@ function AdministrativoDashboardContent() {
           </div>
 
           {/* Card Registrar Administrativos */}
-          <div className={`bg-white rounded-lg shadow-md border-2 transition-all duration-200 ${
+          <div className={`rounded-lg shadow-md transition-all duration-200 ${
             permisos?.puedeRegistrarAdministrativos 
-              ? 'border-purple-200 hover:border-purple-300 hover:shadow-lg cursor-pointer' 
-              : 'border-gray-200 opacity-50 cursor-not-allowed'
+              ? 'bg-white hover:shadow-lg cursor-pointer transform hover:-translate-y-1 border border-[#8D2C1D]/10' 
+              : 'bg-gray-50 opacity-75 cursor-not-allowed border border-gray-200'
           }`}>
             <div className="p-6">
               <div className="flex items-center mb-4">
                 <div className={`p-3 rounded-full ${
-                  permisos?.puedeRegistrarAdministrativos ? 'bg-purple-100' : 'bg-gray-100'
+                  permisos?.puedeRegistrarAdministrativos ? 'bg-[#8D2C1D]/10' : 'bg-gray-100'
                 }`}>
                   <svg className={`w-6 h-6 ${
-                    permisos?.puedeRegistrarAdministrativos ? 'text-purple-600' : 'text-gray-400'
+                    permisos?.puedeRegistrarAdministrativos ? 'text-[#8D2C1D]' : 'text-gray-400'
                   }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V8a2 2 0 012-2V6m8 0H8m0 0h-.01M12 15v.01" />
                   </svg>
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Registrar Administrativos</h3>
+                  <h3 className="text-lg font-semibold text-gray-800">Gestionar Administrativos</h3>
                   <p className="text-sm text-gray-600">Agregar personal administrativo</p>
                 </div>
               </div>
@@ -305,7 +305,7 @@ function AdministrativoDashboardContent() {
               {permisos?.puedeRegistrarAdministrativos ? (
                 <button
                   onClick={() => navegarA('/director/administrativos')}
-                  className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-md text-sm font-medium transition-colors"
+                  className="w-full bg-[#8D2C1D] hover:bg-[#7C271A] text-white py-2 px-4 rounded-md text-sm font-medium transition-colors"
                 >
                   Acceder
                 </button>
@@ -317,24 +317,24 @@ function AdministrativoDashboardContent() {
             </div>
           </div>
           {/* Card Registrar Alumnos */}
-          <div className={`bg-white rounded-lg shadow-md border-2 transition-all duration-200 ${
+          <div className={`rounded-lg shadow-md transition-all duration-200 ${
             permisos?.puedeRegistrarAlumnos 
-              ? 'border-orange-200 hover:border-orange-300 hover:shadow-lg cursor-pointer' 
-              : 'border-gray-200 opacity-50 cursor-not-allowed'
+              ? 'bg-white hover:shadow-lg cursor-pointer transform hover:-translate-y-1 border border-[#8D2C1D]/10' 
+              : 'bg-gray-50 opacity-75 cursor-not-allowed border border-gray-200'
           }`}>
             <div className="p-6">
               <div className="flex items-center mb-4">
                 <div className={`p-3 rounded-full ${
-                  permisos?.puedeRegistrarAlumnos ? 'bg-orange-100' : 'bg-gray-100'
+                  permisos?.puedeRegistrarAlumnos ? 'bg-[#8D2C1D]/10' : 'bg-gray-100'
                 }`}>
                   <svg className={`w-6 h-6 ${
-                    permisos?.puedeRegistrarAlumnos ? 'text-orange-600' : 'text-gray-400'
+                    permisos?.puedeRegistrarAlumnos ? 'text-[#8D2C1D]' : 'text-gray-400'
                   }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
                   </svg>
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Registrar Alumnos</h3>
+                  <h3 className="text-lg font-semibold text-gray-800">Gestionar Alumnos</h3>
                   <p className="text-sm text-gray-600">Agregar nuevos estudiantes al sistema</p>
                 </div>
               </div>
@@ -342,7 +342,7 @@ function AdministrativoDashboardContent() {
               {permisos?.puedeRegistrarAlumnos ? (
                 <button
                   onClick={() => navegarA('/director/alumnos')}
-                  className="w-full bg-orange-600 hover:bg-orange-700 text-white py-2 px-4 rounded-md text-sm font-medium transition-colors"
+                  className="w-full bg-[#8D2C1D] hover:bg-[#7C271A] text-white py-2 px-4 rounded-md text-sm font-medium transition-colors"
                 >
                   Acceder
                 </button>
@@ -355,24 +355,24 @@ function AdministrativoDashboardContent() {
           </div>
 
           {/* Card Gestionar Salones */}
-          <div className={`bg-white rounded-lg shadow-md border-2 transition-all duration-200 ${
+          <div className={`rounded-lg shadow-md transition-all duration-200 ${
             permisos?.puedeGestionarSalones 
-              ? 'border-indigo-200 hover:border-indigo-300 hover:shadow-lg cursor-pointer' 
-              : 'border-gray-200 opacity-50 cursor-not-allowed'
+              ? 'bg-white hover:shadow-lg cursor-pointer transform hover:-translate-y-1 border border-[#8D2C1D]/10' 
+              : 'bg-gray-50 opacity-75 cursor-not-allowed border border-gray-200'
           }`}>
             <div className="p-6">
               <div className="flex items-center mb-4">
                 <div className={`p-3 rounded-full ${
-                  permisos?.puedeGestionarSalones ? 'bg-indigo-100' : 'bg-gray-100'
+                  permisos?.puedeGestionarSalones ? 'bg-[#8D2C1D]/10' : 'bg-gray-100'
                 }`}>
                   <svg className={`w-6 h-6 ${
-                    permisos?.puedeGestionarSalones ? 'text-indigo-600' : 'text-gray-400'
+                    permisos?.puedeGestionarSalones ? 'text-[#8D2C1D]' : 'text-gray-400'
                   }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                   </svg>
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Gestionar Salones</h3>
+                  <h3 className="text-lg font-semibold text-gray-800">Gestionar Salones</h3>
                   <p className="text-sm text-gray-600">Asignar alumnos a salones</p>
                 </div>
               </div>
@@ -380,7 +380,7 @@ function AdministrativoDashboardContent() {
               {permisos?.puedeGestionarSalones ? (
                 <button
                   onClick={() => navegarA('/director/salones/gestion')}
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-md text-sm font-medium transition-colors"
+                  className="w-full bg-[#8D2C1D] hover:bg-[#7C271A] text-white py-2 px-4 rounded-md text-sm font-medium transition-colors"
                 >
                   Acceder
                 </button>
@@ -393,24 +393,24 @@ function AdministrativoDashboardContent() {
           </div>
 
           {/* Card Asignar Profesores */}
-          <div className={`bg-white rounded-lg shadow-md border-2 transition-all duration-200 ${
+          <div className={`rounded-lg shadow-md transition-all duration-200 ${
             permisos?.puedeAsignarProfesores 
-              ? 'border-purple-200 hover:border-purple-300 hover:shadow-lg cursor-pointer' 
-              : 'border-gray-200 opacity-50 cursor-not-allowed'
+              ? 'bg-white hover:shadow-lg cursor-pointer transform hover:-translate-y-1 border border-[#8D2C1D]/10' 
+              : 'bg-gray-50 opacity-75 cursor-not-allowed border border-gray-200'
           }`}>
             <div className="p-6">
               <div className="flex items-center mb-4">
                 <div className={`p-3 rounded-full ${
-                  permisos?.puedeAsignarProfesores ? 'bg-purple-100' : 'bg-gray-100'
+                  permisos?.puedeAsignarProfesores ? 'bg-[#8D2C1D]/10' : 'bg-gray-100'
                 }`}>
                   <svg className={`w-6 h-6 ${
-                    permisos?.puedeAsignarProfesores ? 'text-purple-600' : 'text-gray-400'
+                    permisos?.puedeAsignarProfesores ? 'text-[#8D2C1D]' : 'text-gray-400'
                   }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
                   </svg>
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Asignar Profesores</h3>
+                  <h3 className="text-lg font-semibold text-gray-800">Asignar Profesores</h3>
                   <p className="text-sm text-gray-600">Gestionar asignaciones de profesores</p>
                 </div>
               </div>
@@ -418,7 +418,7 @@ function AdministrativoDashboardContent() {
               {permisos?.puedeAsignarProfesores ? (
                 <button
                   onClick={() => navegarA('/director/asignaciones-profesor')}
-                  className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-md text-sm font-medium transition-colors"
+                  className="w-full bg-[#8D2C1D] hover:bg-[#7C271A] text-white py-2 px-4 rounded-md text-sm font-medium transition-colors"
                 >
                   Acceder
                 </button>
@@ -433,14 +433,14 @@ function AdministrativoDashboardContent() {
 
         {/* Mensaje si no tiene permisos */}
         {permisos && !permisos.puedeRegistrarProfesores && !permisos.puedeRegistrarApoderados && !permisos.puedeRegistrarAdministrativos && !permisos.puedeRegistrarAlumnos && !permisos.puedeGestionarSalones && !permisos.puedeAsignarProfesores && (
-          <div className="mt-8 bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+          <div className="mt-8 bg-white border border-[#8D2C1D]/10 rounded-lg p-6 shadow-md">
             <div className="flex items-center">
-              <svg className="w-6 h-6 text-yellow-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-[#8D2C1D] mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
               <div>
-                <h3 className="text-lg font-medium text-yellow-800">Sin Permisos Asignados</h3>
-                <p className="text-yellow-700 mt-1">
+                <h3 className="text-lg font-medium text-gray-800">Sin Permisos Asignados</h3>
+                <p className="text-gray-600 mt-1">
                   Actualmente no tienes permisos para realizar ninguna función. 
                   Contacta al director para que te otorgue los permisos necesarios.
                 </p>
