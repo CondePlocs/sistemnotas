@@ -156,15 +156,7 @@ export class ReportesService {
           s.seccion,
           n.nombre as nivel,
           c.nombre as curso,
-          AVG(
-            CASE 
-              WHEN rn.nota = 'AD' THEN 4
-              WHEN rn.nota = 'A' THEN 3
-              WHEN rn.nota = 'B' THEN 2
-              WHEN rn.nota = 'C' THEN 1
-              ELSE 0
-            END
-          ) as promedio_numerico
+          AVG(COALESCE(rn."notaEscalaCalculo", 0)) as promedio_numerico
         FROM registro_nota rn
         INNER JOIN evaluacion e ON rn."evaluacionId" = e.id
         INNER JOIN competencia comp ON e."competenciaId" = comp.id
@@ -177,18 +169,10 @@ export class ReportesService {
         INNER JOIN nivel n ON cn."nivelId" = n.id
         WHERE a."colegioId" = ${colegioId} 
           AND e."periodoId" = ${periodoActivo.id}
-          AND rn.nota IN ('AD', 'A', 'B', 'C')
+          AND rn."notaEscalaCalculo" IS NOT NULL
           AND a.activo = true
         GROUP BY a.id, a.nombres, a.apellidos, a.dni, s.grado, s.seccion, n.nombre, c.id, c.nombre
-        HAVING AVG(
-          CASE 
-            WHEN rn.nota = 'AD' THEN 4
-            WHEN rn.nota = 'A' THEN 3
-            WHEN rn.nota = 'B' THEN 2
-            WHEN rn.nota = 'C' THEN 1
-            ELSE 0
-          END
-        ) < 3
+        HAVING AVG(COALESCE(rn."notaEscalaCalculo", 0)) < 2.5
       )
       SELECT 
         alumno_id,
@@ -201,9 +185,8 @@ export class ReportesService {
         curso,
         promedio_numerico,
         CASE 
-          WHEN promedio_numerico < 2 THEN 'RIESGO ALTO'
-          WHEN promedio_numerico < 2.5 THEN 'RIESGO MEDIO'
-          ELSE 'REQUIERE ATENCIÓN'
+          WHEN promedio_numerico < 1.5 THEN 'RIESGO ALTO'
+          ELSE 'RIESGO MEDIO'
         END as estado_riesgo
       FROM promedios_alumnos
       ORDER BY promedio_numerico ASC, apellidos, nombres
@@ -758,7 +741,9 @@ export class ReportesService {
     const totalEvaluaciones = evaluaciones.length;
     const promedioGeneral = notas.length > 0 
       ? notas.reduce((sum, nota) => {
-          const valor = nota.nota === 'AD' ? 4 : nota.nota === 'A' ? 3 : nota.nota === 'B' ? 2 : nota.nota === 'C' ? 1 : 0;
+          // Usar notaEscalaCalculo si está disponible, sino convertir manualmente
+          const valor = nota.notaEscalaCalculo || 
+            (nota.nota === 'AD' ? 4 : nota.nota === 'A' ? 3 : nota.nota === 'B' ? 2 : nota.nota === 'C' ? 1 : 0);
           return sum + valor;
         }, 0) / notas.length
       : 0;
@@ -871,15 +856,7 @@ export class ReportesService {
           s.seccion,
           n.nombre as nivel,
           c.nombre as curso,
-          AVG(
-            CASE 
-              WHEN rn.nota = 'AD' THEN 4
-              WHEN rn.nota = 'A' THEN 3
-              WHEN rn.nota = 'B' THEN 2
-              WHEN rn.nota = 'C' THEN 1
-              ELSE 0
-            END
-          ) as promedio_numerico
+          AVG(COALESCE(rn."notaEscalaCalculo", 0)) as promedio_numerico
         FROM registro_nota rn
         INNER JOIN evaluacion e ON rn."evaluacionId" = e.id
         INNER JOIN competencia comp ON e."competenciaId" = comp.id
@@ -892,18 +869,10 @@ export class ReportesService {
         INNER JOIN nivel n ON cn."nivelId" = n.id
         WHERE pa.id = ${profesorAsignacionId}
           AND e."periodoId" = ${periodoActivo.id}
-          AND rn.nota IN ('AD', 'A', 'B', 'C')
+          AND rn."notaEscalaCalculo" IS NOT NULL
           AND a.activo = true
         GROUP BY a.id, a.nombres, a.apellidos, a.dni, s.grado, s.seccion, n.nombre, c.id, c.nombre
-        HAVING AVG(
-          CASE 
-            WHEN rn.nota = 'AD' THEN 4
-            WHEN rn.nota = 'A' THEN 3
-            WHEN rn.nota = 'B' THEN 2
-            WHEN rn.nota = 'C' THEN 1
-            ELSE 0
-          END
-        ) < 2.5
+        HAVING AVG(COALESCE(rn."notaEscalaCalculo", 0)) < 2.5
       )
       SELECT 
         alumno_id,
@@ -958,20 +927,12 @@ export class ReportesService {
       SELECT 
         e.nombre as evaluacion_nombre,
         e."fechaEvaluacion",
-        AVG(
-          CASE 
-            WHEN rn.nota = 'AD' THEN 4
-            WHEN rn.nota = 'A' THEN 3
-            WHEN rn.nota = 'B' THEN 2
-            WHEN rn.nota = 'C' THEN 1
-            ELSE 0
-          END
-        ) as promedio_salon
+        AVG(COALESCE(rn."notaEscalaCalculo", 0)) as promedio_salon
       FROM evaluacion e
       INNER JOIN registro_nota rn ON e.id = rn."evaluacionId"
       WHERE e."profesorAsignacionId" = ${profesorAsignacionId}
         AND e."periodoId" = ${periodoActivo.id}
-        AND rn.nota IN ('AD', 'A', 'B', 'C')
+        AND rn."notaEscalaCalculo" IS NOT NULL
       GROUP BY e.id, e.nombre, e."fechaEvaluacion"
       ORDER BY e."fechaEvaluacion" DESC
       LIMIT 4

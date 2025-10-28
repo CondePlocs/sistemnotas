@@ -9,6 +9,7 @@ import { useEstimacionesIA } from '@/hooks/useEstimacionesIA';
 import { EstimacionUtils } from '@/types/ia';
 import ModalCrearEvaluacion from '../modals/ModalCrearEvaluacion';
 import BotonGuardarNotas from './BotonGuardarNotas';
+import FiltroAlumnos from './FiltroAlumnos';
 import { registroNotaAPI } from '@/lib/api/registro-nota';
 
 interface TablaEvaluacionesRealProps {
@@ -29,6 +30,7 @@ export default function TablaEvaluacionesReal({
   const [competenciaSeleccionada, setCompetenciaSeleccionada] = useState<number | null>(null);
   const [filaSeleccionada, setFilaSeleccionada] = useState<number | null>(null);
   const [columnaSeleccionada, setColumnaSeleccionada] = useState<number | null>(null);
+  const [alumnosFiltrados, setAlumnosFiltrados] = useState(contexto.alumnos);
 
   // Hook para gestionar estado de notas
   const {
@@ -116,6 +118,11 @@ export default function TablaEvaluacionesReal({
     
     return resultado;
   };
+
+  // Actualizar alumnos filtrados cuando cambie el contexto
+  useEffect(() => {
+    setAlumnosFiltrados(contexto.alumnos);
+  }, [contexto.alumnos]);
 
   // Cargar promedios cuando se cargan las notas iniciales
   useEffect(() => {
@@ -331,7 +338,7 @@ export default function TablaEvaluacionesReal({
                 <div className="text-white text-xs font-semibold text-center">
                   <div className="flex items-center gap-1">
                     <span>👥</span>
-                    <span>{contexto.alumnos.length} estudiantes</span>
+                    <span>{alumnosFiltrados.length} estudiantes</span>
                   </div>
                 </div>
               </div>
@@ -357,9 +364,17 @@ export default function TablaEvaluacionesReal({
           </div>
         </div>
 
-        {/* Tabla mejorada - Ancho completo con scroll horizontal */}
-        <div className="overflow-x-auto w-full">
-          <table className="w-full min-w-max">
+        {/* Filtro de Alumnos */}
+        <div className="p-4 border-b-2 border-[#8D2C1D]/20">
+          <FiltroAlumnos
+            alumnos={contexto.alumnos}
+            onFiltroChange={setAlumnosFiltrados}
+          />
+        </div>
+
+        {/* Tabla con scroll horizontal */}
+        <div className="overflow-x-auto max-h-[calc(100vh-200px)] overflow-y-auto">
+          <table className="w-full border-collapse">
             <thead>
               <tr className="bg-gradient-to-r from-[#FCE0C1] to-[#E9E1C9] border-b-4 border-[#8D2C1D]/30">
                 <th className="px-4 py-4 text-left text-sm font-bold text-[#8D2C1D] border-r-4 border-[#8D2C1D]/30 sticky left-0 bg-gradient-to-r from-[#FCE0C1] to-[#E9E1C9] z-10 min-w-[200px]">
@@ -414,7 +429,7 @@ export default function TablaEvaluacionesReal({
               </tr>
             </thead>
             <tbody className="divide-y-2 divide-[#8D2C1D]/20">
-              {contexto.alumnos.map((alumno, index) => (
+              {alumnosFiltrados.map((alumno, index) => (
                 <React.Fragment key={`alumno-${alumno.id}`}>
                   {/* Línea de separación cada 5 estudiantes */}
                   {index > 0 && index % 5 === 0 && (

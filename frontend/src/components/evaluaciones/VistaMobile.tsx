@@ -9,6 +9,7 @@ import { useEstimacionesIA } from '@/hooks/useEstimacionesIA';
 import { EstimacionUtils } from '@/types/ia';
 import ModalCrearEvaluacion from '../modals/ModalCrearEvaluacion';
 import BotonGuardarNotas from './BotonGuardarNotas';
+import FiltroAlumnos from './FiltroAlumnos';
 import { registroNotaAPI } from '@/lib/api/registro-nota';
 
 interface VistaMobileProps {
@@ -28,6 +29,7 @@ export default function VistaMobile({
   const [modalCrearAbierto, setModalCrearAbierto] = useState(false);
   const [competenciaSeleccionada, setCompetenciaSeleccionada] = useState<number | null>(null);
   const [alumnoExpandido, setAlumnoExpandido] = useState<number | null>(null);
+  const [alumnosFiltrados, setAlumnosFiltrados] = useState(contexto.alumnos);
 
   // Hook para gestionar estado de notas
   const {
@@ -92,6 +94,11 @@ export default function VistaMobile({
       establecerNotasIniciales([]);
     }
   };
+
+  // Actualizar alumnos filtrados cuando cambie el contexto
+  useEffect(() => {
+    setAlumnosFiltrados(contexto.alumnos);
+  }, [contexto.alumnos]);
 
   // Cargar notas iniciales desde la API
   useEffect(() => {
@@ -299,7 +306,7 @@ export default function VistaMobile({
               <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1">
                 <div className="text-white text-xs font-semibold flex items-center gap-1">
                   <span>👥</span>
-                  <span>{contexto.alumnos.length} estudiantes</span>
+                  <span>{alumnosFiltrados.length} estudiantes</span>
                 </div>
               </div>
               <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1">
@@ -320,9 +327,17 @@ export default function VistaMobile({
           </div>
         </div>
 
+        {/* Filtro de Alumnos */}
+        <div className="p-4 border-b-2 border-[#8D2C1D]/20">
+          <FiltroAlumnos
+            alumnos={contexto.alumnos}
+            onFiltroChange={setAlumnosFiltrados}
+          />
+        </div>
+
         {/* Lista de alumnos */}
         <div className="divide-y-2 divide-[#8D2C1D]/20">
-          {contexto.alumnos.map((alumno) => (
+          {alumnosFiltrados.map((alumno) => (
             <div key={alumno.id} className="p-4">
               {/* Header del alumno */}
               <div 

@@ -13,11 +13,11 @@ interface CursosProblemaDirectorProps {
 
 // Colores para el gráfico de barras (gradiente de intensidad)
 const COLORES_BARRAS = [
-  '#EF4444', // Rojo intenso - Mayor problema
-  '#F97316', // Naranja
-  '#F59E0B', // Amarillo
-  '#84CC16', // Verde lima
-  '#10B981'  // Verde - Menor problema
+  '#DC2626', // Rojo intenso - Mayor problema
+  '#EA580C', // Naranja
+  '#D97706', // Amarillo
+  '#65A30D', // Verde lima
+  '#059669'  // Verde - Menor problema
 ];
 
 const CursosProblemaDirector: React.FC<CursosProblemaDirectorProps> = ({
@@ -90,12 +90,13 @@ const CursosProblemaDirector: React.FC<CursosProblemaDirectorProps> = ({
   const datosGrafico = data.cursosProblema.map(curso => ({
     nombre: curso.nombre.length > 15 ? curso.nombre.substring(0, 15) + '...' : curso.nombre,
     nombreCompleto: curso.nombre,
-    porcentaje: curso.porcentajeProblema,
+    porcentaje: Number(curso.porcentajeProblema) || 0,
     totalAlumnos: curso.totalAlumnos,
     alumnosProblema: curso.alumnosProblema,
     detalleB: curso.detalleProblemas.B,
     detalleC: curso.detalleProblemas.C
   }));
+
 
   // Tooltip personalizado
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -157,6 +158,7 @@ const CursosProblemaDirector: React.FC<CursosProblemaDirectorProps> = ({
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
             <XAxis 
               type="number" 
+              domain={[0, 100]}
               tick={{ fontSize: 12 }}
               tickFormatter={(value) => `${value}%`}
             />
@@ -167,9 +169,19 @@ const CursosProblemaDirector: React.FC<CursosProblemaDirectorProps> = ({
               width={75}
             />
             <Tooltip content={<CustomTooltip />} />
-            <Bar dataKey="porcentaje" radius={[0, 4, 4, 0]}>
+            <Bar 
+              dataKey="porcentaje" 
+              fill="#DC2626"
+              stroke="#991B1B"
+              strokeWidth={1}
+            >
               {datosGrafico.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORES_BARRAS[index] || COLORES_BARRAS[4]} />
+                <Cell 
+                  key={`cell-${index}`} 
+                  fill={COLORES_BARRAS[index % COLORES_BARRAS.length]} 
+                  stroke="#991B1B"
+                  strokeWidth={1}
+                />
               ))}
             </Bar>
           </BarChart>
