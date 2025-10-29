@@ -1,94 +1,163 @@
-@startuml Diagrama de Clases - Registro de Notas (Núcleo del Sistema)
+@startuml Diagrama de Clases - Sistema de Registro de Notas
 
 skinparam class {
     BackgroundColor #E8F4FD
     BorderColor #1F2937
 }
 
-title NÚCLEO DEL SISTEMA: Clases del Registro de Notas
-
-' CONTROLADORES
-class RegistroNotaController {
-    +registrarNota(): RegistroNota
-    +calcularPromedios(): Promedio
-    +obtenerEstadisticas(): Estadisticas
+skinparam package {
+    BackgroundColor #F0F9FF
 }
 
-class IaController {
-    +estimarNota(): EstimacionIA
-    +analizarPatrones(): AnalisisPatron
+title SISTEMA DE REGISTRO DE NOTAS: Diagrama de Clases
+
+' CONTROLADORES
+package "Controladores" {
+    class RegistroNotaController {
+        +registrarNota(dto: RegistroNotaDto): Promise<RegistroNota>
+        +modificarNota(id: number, dto: ModificacionNotaDto): Promise<RegistroNota>
+        +obtenerNotas(filtros: FiltroNotasDto): Promise<RegistroNota[]>
+        +calcularPromedios(alumnoId: number): Promise<Promedio[]>
+        +obtenerEstadisticas(periodoId: number): Promise<Estadisticas>
+    }
+
+    class EvaluacionController {
+        +crearEvaluacion(dto: EvaluacionDto): Promise<Evaluacion>
+        +configurarCriterios(id: number, criterios: CriterioDto[]): Promise<Evaluacion>
+        +listarEvaluaciones(filtros: FiltroEvaluacionDto): Promise<Evaluacion[]>
+    }
+
+    class IaController {
+        +estimarNota(alumnoId: number): Promise<EstimacionIA>
+        +analizarPatrones(cursoId: number): Promise<AnalisisPatron[]>
+        +generarRecomendaciones(alumnoId: number): Promise<Recomendacion[]>
+    }
 }
 
 ' SERVICIOS
-package "Servicios" #F0F9FF {
+package "Servicios Core" {
     class RegistroNotaService {
-        +registrarNota(): RegistroNota
-        +validarNota(): boolean
-        +auditarCambio(): void
+        -prisma: PrismaService
+        +registrarNota(data: RegistroNotaData): Promise<RegistroNota>
+        +modificarNota(id: number, data: ModificacionNotaData): Promise<RegistroNota>
+        +validarNota(nota: string, escala: EscalaCalificacion): boolean
+        +auditarCambio(notaId: number, usuario: Usuario): Promise<void>
     }
 
     class NotaCalculoService {
-        +calcularPromedio(): number
-        +convertirNota(): string
-        +actualizarPromedios(): void
+        +calcularPromedio(notas: RegistroNota[]): number
+        +convertirNota(valor: string, origen: EscalaCalificacion, destino: EscalaCalificacion): string
+        +actualizarPromedios(alumnoId: number): Promise<void>
+    }
+
+    class EvaluacionService {
+        +crearEvaluacion(data: EvaluacionData): Promise<Evaluacion>
+        +validarCriterios(criterios: Criterio[]): boolean
+        +asignarCompetencias(id: number, competencias: number[]): Promise<void>
     }
 }
 
-package "Servicios de Inteligencia Artificial" #F3E8FF {
+package "Servicios IA" {
     class IaService {
-        +estimarNota(): EstimacionIA
-        +analizarPatrones(): PatronAprendizaje
-        +calcularMomentum(): number
+        +estimarNota(historial: RegistroNota[]): EstimacionIA
+        +analizarPatrones(datos: DatosAnalisis): PatronAprendizaje[]
+        +calcularMomentum(historial: RegistroNota[]): number
+        +generarRecomendaciones(perfil: PerfilAlumno): Recomendacion[]
     }
 }
 
 ' ENTIDADES
-package "Entidades" #E8F4FD {
+package "Entidades Core" {
     class RegistroNota {
         +id: number
         +alumnoId: number
         +evaluacionId: number
+        +salonCursoId: number
         +nota: string
+        +escala: EscalaCalificacion
         +registradoPor: number
+        +fechaRegistro: Date
+        +estado: EstadoNota
     }
 
     class Evaluacion {
         +id: number
-        +competenciaId: number
         +nombre: string
-        +fecha: Date
+        +descripcion: string
+        +competenciaId: number
+        +periodoId: number
+        +criterios: Criterio[]
+        +escala: EscalaCalificacion
+        +peso: number
+        +fechaAplicacion: Date
     }
+
+    class Curso {
+        +id: number
+        +nombre: string
+        +codigo: string
+        +nivelId: number
+        +competencias: Competencia[]
+        +estado: EstadoCurso
+    }
+}
+
+package "Entidades Académicas" {
     class Alumno {
         +id: number
         +nombres: string
         +apellidos: string
         +dni: string
+        +estado: EstadoAlumno
+    }
+
+    class SalonCurso {
+        +id: number
+        +salonId: number
+        +cursoId: number
+        +profesorId: number
+        +periodo: PeriodoAcademico
+    }
+
+    class Competencia {
+        +id: number
+        +nombre: string
+        +descripcion: string
+        +cursoId: number
+        +criterios: Criterio[]
     }
 }
 
 ' RELACIONES
 RegistroNotaController --> RegistroNotaService
+RegistroNotaController --> NotaCalculoService
+EvaluacionController --> EvaluacionService
 IaController --> IaService
-RegistroNotaService --> RegistroNota
-IaService --> RegistroNota
 
-' FLUJO PRINCIPAL
-RegistroNotaController ..> RegistroNotaService : registrar
-RegistroNotaService ..> NotaCalculoService : calcular
-NotaCalculoService ..> IaService : estimar
+RegistroNotaService --> "1" RegistroNota: gestiona
+NotaCalculoService --> "*" RegistroNota: procesa
+EvaluacionService --> "1" Evaluacion: gestiona
+IaService --> "*" RegistroNota: analiza
 
+RegistroNota "*" -- "1" Evaluacion
+RegistroNota "*" -- "1" SalonCurso
+Evaluacion "*" -- "1" Competencia
+SalonCurso "*" -- "1" Curso
+Curso "1" -- "*" Competencia
+
+' NOTAS
 note right of RegistroNota
-    NÚCLEO DEL SISTEMA
+    Entidad Central del Sistema
     
-    Entidad central que desencadena
-    todos los procesos de cálculo y IA
+    Mantiene el historial completo
+    de calificaciones y su trazabilidad
 end note
 
 note right of IaService
-    INTELIGENCIA ARTIFICIAL
+    Sistema de IA Avanzado
     
-    Análisis avanzado con regresión
-    lineal y patrones de aprendizaje
+    Análisis predictivo usando
+    regresión y patrones de aprendizaje
 end note
 
 @enduml

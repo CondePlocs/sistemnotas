@@ -1,0 +1,92 @@
+@startuml Diagrama de Despliegue - Sistema de Notas
+
+skinparam {
+    NodeBackgroundColor #F0F9FF
+    NodeBorderColor #1E40AF
+    DatabaseBackgroundColor #E8F4FD
+    DatabaseBorderColor #1F2937
+    ArrowColor #1F2937
+    CloudBackgroundColor #EEF2FF
+    CloudBorderColor #1E40AF
+}
+
+title INFRAESTRUCTURA DE DESPLIEGUE: Sistema de Notas
+
+node "Cliente" as client {
+    [Navegador Web] as browser
+}
+
+node "Servidor de Desarrollo" as devserver {
+    package "Frontend (Next.js)" {
+        [Static Files] as static
+        [React Components] as components
+        [API Routes] as frontapi
+    }
+
+    package "Backend (NestJS)" {
+        [Controllers] as controllers
+        [Services] as services
+        [Prisma Client] as prisma
+    }
+}
+
+database "Base de Datos PostgreSQL" as db {
+    [Pool de Conexiones] as pool
+    folder "Esquemas" {
+        [registro_nota] as notas
+        [alumno] as alumnos
+        [evaluacion] as eval
+        [competencia] as comp
+        [curso] as cursos
+        [salon] as salones
+    }
+}
+
+' Conexiones de Red
+client --> devserver : HTTP/3000 (Frontend)
+client ..> devserver : HTTP/3001 (Backend)
+devserver --> db : TCP/5432
+
+' Conexiones Internas Frontend
+browser --> static
+browser --> components
+browser --> frontapi
+
+' Conexiones Internas Backend
+frontapi --> controllers
+controllers --> services
+services --> prisma
+prisma --> pool
+
+' Conexiones Base de Datos
+pool --> notas
+pool --> alumnos
+pool --> eval
+pool --> comp
+pool --> cursos
+pool --> salones
+
+note right of devserver
+  Servidor de Desarrollo
+  ==
+  Frontend (puerto 3000):
+  - Next.js con Hot Reload
+  - React Components
+  - API Routes
+  
+  Backend (puerto 3001):
+  - NestJS con Hot Reload
+  - JWT Auth
+  - Prisma ORM
+end note
+
+note right of db
+  PostgreSQL
+  ==
+  - Campos de auditoría automáticos
+  - Foreign keys y constraints
+  - Índices optimizados
+  - Tipos enumerados
+end note
+
+@enduml

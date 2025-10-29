@@ -1,0 +1,99 @@
+@startuml Diagrama de Componentes - Sistema de Notas
+
+skinparam {
+    ComponentBackgroundColor #F0F9FF
+    ComponentBorderColor #1E40AF
+    InterfaceBackgroundColor #EEF2FF
+    InterfaceBorderColor #1E40AF
+    DatabaseBackgroundColor #E8F4FD
+    DatabaseBorderColor #1F2937
+    ArrowColor #1F2937
+    PackageBackgroundColor #FFFFFF
+    PackageBorderColor #1E40AF
+}
+
+title ARQUITECTURA DE COMPONENTES: Sistema de Notas
+
+package "Frontend (Next.js)" {
+    [Páginas y Componentes] as UI
+    [API Routes] as APIRoutes
+}
+
+package "Backend (NestJS)" {
+    package "Módulo de Registro de Notas" {
+        [RegistroNotaController] as NotasController
+        [RegistroNotaService] as NotasService
+        [NotaCalculoService] as CalculoService
+    }
+    
+    package "Módulo de IA" {
+        [IaController] as IAController
+        [IaService] as IAService
+    }
+
+    package "Módulos de Apoyo" {
+        [AuthModule] as Auth
+        [EstadisticasModule] as Stats
+        [ReportesModule] as Reports
+    }
+}
+
+package "Infraestructura" {
+    [PrismaService] as Prisma
+    [JwtService] as JWT
+}
+
+database "PostgreSQL" {
+    [registro_nota]
+    [evaluacion]
+    [alumno]
+    [salon_curso]
+}
+
+' Conexiones Frontend-Backend
+UI --> APIRoutes
+APIRoutes --> NotasController
+APIRoutes --> IAController
+
+' Conexiones Módulos
+NotasController --> NotasService
+NotasController --> CalculoService
+IAController --> IAService
+
+' Conexiones con Prisma
+NotasService --> Prisma
+CalculoService --> Prisma
+IAService --> Prisma
+Prisma --> registro_nota
+Prisma --> evaluacion
+Prisma --> alumno
+Prisma --> salon_curso
+
+' Autenticación
+Auth --> JWT
+
+note right of NotasService
+  Núcleo del Sistema
+  ==
+  - Registro de notas
+  - Validación de datos
+  - Campos de auditoría automáticos
+end note
+
+note right of CalculoService
+  Motor de Cálculos
+  ==
+  - Conversión de escalas
+  - Cálculo de promedios
+  - Normalización 1.0-4.0
+end note
+
+note right of IAService
+  Sistema Inteligente
+  ==
+  - Análisis de patrones
+  - Predicciones
+  - Momentum de aprendizaje
+end note
+
+@enduml

@@ -1,64 +1,94 @@
-@startuml Casos de Uso - Registro de Notas (Núcleo del Sistema)
+@startuml Casos de Uso - Sistema de Registro de Notas (Núcleo)
 
-skinparam actor {
-    BackgroundColor #E8F4FD
-    BorderColor #1F2937
-}
-
-skinparam usecase {
-    BackgroundColor #F0F9FF
-    BorderColor #1E40AF
+skinparam {
+    ActorBackgroundColor #E8F4FD
+    ActorBorderColor #1F2937
+    UsecaseBackgroundColor #F0F9FF
+    UsecaseBorderColor #1E40AF
+    PackageBackgroundColor #F0F9FF
+    PackageBorderColor #1E40AF
+    ArrowColor #1F2937
 }
 
 title NÚCLEO DEL SISTEMA: Registro de Notas
 
+' ACTORES PRINCIPALES
 actor "Profesor" as Profesor
 actor "Sistema IA" as SistemaIA
 
-rectangle "Registro de Notas" {
-    
-    ' NÚCLEO PRINCIPAL
-    usecase "Registrar Nota" as UC_REGISTRAR
-    usecase "Calcular Promedios" as UC_CALCULAR
-    usecase "Generar Estimación IA" as UC_IA
-    
-    ' PROCESOS DE APOYO
-    usecase "Validar Nota" as UC_VALIDAR
-    usecase "Convertir Literal/Numérico" as UC_CONVERTIR
-    usecase "Analizar Patrones" as UC_PATRONES
-    
-    ' RESULTADOS
-    usecase "Ver Tabla de Notas" as UC_VER
-    usecase "Consultar Estadísticas" as UC_STATS
+rectangle "Sistema de Registro de Notas" {
+    package "Proceso Principal" {
+        usecase "Registrar Nota\nIndividual" as UC1
+        usecase "Registrar Notas\npor Lote" as UC2
+        usecase "Modificar Nota" as UC3
+    }
+
+    package "Procesamiento de Notas" {
+        usecase "Validar Formato\ny Rango" as UC4
+        usecase "Convertir Escalas\n(Literal ↔ Numérico)" as UC5
+        usecase "Convertir a Escala\nde Cálculo (1.0-4.0)" as UC6
+        usecase "Calcular\nPromedios" as UC7
+    }
+
+    package "Análisis Inteligente" {
+        usecase "Estimar Nota\nBasada en Patrones" as UC8
+        usecase "Analizar Patrones\nde Rendimiento" as UC9
+        usecase "Calcular Momentum\nde Aprendizaje" as UC10
+    }
+
+    package "Visualización" {
+        usecase "Ver Registro\nde Notas" as UC11
+        usecase "Consultar\nEstadísticas" as UC12
+    }
 }
 
 ' RELACIONES PRINCIPALES
-Profesor --> UC_REGISTRAR
-Profesor --> UC_VER
-SistemaIA --> UC_IA
+Profesor --> UC1
+Profesor --> UC2
+Profesor --> UC3
+Profesor --> UC11
+Profesor --> UC12
 
-' FLUJO DEL NÚCLEO
-UC_REGISTRAR ..> UC_VALIDAR : <<include>>
-UC_REGISTRAR ..> UC_CALCULAR : <<include>>
-UC_REGISTRAR ..> UC_IA : <<include>>
+SistemaIA --> UC8
+SistemaIA --> UC9
+SistemaIA --> UC10
 
-UC_CALCULAR ..> UC_CONVERTIR : <<include>>
-UC_IA ..> UC_PATRONES : <<include>>
+' RELACIONES DE INCLUSIÓN
+UC1 ..> UC4 : <<include>>
+UC1 ..> UC5 : <<include>>
+UC1 ..> UC6 : <<include>>
 
-UC_VER ..> UC_STATS : <<extend>>
+UC2 ..> UC4 : <<include>>
+UC2 ..> UC5 : <<include>>
+UC2 ..> UC6 : <<include>>
 
-note right of UC_REGISTRAR
+UC3 ..> UC4 : <<include>>
+UC3 ..> UC5 : <<include>>
+UC3 ..> UC6 : <<include>>
+
+' RELACIONES DE EXTENSIÓN
+UC1 ..> UC7 : <<extend>>
+UC7 ..> UC8 : <<extend>>
+UC7 ..> UC9 : <<extend>>
+
+UC11 ..> UC12 : <<extend>>
+
+note right of UC1
     CORAZÓN DEL SISTEMA
     
-    Proceso central que desencadena
-    validaciones, cálculos y IA
+    Proceso principal que incluye:
+    1. Validación automática
+    2. Conversión de escalas
+    3. Cálculo de promedios
 end note
 
-note right of UC_IA
-    INTELIGENCIA ARTIFICIAL
+note right of UC8
+    SISTEMA IA
     
-    Estimaciones avanzadas con
-    análisis de patrones y momentum
+    Análisis avanzado:
+    - Patrones históricos
+    - Predicción de rendimiento
+    - Momentum de aprendizaje
 end note
 
 @enduml
