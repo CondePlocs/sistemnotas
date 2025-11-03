@@ -1,6 +1,7 @@
 import { Injectable, Logger, NotFoundException, ForbiddenException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../../providers/prisma.service';
 import { NotaCalculoService } from '../registro-nota/services/nota-calculo.service';
+import { IaService } from '../ia/ia.service';
 import { CreateApoderadoDto, UpdateApoderadoDto, RelacionApoderadoAlumnoDto, CrearRelacionesDto, ActualizarRelacionDto } from './dto';
 import * as bcrypt from 'bcrypt';
 
@@ -10,7 +11,8 @@ export class ApoderadoService {
   
   constructor(
     private readonly prisma: PrismaService,
-    private readonly notaCalculoService: NotaCalculoService
+    private readonly notaCalculoService: NotaCalculoService,
+    private readonly iaService: IaService
   ) {}
 
   async crearApoderado(createApoderadoDto: CreateApoderadoDto, userId: number) {
@@ -1255,18 +1257,49 @@ export class ApoderadoService {
     // Log de resultados para debug
     const totalEvaluaciones = curso.competencias.reduce((total, comp) => total + comp.evaluaciones.length, 0);
     this.logger.log(`Evaluaciones encontradas: ${totalEvaluaciones} (filtradas por periodo ${periodoActivo.id} y asignación ${profesorAsignacionId})`);
-    
-    curso.competencias.forEach(competencia => {
-      this.logger.log(`Competencia "${competencia.nombre}": ${competencia.evaluaciones.length} evaluaciones`);
-    });
 
-    // 7. Calcular promedios usando NotaCalculoService
-    const competenciasConPromedios = curso.competencias.map(competencia => {
-      const evaluacionesConNotas = competencia.evaluaciones.map(evaluacion => ({
-        id: evaluacion.id,
-        nombre: evaluacion.nombre,
-        fechaEvaluacion: evaluacion.fechaEvaluacion,
-        nota: evaluacion.notas[0]?.nota || null
+    // 7. Calcular promedios usando NotaCalculoService + Estimaciones IA
+    const competenciasConPromedios = await Promise.all(curso.competencias.map(async competencia => {
+      const evaluacionesConNotas = await Promise.all(competencia.evaluaciones.map(async evaluacion => {
+        let nota = evaluacion.notas[0]?.nota || null;
+        let esEstimacion = false;
+        
+        // Si no hay nota registrada, intentar obtener estimación IA
+        if (!nota) {
+          try {
+            // Obtener la asignación del profesor para esta evaluación
+            const evaluacionCompleta = await this.prisma.evaluacion.findUnique({
+              where: { id: evaluacion.id },
+              select: { profesorAsignacionId: true }
+            });
+            
+            if (evaluacionCompleta?.profesorAsignacionId) {
+              const estimacion = await this.iaService.estimarNota({
+                alumnoId: alumnoId,
+                competenciaId: competencia.id,
+                profesorAsignacionId: evaluacionCompleta.profesorAsignacionId,
+                proximaTarea: 1 // Usar 1 como valor estándar para estimaciones de padres
+              });
+              
+              // Solo usar la estimación si tiene confianza mínima
+              if (estimacion.confianza >= 0.3) {
+                nota = estimacion.notaEstimadaLiteral;
+                esEstimacion = true;
+              }
+            }
+          } catch (error) {
+            // Si falla la estimación, continuar sin nota
+            this.logger.warn(`Error al generar estimación IA para evaluación ${evaluacion.id}: ${error.message}`);
+          }
+        }
+        
+        return {
+          id: evaluacion.id,
+          nombre: evaluacion.nombre,
+          fechaEvaluacion: evaluacion.fechaEvaluacion,
+          nota: nota,
+          esEstimacion: esEstimacion
+        };
       }));
 
       // Calcular promedio de la competencia usando el servicio de cálculo
@@ -1289,7 +1322,7 @@ export class ApoderadoService {
         promedio: promedioCompetencia,
         evaluaciones: evaluacionesConNotas
       };
-    });
+    }));
 
     // 8. Calcular promedio general del curso
     const promediosCompetencias = competenciasConPromedios

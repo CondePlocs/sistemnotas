@@ -298,32 +298,42 @@ export class PdfGeneratorService {
             .section-title {
               background: #2563eb;
               color: white;
-              padding: 10px 15px;
+              padding: 8px 12px;
               margin: 20px 0 10px 0;
-              border-radius: 5px;
+              border-radius: 4px;
+              font-size: 14px;
               font-weight: bold;
             }
             .alumnos-table {
               width: 100%;
               border-collapse: collapse;
-              margin-bottom: 20px;
+              margin: 15px 0;
+              background: white;
             }
             .alumnos-table th,
             .alumnos-table td {
               border: 1px solid #ddd;
-              padding: 8px;
+              padding: 8px 10px;
               text-align: left;
+              font-size: 10px;
             }
             .alumnos-table th {
-              background: #f3f4f6;
+              background-color: #f8f9fa;
               font-weight: bold;
+              color: #374151;
+            }
+            .alumnos-table tr:nth-child(even) {
+              background-color: #f9f9f9;
             }
             .nota-sugerida {
-              font-weight: bold;
               padding: 4px 8px;
-              border-radius: 4px;
+              border-radius: 12px;
+              font-weight: bold;
+              font-size: 9px;
               color: white;
             }
+            .nota-ad { background: #10b981; }
+            .nota-a { background: #3b82f6; }
             .nota-b { background: #f59e0b; }
             .nota-c { background: #dc2626; }
             .recomendaciones {
@@ -856,32 +866,49 @@ export class PdfGeneratorService {
           </div>
           ` : ''}
 
-          <!-- Evaluaciones y Notas -->
+          <!-- Evaluaciones y Notas - SEPARADO POR CURSO -->
           ${datos.notas && datos.notas.length > 0 ? `
           <div class="section">
             <h2 class="section-title">📝 Evaluaciones y Notas</h2>
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Curso</th>
-                  <th>Competencia</th>
-                  <th>Evaluación</th>
-                  <th style="width: 60px;">Nota</th>
-                  <th style="width: 80px;">Fecha</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${datos.notas.map((nota: any) => `
-                  <tr>
-                    <td>${nota.cursoNombre}</td>
-                    <td>${nota.competenciaNombre}</td>
-                    <td>${nota.evaluacionNombre}</td>
-                    <td style="text-align: center; font-weight: bold;">${nota.nota}</td>
-                    <td>${nota.fechaRegistro ? new Date(nota.fechaRegistro).toLocaleDateString('es-PE') : ''}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
+            ${(() => {
+              // Agrupar notas por curso
+              const notasPorCurso = new Map();
+              datos.notas.forEach((nota: any) => {
+                if (!notasPorCurso.has(nota.cursoNombre)) {
+                  notasPorCurso.set(nota.cursoNombre, []);
+                }
+                notasPorCurso.get(nota.cursoNombre).push(nota);
+              });
+              
+              // Generar HTML para cada curso
+              return Array.from(notasPorCurso.entries()).map(([cursoNombre, notasCurso], index) => `
+                <div class="curso-section" style="margin-bottom: 25px;">
+                  <h3 style="color: #2563eb; font-size: 13px; margin: 15px 0 10px 0; padding: 8px; background-color: #f0f4ff; border-left: 4px solid #2563eb;">
+                    📚 ${cursoNombre}
+                  </h3>
+                  <table class="table" style="margin-top: 10px;">
+                    <thead>
+                      <tr>
+                        <th>Competencia</th>
+                        <th>Evaluación</th>
+                        <th style="width: 60px;">Nota</th>
+                        <th style="width: 80px;">Fecha</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${notasCurso.map((nota: any) => `
+                        <tr>
+                          <td>${nota.competenciaNombre}</td>
+                          <td>${nota.evaluacionNombre}</td>
+                          <td style="text-align: center; font-weight: bold;">${nota.nota}</td>
+                          <td>${nota.fechaRegistro ? new Date(nota.fechaRegistro).toLocaleDateString('es-PE') : ''}</td>
+                        </tr>
+                      `).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              `).join('');
+            })()} 
           </div>
           ` : ''}
 

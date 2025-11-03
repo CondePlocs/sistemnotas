@@ -6,6 +6,35 @@ export class ExcelGeneratorService {
   private readonly logger = new Logger(ExcelGeneratorService.name);
 
   /**
+   * Obtiene el valor de escala de cálculo, con fallback para datos legacy
+   * Prioriza notaEscalaCalculo, pero calcula desde nota si es necesario
+   */
+  private obtenerEscalaCalculo(nota: string, notaEscalaCalculo: number | null): number {
+    // Si ya tenemos el valor calculado, lo usamos
+    if (notaEscalaCalculo !== null && notaEscalaCalculo > 0) {
+      return notaEscalaCalculo;
+    }
+
+    // Fallback para datos legacy o casos donde no se calculó
+    if (nota === 'AD') return 4.0;
+    if (nota === 'A') return 3.0;
+    if (nota === 'B') return 2.0;
+    if (nota === 'C') return 1.0;
+
+    // Para notas numéricas, convertir a escala 1.0-4.0
+    const notaNum = parseFloat(nota);
+    if (!isNaN(notaNum)) {
+      if (notaNum >= 0 && notaNum <= 20) {
+        // Conversión de escala 0-20 a 1.0-4.0
+        return Math.max(1.0, Math.min(4.0, 1.0 + (notaNum / 20) * 3.0));
+      }
+    }
+
+    // Valor por defecto para casos no reconocidos
+    return 1.0;
+  }
+
+  /**
    * Crea un nuevo workbook de Excel
    */
   createWorkbook(): ExcelJS.Workbook {
@@ -338,10 +367,11 @@ export class ExcelGeneratorService {
         });
 
         // Calcular promedio del alumno
+        // CORREGIDO: Usar función auxiliar que maneja notas mixtas (alfabéticas + numéricas)
         const notasAlumno = datos.notas?.filter((n: any) => n.alumnoId === alumno.id) || [];
         const promedio = notasAlumno.length > 0 
           ? notasAlumno.reduce((sum: number, nota: any) => {
-              const valor = nota.nota === 'AD' ? 4 : nota.nota === 'A' ? 3 : nota.nota === 'B' ? 2 : nota.nota === 'C' ? 1 : 0;
+              const valor = this.obtenerEscalaCalculo(nota.nota, nota.notaEscalaCalculo);
               return sum + valor;
             }, 0) / notasAlumno.length
           : 0;
@@ -445,27 +475,52 @@ export class ExcelGeneratorService {
       });
     }
 
-    // Sección de Evaluaciones y Notas
+    // Sección de Evaluaciones y Notas - SEPARADO POR CURSO
     currentRow += 2;
     worksheet.getCell(`A${currentRow}`).value = 'EVALUACIONES Y NOTAS';
     worksheet.getCell(`A${currentRow}`).font = { bold: true, size: 12 };
     currentRow++;
 
     if (datos.notas && datos.notas.length > 0) {
-      const notasHeaders = ['Curso', 'Competencia', 'Evaluación', 'Nota', 'Fecha'];
-      worksheet.addRow(notasHeaders);
-      this.applyHeaderStyle(worksheet, currentRow, notasHeaders.length);
-      currentRow++;
-
+      // Agrupar notas por curso
+      const notasPorCurso = new Map();
       datos.notas.forEach((nota: any) => {
-        worksheet.addRow([
-          nota.cursoNombre,
-          nota.competenciaNombre,
-          nota.evaluacionNombre,
-          nota.nota,
-          nota.fechaRegistro ? new Date(nota.fechaRegistro).toLocaleDateString('es-PE') : ''
-        ]);
+        if (!notasPorCurso.has(nota.cursoNombre)) {
+          notasPorCurso.set(nota.cursoNombre, []);
+        }
+        notasPorCurso.get(nota.cursoNombre).push(nota);
+      });
+
+      // Mostrar cada curso por separado
+      Array.from(notasPorCurso.entries()).forEach(([cursoNombre, notasCurso], index) => {
+        // Espacio entre cursos (excepto el primero)
+        if (index > 0) {
+          currentRow += 2;
+        } else {
+          currentRow++;
+        }
+
+        // Título del curso
+        worksheet.getCell(`A${currentRow}`).value = `📚 CURSO: ${cursoNombre}`;
+        worksheet.getCell(`A${currentRow}`).font = { bold: true, size: 11, color: { argb: 'FF2563eb' } };
         currentRow++;
+
+        // Headers de la tabla del curso
+        const notasHeaders = ['Competencia', 'Evaluación', 'Nota', 'Fecha'];
+        worksheet.addRow(notasHeaders);
+        this.applyHeaderStyle(worksheet, currentRow, notasHeaders.length);
+        currentRow++;
+
+        // Notas del curso
+        (notasCurso as any[]).forEach((nota: any) => {
+          worksheet.addRow([
+            nota.competenciaNombre,
+            nota.evaluacionNombre,
+            nota.nota,
+            nota.fechaRegistro ? new Date(nota.fechaRegistro).toLocaleDateString('es-PE') : ''
+          ]);
+          currentRow++;
+        });
       });
     }
 

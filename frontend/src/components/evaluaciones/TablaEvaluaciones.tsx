@@ -266,22 +266,22 @@ export default function TablaEvaluacionesReal({
     
     const notaParaColor = nota ? convertirALetra(nota) : null;
     if (esEstimacion) {
-      // Colores especiales para estimaciones de IA
+      // Colores suaves para estimaciones de IA
       switch (notaParaColor) {
-        case 'AD': return 'bg-gradient-to-br from-purple-400 to-purple-500 text-white border-purple-500 hover:from-purple-500 hover:to-purple-600 ring-2 ring-purple-300';
-        case 'A': return 'bg-gradient-to-br from-indigo-400 to-indigo-500 text-white border-indigo-500 hover:from-indigo-500 hover:to-indigo-600 ring-2 ring-indigo-300';
-        case 'B': return 'bg-gradient-to-br from-pink-400 to-pink-500 text-white border-pink-500 hover:from-pink-500 hover:to-pink-600 ring-2 ring-pink-300';
-        case 'C': return 'bg-gradient-to-br from-orange-400 to-orange-500 text-white border-orange-500 hover:from-orange-500 hover:to-orange-600 ring-2 ring-orange-300';
-        default: return 'bg-gradient-to-br from-gray-400 to-gray-500 text-white border-gray-500 hover:from-gray-500 hover:to-gray-600 ring-2 ring-gray-300';
+        case 'AD': return 'bg-gradient-to-br from-purple-200 to-purple-300 text-purple-800 border-purple-400 hover:from-purple-300 hover:to-purple-400 ring-2 ring-purple-200 border-dashed';
+        case 'A': return 'bg-gradient-to-br from-indigo-200 to-indigo-300 text-indigo-800 border-indigo-400 hover:from-indigo-300 hover:to-indigo-400 ring-2 ring-indigo-200 border-dashed';
+        case 'B': return 'bg-gradient-to-br from-pink-200 to-pink-300 text-pink-800 border-pink-400 hover:from-pink-300 hover:to-pink-400 ring-2 ring-pink-200 border-dashed';
+        case 'C': return 'bg-gradient-to-br from-orange-200 to-orange-300 text-orange-800 border-orange-400 hover:from-orange-300 hover:to-orange-400 ring-2 ring-orange-200 border-dashed';
+        default: return 'bg-gradient-to-br from-gray-200 to-gray-300 text-gray-700 border-gray-400 hover:from-gray-300 hover:to-gray-400 ring-2 ring-gray-200 border-dashed';
       }
     }
     
     if (notaParaColor === null) return 'bg-white/80 text-[#666666] border-[#E9E1C9] hover:bg-[#FCE0C1] hover:border-[#8D2C1D]';
     switch (notaParaColor) {
-      case 'AD': return 'bg-gradient-to-br from-green-400 to-green-500 text-white border-green-500 hover:from-green-500 hover:to-green-600';
-      case 'A': return 'bg-gradient-to-br from-blue-400 to-blue-500 text-white border-blue-500 hover:from-blue-500 hover:to-blue-600';
-      case 'B': return 'bg-gradient-to-br from-yellow-400 to-yellow-500 text-white border-yellow-500 hover:from-yellow-500 hover:to-yellow-600';
-      case 'C': return 'bg-gradient-to-br from-red-400 to-red-500 text-white border-red-500 hover:from-red-500 hover:to-red-600';
+      case 'AD': return 'bg-gradient-to-br from-emerald-200 to-emerald-300 text-emerald-800 border-emerald-300 hover:from-emerald-300 hover:to-emerald-400 hover:text-emerald-900';
+      case 'A': return 'bg-gradient-to-br from-blue-200 to-blue-300 text-blue-800 border-blue-300 hover:from-blue-300 hover:to-blue-400 hover:text-blue-900';
+      case 'B': return 'bg-gradient-to-br from-amber-200 to-amber-300 text-amber-800 border-amber-300 hover:from-amber-300 hover:to-amber-400 hover:text-amber-900';
+      case 'C': return 'bg-gradient-to-br from-rose-200 to-rose-300 text-rose-800 border-rose-300 hover:from-rose-300 hover:to-rose-400 hover:text-rose-900';
       default: return 'bg-white/80 text-[#666666] border-[#E9E1C9] hover:bg-[#FCE0C1] hover:border-[#8D2C1D]';
     }
   };
@@ -298,14 +298,14 @@ export default function TablaEvaluacionesReal({
     }
   };
 
-  // Obtener color para promedio final
+  // Obtener color para promedio final (suavizado)
   const getColorPromedioFinal = (promedio: string): string => {
     if (promedio === '-') return 'bg-gradient-to-br from-gray-200 to-gray-300 text-gray-600 border-2 border-gray-400';
     switch (promedio) {
-      case 'AD': return 'bg-gradient-to-br from-green-400 to-green-600 text-white border-2 border-green-600';
-      case 'A': return 'bg-gradient-to-br from-blue-400 to-blue-600 text-white border-2 border-blue-600';
-      case 'B': return 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-white border-2 border-yellow-600';
-      case 'C': return 'bg-gradient-to-br from-red-400 to-red-600 text-white border-2 border-red-600';
+      case 'AD': return 'bg-gradient-to-br from-emerald-200 to-emerald-300 text-emerald-800 border-2 border-emerald-400';
+      case 'A': return 'bg-gradient-to-br from-blue-200 to-blue-300 text-blue-800 border-2 border-blue-400';
+      case 'B': return 'bg-gradient-to-br from-amber-200 to-amber-300 text-amber-800 border-2 border-amber-400';
+      case 'C': return 'bg-gradient-to-br from-rose-200 to-rose-300 text-rose-800 border-2 border-rose-400';
       default: return 'bg-gradient-to-br from-gray-200 to-gray-300 text-gray-600 border-2 border-gray-400';
     }
   };

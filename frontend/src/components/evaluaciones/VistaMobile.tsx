@@ -267,10 +267,10 @@ export default function VistaMobile({
     const baseClasses = esEstimacion ? 'border-2 border-dashed' : 'border-2';
     
     switch (letraEquivalente) {
-      case 'AD': return `bg-gradient-to-br from-emerald-400 to-green-500 text-white ${baseClasses} border-emerald-600`;
-      case 'A': return `bg-gradient-to-br from-blue-400 to-indigo-500 text-white ${baseClasses} border-blue-600`;
-      case 'B': return `bg-gradient-to-br from-amber-400 to-orange-500 text-white ${baseClasses} border-amber-600`;
-      case 'C': return `bg-gradient-to-br from-red-400 to-rose-500 text-white ${baseClasses} border-red-600`;
+      case 'AD': return `bg-gradient-to-br from-emerald-200 to-emerald-300 text-emerald-800 ${baseClasses} border-emerald-400`;
+      case 'A': return `bg-gradient-to-br from-blue-200 to-blue-300 text-blue-800 ${baseClasses} border-blue-400`;
+      case 'B': return `bg-gradient-to-br from-amber-200 to-amber-300 text-amber-800 ${baseClasses} border-amber-400`;
+      case 'C': return `bg-gradient-to-br from-rose-200 to-rose-300 text-rose-800 ${baseClasses} border-rose-400`;
       default: return `bg-gradient-to-br from-gray-200 to-gray-300 text-gray-600 ${baseClasses} border-gray-400`;
     }
   };

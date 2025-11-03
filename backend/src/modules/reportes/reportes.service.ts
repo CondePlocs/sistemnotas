@@ -20,6 +20,46 @@ export class ReportesService {
   }
 
   /**
+   * Convierte un valor de escala de cálculo (1.0-4.0) a categoría de logro
+   * Esta función unifica el tratamiento de notas alfabéticas y numéricas
+   */
+  private convertirEscalaACategoria(escala: number): string {
+    if (escala >= 3.5) return 'AD';
+    if (escala >= 2.5) return 'A';
+    if (escala >= 1.5) return 'B';
+    return 'C';
+  }
+
+  /**
+   * Obtiene el valor de escala de cálculo, con fallback para datos legacy
+   * Prioriza notaEscalaCalculo, pero calcula desde nota si es necesario
+   */
+  private obtenerEscalaCalculo(nota: string, notaEscalaCalculo: number | null): number {
+    // Si ya tenemos el valor calculado, lo usamos
+    if (notaEscalaCalculo !== null && notaEscalaCalculo > 0) {
+      return notaEscalaCalculo;
+    }
+
+    // Fallback para datos legacy o casos donde no se calculó
+    if (nota === 'AD') return 4.0;
+    if (nota === 'A') return 3.0;
+    if (nota === 'B') return 2.0;
+    if (nota === 'C') return 1.0;
+
+    // Para notas numéricas, convertir a escala 1.0-4.0
+    const notaNum = parseFloat(nota);
+    if (!isNaN(notaNum)) {
+      if (notaNum >= 0 && notaNum <= 20) {
+        // Conversión de escala 0-20 a 1.0-4.0
+        return Math.max(1.0, Math.min(4.0, 1.0 + (notaNum / 20) * 3.0));
+      }
+    }
+
+    // Valor por defecto para casos no reconocidos
+    return 1.0;
+  }
+
+  /**
    * Genera un reporte según el tipo y formato solicitado
    */
   async generarReporte(
@@ -145,6 +185,7 @@ export class ReportesService {
     }
 
     // Query para obtener alumnos en riesgo (promedio < 3 en cualquier curso)
+    // CORREGIDO: Usando COALESCE completo para incluir TODAS las notas (alfabéticas + numéricas)
     const alumnosEnRiesgo = await this.prisma.$queryRaw`
       WITH promedios_alumnos AS (
         SELECT 
@@ -156,7 +197,17 @@ export class ReportesService {
           s.seccion,
           n.nombre as nivel,
           c.nombre as curso,
-          AVG(COALESCE(rn."notaEscalaCalculo", 0)) as promedio_numerico
+          AVG(
+            COALESCE(rn."notaEscalaCalculo", 
+              CASE 
+                WHEN rn.nota = 'AD' THEN 4.0
+                WHEN rn.nota = 'A' THEN 3.0
+                WHEN rn.nota = 'B' THEN 2.0
+                WHEN rn.nota = 'C' THEN 1.0
+                ELSE GREATEST(1.0, LEAST(4.0, 1.0 + (CAST(rn.nota AS FLOAT) / 20.0) * 3.0))
+              END
+            )
+          ) as promedio_numerico
         FROM registro_nota rn
         INNER JOIN evaluacion e ON rn."evaluacionId" = e.id
         INNER JOIN competencia comp ON e."competenciaId" = comp.id
@@ -169,10 +220,20 @@ export class ReportesService {
         INNER JOIN nivel n ON cn."nivelId" = n.id
         WHERE a."colegioId" = ${colegioId} 
           AND e."periodoId" = ${periodoActivo.id}
-          AND rn."notaEscalaCalculo" IS NOT NULL
+          AND rn.nota IS NOT NULL AND rn.nota != ''
           AND a.activo = true
         GROUP BY a.id, a.nombres, a.apellidos, a.dni, s.grado, s.seccion, n.nombre, c.id, c.nombre
-        HAVING AVG(COALESCE(rn."notaEscalaCalculo", 0)) < 2.5
+        HAVING AVG(
+          COALESCE(rn."notaEscalaCalculo", 
+            CASE 
+              WHEN rn.nota = 'AD' THEN 4.0
+              WHEN rn.nota = 'A' THEN 3.0
+              WHEN rn.nota = 'B' THEN 2.0
+              WHEN rn.nota = 'C' THEN 1.0
+              ELSE GREATEST(1.0, LEAST(4.0, 1.0 + (CAST(rn.nota AS FLOAT) / 20.0) * 3.0))
+            END
+          )
+        ) < 2.5
       )
       SELECT 
         alumno_id,
@@ -741,9 +802,8 @@ export class ReportesService {
     const totalEvaluaciones = evaluaciones.length;
     const promedioGeneral = notas.length > 0 
       ? notas.reduce((sum, nota) => {
-          // Usar notaEscalaCalculo si está disponible, sino convertir manualmente
-          const valor = nota.notaEscalaCalculo || 
-            (nota.nota === 'AD' ? 4 : nota.nota === 'A' ? 3 : nota.nota === 'B' ? 2 : nota.nota === 'C' ? 1 : 0);
+          // CORREGIDO: Usar función auxiliar que maneja notas mixtas (alfabéticas + numéricas)
+          const valor = this.obtenerEscalaCalculo(nota.nota, nota.notaEscalaCalculo);
           return sum + valor;
         }, 0) / notas.length
       : 0;
@@ -845,6 +905,7 @@ export class ReportesService {
     }
 
     // Query para obtener alumnos en riesgo del salón específico
+    // CORREGIDO: Usando COALESCE completo para incluir TODAS las notas (alfabéticas + numéricas)
     const alumnosEnRiesgo = await this.prisma.$queryRaw`
       WITH promedios_alumnos AS (
         SELECT 
@@ -856,7 +917,17 @@ export class ReportesService {
           s.seccion,
           n.nombre as nivel,
           c.nombre as curso,
-          AVG(COALESCE(rn."notaEscalaCalculo", 0)) as promedio_numerico
+          AVG(
+            COALESCE(rn."notaEscalaCalculo", 
+              CASE 
+                WHEN rn.nota = 'AD' THEN 4.0
+                WHEN rn.nota = 'A' THEN 3.0
+                WHEN rn.nota = 'B' THEN 2.0
+                WHEN rn.nota = 'C' THEN 1.0
+                ELSE GREATEST(1.0, LEAST(4.0, 1.0 + (CAST(rn.nota AS FLOAT) / 20.0) * 3.0))
+              END
+            )
+          ) as promedio_numerico
         FROM registro_nota rn
         INNER JOIN evaluacion e ON rn."evaluacionId" = e.id
         INNER JOIN competencia comp ON e."competenciaId" = comp.id
@@ -869,10 +940,20 @@ export class ReportesService {
         INNER JOIN nivel n ON cn."nivelId" = n.id
         WHERE pa.id = ${profesorAsignacionId}
           AND e."periodoId" = ${periodoActivo.id}
-          AND rn."notaEscalaCalculo" IS NOT NULL
+          AND rn.nota IS NOT NULL AND rn.nota != ''
           AND a.activo = true
         GROUP BY a.id, a.nombres, a.apellidos, a.dni, s.grado, s.seccion, n.nombre, c.id, c.nombre
-        HAVING AVG(COALESCE(rn."notaEscalaCalculo", 0)) < 2.5
+        HAVING AVG(
+          COALESCE(rn."notaEscalaCalculo", 
+            CASE 
+              WHEN rn.nota = 'AD' THEN 4.0
+              WHEN rn.nota = 'A' THEN 3.0
+              WHEN rn.nota = 'B' THEN 2.0
+              WHEN rn.nota = 'C' THEN 1.0
+              ELSE GREATEST(1.0, LEAST(4.0, 1.0 + (CAST(rn.nota AS FLOAT) / 20.0) * 3.0))
+            END
+          )
+        ) < 2.5
       )
       SELECT 
         alumno_id,
@@ -923,16 +1004,27 @@ export class ReportesService {
     });
 
     // Obtener tendencias del salón (últimas 4 evaluaciones)
+    // CORREGIDO: Usando COALESCE completo para incluir TODAS las notas (alfabéticas + numéricas)
     const tendencias = await this.prisma.$queryRaw`
       SELECT 
         e.nombre as evaluacion_nombre,
         e."fechaEvaluacion",
-        AVG(COALESCE(rn."notaEscalaCalculo", 0)) as promedio_salon
+        AVG(
+          COALESCE(rn."notaEscalaCalculo", 
+            CASE 
+              WHEN rn.nota = 'AD' THEN 4.0
+              WHEN rn.nota = 'A' THEN 3.0
+              WHEN rn.nota = 'B' THEN 2.0
+              WHEN rn.nota = 'C' THEN 1.0
+              ELSE GREATEST(1.0, LEAST(4.0, 1.0 + (CAST(rn.nota AS FLOAT) / 20.0) * 3.0))
+            END
+          )
+        ) as promedio_salon
       FROM evaluacion e
       INNER JOIN registro_nota rn ON e.id = rn."evaluacionId"
       WHERE e."profesorAsignacionId" = ${profesorAsignacionId}
         AND e."periodoId" = ${periodoActivo.id}
-        AND rn."notaEscalaCalculo" IS NOT NULL
+        AND rn.nota IS NOT NULL AND rn.nota != ''
       GROUP BY e.id, e.nombre, e."fechaEvaluacion"
       ORDER BY e."fechaEvaluacion" DESC
       LIMIT 4

@@ -62,7 +62,7 @@ export class EvaluacionService {
       throw new NotFoundException('Período académico no encontrado');
     }
 
-    // Obtener alumnos del salón
+    // Obtener alumnos del salón ordenados alfabéticamente por apellido
     const alumnos = await this.prisma.alumnoSalon.findMany({
       where: {
         salonId: asignacion.salonId
@@ -75,6 +75,11 @@ export class EvaluacionService {
             apellidos: true,
             dni: true
           }
+        }
+      },
+      orderBy: {
+        alumno: {
+          apellidos: 'asc'
         }
       }
     });
