@@ -1,16 +1,18 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { ContextoTrabajo, CreateEvaluacionDto, Evaluacion } from '@/types/evaluaciones';
 import { NotaLiteral, NotaInput } from '@/types/registro-nota';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { useNotasState } from '@/hooks/useNotasState';
 import { useEstimacionesIA } from '@/hooks/useEstimacionesIA';
-import { EstimacionUtils } from '@/types/ia';
 import ModalCrearEvaluacion from '../modals/ModalCrearEvaluacion';
 import BotonGuardarNotas from './BotonGuardarNotas';
 import FiltroAlumnos from './FiltroAlumnos';
+import ModalInformacionTareas from '../modals/ModalInformacionTareas';
+import ModalCalculadoraNotas from '../modals/ModalCalculadoraNotas';
 import { registroNotaAPI } from '@/lib/api/registro-nota';
+import { EstimacionUtils } from '@/types/ia';
 
 interface TablaEvaluacionesRealProps {
   contexto: ContextoTrabajo;
@@ -26,7 +28,11 @@ export default function TablaEvaluacionesReal({
   periodoId
 }: TablaEvaluacionesRealProps) {
   const [editando, setEditando] = useState<string | null>(null);
+  const [notasTemporales, setNotasTemporales] = useState<Map<string, string>>(new Map());
+  const [filtroAlumno, setFiltroAlumno] = useState<string>('');
   const [modalCrearAbierto, setModalCrearAbierto] = useState(false);
+  const [modalInfoAbierto, setModalInfoAbierto] = useState(false);
+  const [modalCalculadoraAbierto, setModalCalculadoraAbierto] = useState(false);
   const [competenciaSeleccionada, setCompetenciaSeleccionada] = useState<number | null>(null);
   const [filaSeleccionada, setFilaSeleccionada] = useState<number | null>(null);
   const [columnaSeleccionada, setColumnaSeleccionada] = useState<number | null>(null);
@@ -345,7 +351,6 @@ export default function TablaEvaluacionesReal({
               <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-2">
                 <div className="text-white text-xs font-semibold text-center">
                   <div className="flex items-center gap-1">
-                    <span>🎯</span>
                     <span>{contexto.competencias.length} competencias</span>
                   </div>
                 </div>
@@ -354,12 +359,36 @@ export default function TablaEvaluacionesReal({
                 <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-2">
                   <div className="text-white text-xs font-semibold text-center">
                     <div className="flex items-center gap-1">
-                      <span>🤖</span>
                       <span>{totalEstimaciones} IA</span>
                     </div>
                   </div>
                 </div>
               )}
+              
+              {/* Botones de herramientas */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setModalInfoAbierto(true)}
+                  className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-2 hover:bg-white/30 transition-colors group"
+                  title="Ver información de tareas pendientes"
+                >
+                  <div className="text-white text-xs font-semibold flex items-center gap-1">
+                    <span className="group-hover:scale-110 transition-transform">📊</span>
+                    <span>Info</span>
+                  </div>
+                </button>
+                
+                <button
+                  onClick={() => setModalCalculadoraAbierto(true)}
+                  className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-2 hover:bg-white/30 transition-colors group"
+                  title="Calculadora de notas personalizada"
+                >
+                  <div className="text-white text-xs font-semibold flex items-center gap-1">
+                    <span className="group-hover:scale-110 transition-transform">🧮</span>
+                    <span>Calc</span>
+                  </div>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -575,6 +604,24 @@ export default function TablaEvaluacionesReal({
         asignacionId={asignacionId}
         periodoId={periodoId}
         onCrearEvaluacion={onCrearEvaluacion}
+      />
+
+      {/* Modal de información de tareas */}
+      <ModalInformacionTareas
+        isOpen={modalInfoAbierto}
+        onClose={() => setModalInfoAbierto(false)}
+        alumnos={contexto.alumnos}
+        competencias={contexto.competencias}
+        evaluaciones={contexto.evaluaciones}
+        notas={todasLasNotas}
+        cursoNombre={contexto.asignacion.curso}
+        salonNombre={contexto.asignacion.salon}
+      />
+
+      {/* Modal calculadora de notas */}
+      <ModalCalculadoraNotas
+        isOpen={modalCalculadoraAbierto}
+        onClose={() => setModalCalculadoraAbierto(false)}
       />
     </>
   );

@@ -1,16 +1,18 @@
 "use client";
 
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { ContextoTrabajo, CreateEvaluacionDto, Evaluacion } from '@/types/evaluaciones';
 import { NotaLiteral, NotaInput } from '@/types/registro-nota';
 import { PlusIcon, ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { useNotasState } from '@/hooks/useNotasState';
 import { useEstimacionesIA } from '@/hooks/useEstimacionesIA';
-import { EstimacionUtils } from '@/types/ia';
 import ModalCrearEvaluacion from '../modals/ModalCrearEvaluacion';
+import ModalInformacionTareas from '../modals/ModalInformacionTareas';
+import ModalCalculadoraNotas from '../modals/ModalCalculadoraNotas';
 import BotonGuardarNotas from './BotonGuardarNotas';
 import FiltroAlumnos from './FiltroAlumnos';
 import { registroNotaAPI } from '@/lib/api/registro-nota';
+import { EstimacionUtils } from '@/types/ia';
 
 interface VistaMobileProps {
   contexto: ContextoTrabajo;
@@ -27,6 +29,8 @@ export default function VistaMobile({
 }: VistaMobileProps) {
   const [editando, setEditando] = useState<string | null>(null);
   const [modalCrearAbierto, setModalCrearAbierto] = useState(false);
+  const [modalInfoAbierto, setModalInfoAbierto] = useState(false);
+  const [modalCalculadoraAbierto, setModalCalculadoraAbierto] = useState(false);
   const [competenciaSeleccionada, setCompetenciaSeleccionada] = useState<number | null>(null);
   const [alumnoExpandido, setAlumnoExpandido] = useState<number | null>(null);
   const [alumnosFiltrados, setAlumnosFiltrados] = useState(contexto.alumnos);
@@ -302,7 +306,7 @@ export default function VistaMobile({
             <p className="text-[#FCE0C1] text-sm font-medium">
               🗺️ {contexto.periodo.tipo} {contexto.periodo.nombre} - {contexto.periodo.anioAcademico}
             </p>
-            <div className="flex gap-3 mt-2">
+            <div className="flex flex-wrap gap-2 mt-2">
               <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1">
                 <div className="text-white text-xs font-semibold flex items-center gap-1">
                   <span>👥</span>
@@ -323,6 +327,29 @@ export default function VistaMobile({
                   </div>
                 </div>
               )}
+              
+              {/* Botones de herramientas móvil */}
+              <button
+                onClick={() => setModalInfoAbierto(true)}
+                className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 hover:bg-white/30 transition-colors"
+                title="Ver información de tareas"
+              >
+                <div className="text-white text-xs font-semibold flex items-center gap-1">
+                  <span>📊</span>
+                  <span>Info</span>
+                </div>
+              </button>
+              
+              <button
+                onClick={() => setModalCalculadoraAbierto(true)}
+                className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 hover:bg-white/30 transition-colors"
+                title="Calculadora de notas"
+              >
+                <div className="text-white text-xs font-semibold flex items-center gap-1">
+                  <span>🧮</span>
+                  <span>Calc</span>
+                </div>
+              </button>
             </div>
           </div>
         </div>
@@ -480,6 +507,24 @@ export default function VistaMobile({
         asignacionId={asignacionId}
         periodoId={periodoId}
         onCrearEvaluacion={onCrearEvaluacion}
+      />
+
+      {/* Modal de información de tareas */}
+      <ModalInformacionTareas
+        isOpen={modalInfoAbierto}
+        onClose={() => setModalInfoAbierto(false)}
+        alumnos={contexto.alumnos}
+        competencias={contexto.competencias}
+        evaluaciones={contexto.evaluaciones}
+        notas={todasLasNotas}
+        cursoNombre={contexto.asignacion.curso}
+        salonNombre={contexto.asignacion.salon}
+      />
+
+      {/* Modal calculadora de notas */}
+      <ModalCalculadoraNotas
+        isOpen={modalCalculadoraAbierto}
+        onClose={() => setModalCalculadoraAbierto(false)}
       />
     </>
   );
