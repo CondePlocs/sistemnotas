@@ -19,13 +19,15 @@ interface VistaMobileProps {
   onCrearEvaluacion: (data: CreateEvaluacionDto) => Promise<Evaluacion>;
   asignacionId: number;
   periodoId: number;
+  readonly?: boolean;
 }
 
 export default function VistaMobile({ 
   contexto, 
   onCrearEvaluacion,
   asignacionId,
-  periodoId
+  periodoId,
+  readonly = false
 }: VistaMobileProps) {
   const [editando, setEditando] = useState<string | null>(null);
   const [modalCrearAbierto, setModalCrearAbierto] = useState(false);

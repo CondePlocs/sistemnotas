@@ -19,13 +19,15 @@ interface TablaEvaluacionesRealProps {
   onCrearEvaluacion: (data: CreateEvaluacionDto) => Promise<Evaluacion>;
   asignacionId: number;
   periodoId: number;
+  readonly?: boolean;
 }
 
 export default function TablaEvaluacionesReal({ 
   contexto, 
   onCrearEvaluacion,
   asignacionId,
-  periodoId
+  periodoId,
+  readonly = false
 }: TablaEvaluacionesRealProps) {
   const [editando, setEditando] = useState<string | null>(null);
   const [notasTemporales, setNotasTemporales] = useState<Map<string, string>>(new Map());

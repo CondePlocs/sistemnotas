@@ -66,4 +66,12 @@ export class PeriodoAcademicoController {
     const directorUserId = request.user.id;
     return this.periodoAcademicoService.activar(directorUserId, periodoId, activarDto);
   }
+
+  // GET /api/periodos-academicos/profesor/anteriores - Obtener períodos anteriores para profesor
+  @Get('profesor/anteriores')
+  @Roles('PROFESOR')
+  async obtenerPeriodosAnterioresProfesor(@Req() request: any) {
+    const profesorUserId = request.user.id;
+    return this.periodoAcademicoService.obtenerPeriodosAnterioresProfesor(profesorUserId);
+  }
 }

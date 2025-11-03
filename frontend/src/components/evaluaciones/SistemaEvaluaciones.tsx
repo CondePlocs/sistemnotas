@@ -10,13 +10,15 @@ interface SistemaEvaluacionesProps {
   onCrearEvaluacion: (data: CreateEvaluacionDto) => Promise<Evaluacion>;
   asignacionId: number;
   periodoId: number;
+  readonly?: boolean;
 }
 
 export default function SistemaEvaluaciones({ 
   contexto, 
   onCrearEvaluacion,
   asignacionId,
-  periodoId
+  periodoId,
+  readonly = false
 }: SistemaEvaluacionesProps) {
   const [isMobile, setIsMobile] = useState(false);
 
@@ -39,6 +41,7 @@ export default function SistemaEvaluaciones({
           onCrearEvaluacion={onCrearEvaluacion}
           asignacionId={asignacionId}
           periodoId={periodoId}
+          readonly={readonly}
         />
       ) : (
         <TablaEvaluaciones 
@@ -46,6 +49,7 @@ export default function SistemaEvaluaciones({
           onCrearEvaluacion={onCrearEvaluacion}
           asignacionId={asignacionId}
           periodoId={periodoId}
+          readonly={readonly}
         />
       )}
     </div>

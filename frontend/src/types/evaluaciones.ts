@@ -35,6 +35,9 @@ export interface PeriodoAcademico {
   nombre: string;
   tipo: string;
   anioAcademico: number;
+  orden: number;
+  fechaInicio: string;
+  fechaFin: string;
   activo: boolean;
 }
 

@@ -8,13 +8,15 @@ interface SimpleHeaderProps {
   showBackButton?: boolean;
   showForwardButton?: boolean;
   dashboardPath: string;
+  extraButtons?: React.ReactNode; // Para botones adicionales
 }
 
 export default function SimpleHeader({ 
   title, 
   showBackButton = true,
   showForwardButton = true,
-  dashboardPath 
+  dashboardPath,
+  extraButtons
 }: SimpleHeaderProps) {
   const router = useRouter();
   const { user, logout } = useAuth();
@@ -126,8 +128,16 @@ export default function SimpleHeader({
             </h1>
           </div>
 
-          {/* Usuario y Logout */}
+          {/* Botones Extra y Usuario */}
           <div className="flex items-center space-x-1 sm:space-x-2">
+            {/* Botones adicionales */}
+            {extraButtons && (
+              <>
+                {extraButtons}
+                <div className="hidden sm:block w-px h-6 bg-white/20 mx-2"></div>
+              </>
+            )}
+
             {/* Información del Usuario */}
             <div className="flex items-center space-x-1 sm:space-x-2">
               {/* Avatar */}

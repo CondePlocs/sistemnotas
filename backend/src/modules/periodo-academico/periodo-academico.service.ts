@@ -381,4 +381,69 @@ export class PeriodoAcademicoService {
       data: periodoActivo
     };
   }
+
+  // Verificar que el usuario es profesor del colegio
+  private async verificarProfesorYColegio(profesorUserId: number): Promise<number> {
+    const usuarioRol = await this.prisma.usuarioRol.findFirst({
+      where: {
+        usuario_id: profesorUserId,
+        rol: {
+          nombre: 'PROFESOR'
+        }
+      },
+      include: {
+        colegio: true
+      }
+    });
+
+    if (!usuarioRol || !usuarioRol.colegio_id) {
+      throw new ForbiddenException('Solo los profesores pueden acceder a períodos académicos');
+    }
+
+    return usuarioRol.colegio_id;
+  }
+
+  // Obtener períodos anteriores (no activos) para profesor
+  async obtenerPeriodosAnterioresProfesor(profesorUserId: number) {
+    const colegioId = await this.verificarProfesorYColegio(profesorUserId);
+
+    const periodosAnteriores = await this.prisma.periodoAcademico.findMany({
+      where: {
+        colegioId,
+        activo: false // Solo períodos no activos (anteriores)
+      },
+      include: {
+        colegio: {
+          select: {
+            id: true,
+            nombre: true
+          }
+        }
+      },
+      orderBy: [
+        { anioAcademico: 'desc' },
+        { orden: 'desc' }
+      ]
+    });
+
+    // Agrupar por año académico
+    const periodosPorAnio = periodosAnteriores.reduce((acc, periodo) => {
+      const anio = periodo.anioAcademico;
+      if (!acc[anio]) {
+        acc[anio] = [];
+      }
+      acc[anio].push(periodo);
+      return acc;
+    }, {} as Record<number, typeof periodosAnteriores>);
+
+    return {
+      success: true,
+      data: {
+        periodosAnteriores,
+        periodosPorAnio,
+        totalPeriodos: periodosAnteriores.length,
+        aniosAcademicos: Object.keys(periodosPorAnio).map(Number).sort((a, b) => b - a)
+      }
+    };
+  }
 }

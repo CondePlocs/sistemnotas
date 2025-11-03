@@ -18,6 +18,7 @@ export default function ProfesorEvaluacionesPage() {
   const searchParams = useSearchParams();
   const asignacionId = searchParams.get('asignacionId');
   const periodoId = searchParams.get('periodoId');
+  const readonly = searchParams.get('readonly') === 'true';
 
   const [contexto, setContexto] = useState<ContextoTrabajo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -353,6 +354,7 @@ export default function ProfesorEvaluacionesPage() {
               onCrearEvaluacion={handleCrearEvaluacion}
               asignacionId={parseInt(asignacionId!)}
               periodoId={parseInt(periodoId!)}
+              readonly={readonly}
             />
           </div>
         </div>
