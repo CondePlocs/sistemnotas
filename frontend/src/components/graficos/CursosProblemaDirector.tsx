@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { CursosProblemaColegioResponse } from '@/lib/api/estadisticas-director';
 
 interface CursosProblemaDirectorProps {
@@ -11,14 +10,33 @@ interface CursosProblemaDirectorProps {
   onRetry: () => void;
 }
 
-// Colores para el gráfico de barras (gradiente de intensidad)
-const COLORES_BARRAS = [
-  '#DC2626', // Rojo intenso - Mayor problema
-  '#EA580C', // Naranja
-  '#D97706', // Amarillo
-  '#65A30D', // Verde lima
-  '#059669'  // Verde - Menor problema
-];
+// Función para obtener el color y estado según el porcentaje de problemas
+const obtenerEstadoRiesgo = (porcentaje: number) => {
+  if (porcentaje >= 70) return { 
+    color: 'bg-red-100 border-red-300 text-red-800', 
+    badge: 'bg-red-500 text-white', 
+    nivel: 'Crítico',
+    icon: '🚨'
+  };
+  if (porcentaje >= 50) return { 
+    color: 'bg-orange-100 border-orange-300 text-orange-800', 
+    badge: 'bg-orange-500 text-white', 
+    nivel: 'Alto',
+    icon: '⚠️'
+  };
+  if (porcentaje >= 30) return { 
+    color: 'bg-yellow-100 border-yellow-300 text-yellow-800', 
+    badge: 'bg-yellow-500 text-white', 
+    nivel: 'Moderado',
+    icon: '⚡'
+  };
+  return { 
+    color: 'bg-green-100 border-green-300 text-green-800', 
+    badge: 'bg-green-500 text-white', 
+    nivel: 'Bajo',
+    icon: '✅'
+  };
+};
 
 const CursosProblemaDirector: React.FC<CursosProblemaDirectorProps> = ({
   data,
@@ -86,51 +104,12 @@ const CursosProblemaDirector: React.FC<CursosProblemaDirectorProps> = ({
     );
   }
 
-  // Preparar datos para el gráfico
-  const datosGrafico = data.cursosProblema.map(curso => ({
-    nombre: curso.nombre.length > 15 ? curso.nombre.substring(0, 15) + '...' : curso.nombre,
-    nombreCompleto: curso.nombre,
+  // Preparar datos para la tabla
+  const datosTabla = data.cursosProblema.map(curso => ({
+    ...curso,
     porcentaje: Number(curso.porcentajeProblema) || 0,
-    totalAlumnos: curso.totalAlumnos,
-    alumnosProblema: curso.alumnosProblema,
-    detalleB: curso.detalleProblemas.B,
-    detalleC: curso.detalleProblemas.C
+    estado: obtenerEstadoRiesgo(Number(curso.porcentajeProblema) || 0)
   }));
-
-
-  // Tooltip personalizado
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className="bg-white p-4 border rounded-lg shadow-lg max-w-xs">
-          <p className="font-semibold text-gray-800 mb-2">{data.nombreCompleto}</p>
-          <div className="space-y-1 text-sm">
-            <p>
-              <span className="text-gray-600">% Alumnos en riesgo:</span>
-              <span className="font-medium ml-1 text-red-600">{data.porcentaje}%</span>
-            </p>
-            <p>
-              <span className="text-gray-600">Total alumnos:</span>
-              <span className="font-medium ml-1">{data.totalAlumnos}</span>
-            </p>
-            <p>
-              <span className="text-gray-600">En riesgo académico:</span>
-              <span className="font-medium ml-1 text-red-600">{data.alumnosProblema}</span>
-            </p>
-            <div className="pt-2 border-t">
-              <p className="text-xs text-gray-500 mb-1">Alumnos con promedio final:</p>
-              <div className="flex justify-between">
-                <span className="text-yellow-600">Promedio B: {data.detalleB}</span>
-                <span className="text-red-600">Promedio C: {data.detalleC}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm border">
@@ -143,49 +122,59 @@ const CursosProblemaDirector: React.FC<CursosProblemaDirectorProps> = ({
         </p>
       </div>
 
-      <div className="h-80 mb-4">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={datosGrafico}
-            layout="horizontal"
-            margin={{
-              top: 20,
-              right: 30,
-              left: 80,
-              bottom: 20
-            }}
-          >
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-            <XAxis 
-              type="number" 
-              domain={[0, 100]}
-              tick={{ fontSize: 12 }}
-              tickFormatter={(value) => `${value}%`}
-            />
-            <YAxis 
-              type="category" 
-              dataKey="nombre" 
-              tick={{ fontSize: 12 }}
-              width={75}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Bar 
-              dataKey="porcentaje" 
-              fill="#DC2626"
-              stroke="#991B1B"
-              strokeWidth={1}
-            >
-              {datosGrafico.map((entry, index) => (
-                <Cell 
-                  key={`cell-${index}`} 
-                  fill={COLORES_BARRAS[index % COLORES_BARRAS.length]} 
-                  stroke="#991B1B"
-                  strokeWidth={1}
-                />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+      {/* Tabla de Cursos Problema */}
+      <div className="overflow-x-auto mb-4">
+        <table className="w-full border-collapse bg-white rounded-lg overflow-hidden shadow-sm">
+          <thead>
+            <tr className="bg-gray-50 border-b">
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Curso</th>
+              <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700">Nivel Riesgo</th>
+              <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700">% Problema</th>
+              <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700">Alumnos</th>
+              <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700">En Riesgo</th>
+              <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700">Detalle B/C</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {datosTabla.map((curso, index) => (
+              <tr key={index} className={`hover:bg-gray-50 transition-colors ${curso.estado.color}`}>
+                <td className="px-4 py-3">
+                  <div>
+                    <div className="font-medium text-gray-900">{curso.nombre}</div>
+                    <div className="text-sm text-gray-500">({curso.nivel})</div>
+                  </div>
+                </td>
+                <td className="px-4 py-3 text-center">
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-lg">{curso.estado.icon}</span>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${curso.estado.badge}`}>
+                      {curso.estado.nivel}
+                    </span>
+                  </div>
+                </td>
+                <td className="px-4 py-3 text-center">
+                  <div className="text-lg font-bold text-red-600">{curso.porcentaje}%</div>
+                </td>
+                <td className="px-4 py-3 text-center">
+                  <div className="text-sm font-medium text-gray-900">{curso.totalAlumnos}</div>
+                </td>
+                <td className="px-4 py-3 text-center">
+                  <div className="text-sm font-bold text-red-600">{curso.alumnosProblema}</div>
+                </td>
+                <td className="px-4 py-3 text-center">
+                  <div className="flex justify-center gap-2 text-xs">
+                    <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
+                      B: {curso.detalleProblemas.B}
+                    </span>
+                    <span className="bg-red-100 text-red-800 px-2 py-1 rounded">
+                      C: {curso.detalleProblemas.C}
+                    </span>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       {/* Resumen estadístico */}
