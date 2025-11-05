@@ -83,10 +83,11 @@ end note
 note right of db
   PostgreSQL
   ==
-  - Campos de auditoría automáticos
-  - Foreign keys y constraints
-  - Índices optimizados
-  - Tipos enumerados
+  • Campos de auditoría automáticos
+  • Constraint único: alumno-evaluación
+  • Índices optimizados para consultas
+  • Escala dual: nota + notaEscalaCalculo
+  • Foreign keys con CASCADE
 end note
 
 @enduml

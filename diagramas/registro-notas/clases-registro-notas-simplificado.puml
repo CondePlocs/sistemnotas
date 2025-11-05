@@ -1,0 +1,126 @@
+@startuml Diagrama de Clases Simplificado - Sistema de Registro de Notas
+
+skinparam class {
+    BackgroundColor #E8F4FD
+    BorderColor #1F2937
+    FontSize 10
+}
+
+skinparam package {
+    BackgroundColor #F0F9FF
+    FontSize 12
+}
+
+title DIAGRAMA DE CLASES - NÚCLEO DEL SISTEMA: Registro de Notas
+
+' CONTROLADORES
+package "🎯 Controladores" {
+    class RegistroNotaController {
+        + crearNota()
+        + actualizarNota()
+        + guardarNotasLote()
+        + obtenerNotasPorContexto()
+        + calcularPromedios()
+    }
+
+    class IaController {
+        + estimarNota()
+    }
+}
+
+' SERVICIOS CORE
+package "⚙️ Servicios Core" {
+    class RegistroNotaService {
+        - prisma: PrismaService
+        - notaCalculoService: NotaCalculoService
+        + crearNota()
+        + guardarNotasLote()
+        + calcularPromedioCompetencia()
+        - verificarPertenenciaColegio()
+    }
+
+    class NotaCalculoService {
+        + detectarTipoNota()
+        + convertirAEscalaCalculo()
+        + convertirNumeroALetra()
+        - convertirLetraAEscala4()
+        - convertirNumeroAEscala4()
+    }
+
+    class IaService {
+        - prisma: PrismaService
+        + estimarNota()
+        - calcularRegresion()
+        - analizarPatronAprendizaje()
+        - calcularMomentumEducativo()
+    }
+}
+
+' ENTIDADES CORE
+package "📊 Entidades Core" {
+    class RegistroNota {
+        + id: number
+        + alumnoId: number
+        + evaluacionId: number
+        + nota: string
+        + notaEscalaCalculo: number
+        + registradoPor: number
+        + creadoEn: DateTime
+    }
+
+    class Evaluacion {
+        + id: number
+        + nombre: string
+        + competenciaId: number
+        + profesorAsignacionId: number
+        + periodoId: number
+    }
+
+    class Alumno {
+        + id: number
+        + nombres: string
+        + apellidos: string
+        + dni: string
+        + colegioId: number
+    }
+}
+
+' RELACIONES CON ETIQUETAS
+RegistroNotaController --> RegistroNotaService : "usa"
+RegistroNotaController ..> NotaCalculoService : "consulta"
+IaController --> IaService : "delega"
+
+RegistroNotaService --> NotaCalculoService : "utiliza"
+RegistroNotaService --> RegistroNota : "gestiona"
+IaService --> RegistroNota : "analiza"
+
+RegistroNota --> Alumno : "pertenece a"
+RegistroNota --> Evaluacion : "corresponde a"
+
+' NOTAS EXPLICATIVAS
+note right of RegistroNota
+    CORAZÓN DEL SISTEMA
+    
+    • Input dual: AD,A,B,C o 0-20
+    • Conversión automática a 1.0-4.0
+    • Constraint único alumno-evaluación
+    • Auditoría completa
+end note
+
+note right of NotaCalculoService
+    MOTOR DE CONVERSIONES
+    
+    • Detección automática de tipo
+    • Escalas unificadas para cálculos
+    • Promedios automáticos
+end note
+
+note right of IaService
+    SISTEMA IA AVANZADO
+    
+    • 8 algoritmos predictivos
+    • Confianza variable 30%-100%
+    • Análisis de patrones
+end note
+
+@enduml

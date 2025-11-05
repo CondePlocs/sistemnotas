@@ -14,150 +14,216 @@ title SISTEMA DE REGISTRO DE NOTAS: Diagrama de Clases
 ' CONTROLADORES
 package "Controladores" {
     class RegistroNotaController {
-        +registrarNota(dto: RegistroNotaDto): Promise<RegistroNota>
-        +modificarNota(id: number, dto: ModificacionNotaDto): Promise<RegistroNota>
-        +obtenerNotas(filtros: FiltroNotasDto): Promise<RegistroNota[]>
-        +calcularPromedios(alumnoId: number): Promise<Promedio[]>
-        +obtenerEstadisticas(periodoId: number): Promise<Estadisticas>
+        + crearNota(dto: CrearRegistroNotaDto, usuarioId: number, colegioId: number): Promise<RegistroNota>
+        + actualizarNota(id: number, dto: ActualizarRegistroNotaDto, usuarioId: number, colegioId: number): Promise<RegistroNota>
+        + guardarNotasLote(dto: GuardarNotasLoteDto, usuarioId: number, colegioId: number): Promise<ResultadoLote>
+        + obtenerNotasPorContexto(asignacionId: number, periodoId: number, colegioId: number): Promise<RegistroNota[]>
+        + calcularPromedioCompetencia(alumnoId: number, competenciaId: number, periodoId: number, colegioId: number): Promise<Promedio>
+        + calcularPromedioCurso(alumnoId: number, cursoId: number, periodoId: number, colegioId: number): Promise<Promedio>
     }
 
     class EvaluacionController {
-        +crearEvaluacion(dto: EvaluacionDto): Promise<Evaluacion>
-        +configurarCriterios(id: number, criterios: CriterioDto[]): Promise<Evaluacion>
-        +listarEvaluaciones(filtros: FiltroEvaluacionDto): Promise<Evaluacion[]>
+        + crearEvaluacion(dto: CreateEvaluacionDto, usuarioId: number): Promise<Evaluacion>
+        + obtenerContextoTrabajo(asignacionId: number, periodoId: number): Promise<ContextoTrabajo>
+        + findByContext(profesorAsignacionId: number, periodoId: number, usuarioId: number): Promise<Evaluacion[]>
     }
 
     class IaController {
-        +estimarNota(alumnoId: number): Promise<EstimacionIA>
-        +analizarPatrones(cursoId: number): Promise<AnalisisPatron[]>
-        +generarRecomendaciones(alumnoId: number): Promise<Recomendacion[]>
+        + estimarNota(dto: EstimacionNotaDto): Promise<EstimacionRespuesta>
     }
 }
 
 ' SERVICIOS
 package "Servicios Core" {
     class RegistroNotaService {
-        -prisma: PrismaService
-        +registrarNota(data: RegistroNotaData): Promise<RegistroNota>
-        +modificarNota(id: number, data: ModificacionNotaData): Promise<RegistroNota>
-        +validarNota(nota: string, escala: EscalaCalificacion): boolean
-        +auditarCambio(notaId: number, usuario: Usuario): Promise<void>
+        - prisma: PrismaService
+        - notaCalculoService: NotaCalculoService
+        + crearNota(createDto: CrearRegistroNotaDto, registradoPor: number, colegioId: number): Promise<RegistroNota>
+        + actualizarNota(id: number, updateDto: ActualizarRegistroNotaDto, usuarioId: number, colegioId: number): Promise<RegistroNota>
+        + guardarNotasLote(guardarDto: GuardarNotasLoteDto, registradoPor: number, colegioId: number): Promise<ResultadoLote>
+        + obtenerNotasPorContexto(asignacionId: number, periodoId: number, colegioId: number): Promise<RegistroNota[]>
+        + calcularPromedioCompetencia(alumnoId: number, competenciaId: number, periodoId: number, colegioId: number): Promise<Promedio>
+        + calcularPromedioCurso(alumnoId: number, cursoId: number, periodoId: number, colegioId: number): Promise<Promedio>
+        - verificarPertenenciaColegio(alumnoId: number, evaluacionId: number, colegioId: number): Promise<void>
     }
 
     class NotaCalculoService {
-        +calcularPromedio(notas: RegistroNota[]): number
-        +convertirNota(valor: string, origen: EscalaCalificacion, destino: EscalaCalificacion): string
-        +actualizarPromedios(alumnoId: number): Promise<void>
+        + detectarTipoNota(input: string): 'alfabetico' | 'numerico'
+        + convertirAEscalaCalculo(notaOriginal: string): number
+        + convertirLetraANumero(nota: string): number
+        + convertirNumeroALetra(promedio: number): string
+        + calcularPromedioEscalaCalculo(valoresEscalaCalculo: number[]): PromedioResult
+        + calcularPromedioCurso(promediosCompetencias: number[]): PromedioResult
+        - convertirLetraAEscala4(nota: string): number
+        - convertirNumeroAEscala4(nota: number): number
     }
 
     class EvaluacionService {
-        +crearEvaluacion(data: EvaluacionData): Promise<Evaluacion>
-        +validarCriterios(criterios: Criterio[]): boolean
-        +asignarCompetencias(id: number, competencias: number[]): Promise<void>
+        - prisma: PrismaService
+        + crearEvaluacion(createDto: CreateEvaluacionDto, creadoPor: number): Promise<Evaluacion>
+        + obtenerContextoTrabajo(asignacionId: number, periodoId: number): Promise<ContextoTrabajo>
+        + findByContext(profesorAsignacionId: number, periodoId: number, usuarioId: number): Promise<Evaluacion[]>
+        - verificarAccesoAsignacion(profesorAsignacionId: number, usuarioId: number): Promise<void>
     }
 }
 
 package "Servicios IA" {
     class IaService {
-        +estimarNota(historial: RegistroNota[]): EstimacionIA
-        +analizarPatrones(datos: DatosAnalisis): PatronAprendizaje[]
-        +calcularMomentum(historial: RegistroNota[]): number
-        +generarRecomendaciones(perfil: PerfilAlumno): Recomendacion[]
+        - prisma: PrismaService
+        - config: ConfiguracionIA
+        + estimarNota(dto: EstimacionNotaDto): Promise<EstimacionRespuesta>
+        - validarEntidades(alumnoId: number, competenciaId: number): Promise<void>
+        - obtenerDatosHistoricos(alumnoId: number, competenciaId: number, profesorAsignacionId: number): Promise<DatosHistoricos>
+        - calcularRegresion(datos: DatosHistoricos[]): ResultadoRegresion
+        - calcularEstimacionMejorada(datos: DatosHistoricos[]): EstimacionMejorada
+        - analizarPatronAprendizaje(notas: number[]): PatronAprendizaje
+        - calcularMomentumEducativo(notas: number[]): number
+        - calcularVolatilidadAcademica(notas: number[]): VolatilidadAcademica
+        - proyectarCrecimiento(notas: number[], momentum: number, factorDificultad: number): number
+        - aplicarCorreccionPredictiva(notas: number[], volatilidad: VolatilidadAcademica): number
+        - redNeuronalSimplificada(notas: number[], momentum: number, volatilidad: VolatilidadAcademica): number
     }
 }
 
 ' ENTIDADES
 package "Entidades Core" {
     class RegistroNota {
-        +id: number
-        +alumnoId: number
-        +evaluacionId: number
-        +salonCursoId: number
-        +nota: string
-        +escala: EscalaCalificacion
-        +registradoPor: number
-        +fechaRegistro: Date
-        +estado: EstadoNota
+        + id: number
+        + alumnoId: number
+        + evaluacionId: number
+        + nota: string
+        + notaEscalaCalculo: number
+        + registradoPor: number
+        + creadoEn: DateTime
+        + actualizadoEn: DateTime
     }
 
     class Evaluacion {
-        +id: number
-        +nombre: string
-        +descripcion: string
-        +competenciaId: number
-        +periodoId: number
-        +criterios: Criterio[]
-        +escala: EscalaCalificacion
-        +peso: number
-        +fechaAplicacion: Date
+        + id: number
+        + nombre: string
+        + descripcion: string
+        + fechaEvaluacion: DateTime
+        + competenciaId: number
+        + profesorAsignacionId: number
+        + periodoId: number
+        + creadoPor: number
+        + creadoEn: DateTime
+        + actualizadoEn: DateTime
+    }
+
+    class Competencia {
+        + id: number
+        + nombre: string
+        + descripcion: string
+        + orden: number
+        + activo: boolean
+        + cursoId: number
+        + creadoPor: number
+        + creadoEn: DateTime
+        + actualizadoEn: DateTime
     }
 
     class Curso {
-        +id: number
-        +nombre: string
-        +codigo: string
-        +nivelId: number
-        +competencias: Competencia[]
-        +estado: EstadoCurso
+        + id: number
+        + nombre: string
+        + descripcion: string
+        + color: string
+        + nivelId: number
+        + creadoPor: number
+        + creadoEn: DateTime
+        + actualizadoEn: DateTime
     }
 }
 
 package "Entidades Académicas" {
     class Alumno {
-        +id: number
-        +nombres: string
-        +apellidos: string
-        +dni: string
-        +estado: EstadoAlumno
+        + id: number
+        + nombres: string
+        + apellidos: string
+        + dni: string
+        + fechaNacimiento: DateTime
+        + sexo: string
+        + direccion: string
+        + distrito: string
+        + numeroContacto: string
+        + colegioId: number
+        + activo: boolean
+        + creadoPor: number
+        + creadoEn: DateTime
+        + actualizadoEn: DateTime
     }
 
-    class SalonCurso {
-        +id: number
-        +salonId: number
-        +cursoId: number
-        +profesorId: number
-        +periodo: PeriodoAcademico
+    class ProfesorAsignacion {
+        + id: number
+        + profesorId: number
+        + salonId: number
+        + cursoId: number
+        + activo: boolean
+        + asignadoPor: number
+        + asignadoEn: DateTime
+        + actualizadoEn: DateTime
     }
 
-    class Competencia {
-        +id: number
-        +nombre: string
-        +descripcion: string
-        +cursoId: number
-        +criterios: Criterio[]
+    class PeriodoAcademico {
+        + id: number
+        + nombre: string
+        + tipo: string
+        + orden: number
+        + anioAcademico: number
+        + fechaInicio: DateTime
+        + fechaFin: DateTime
+        + activo: boolean
+        + colegioId: number
+        + creadoPor: number
+        + creadoEn: DateTime
+        + actualizadoEn: DateTime
     }
 }
 
 ' RELACIONES
 RegistroNotaController --> RegistroNotaService
-RegistroNotaController --> NotaCalculoService
 EvaluacionController --> EvaluacionService
 IaController --> IaService
 
-RegistroNotaService --> "1" RegistroNota: gestiona
-NotaCalculoService --> "*" RegistroNota: procesa
-EvaluacionService --> "1" Evaluacion: gestiona
-IaService --> "*" RegistroNota: analiza
+RegistroNotaService --> NotaCalculoService
+RegistroNotaService --> RegistroNota
+EvaluacionService --> Evaluacion
+IaService --> RegistroNota
 
-RegistroNota "*" -- "1" Evaluacion
-RegistroNota "*" -- "1" SalonCurso
-Evaluacion "*" -- "1" Competencia
-SalonCurso "*" -- "1" Curso
-Curso "1" -- "*" Competencia
+RegistroNota --> Alumno
+RegistroNota --> Evaluacion
+Evaluacion --> Competencia
+Evaluacion --> ProfesorAsignacion
+Evaluacion --> PeriodoAcademico
+Competencia --> Curso
+ProfesorAsignacion --> Curso
 
 ' NOTAS
 note right of RegistroNota
-    Entidad Central del Sistema
+    CORAZÓN DEL SISTEMA
     
-    Mantiene el historial completo
-    de calificaciones y su trazabilidad
+    • Input dual: AD,A,B,C o 0-20
+    • Conversión automática a escala 1.0-4.0
+    • Constraint único: alumno-evaluación
+    • Auditoría completa con timestamps
 end note
 
 note right of IaService
-    Sistema de IA Avanzado
+    SISTEMA IA AVANZADO
     
-    Análisis predictivo usando
-    regresión y patrones de aprendizaje
+    • 8 algoritmos predictivos diferentes
+    • Mínimo 2 notas históricas requeridas
+    • Confianza 30%-100% según patrón
+    • Filtro por profesor y período activo
+end note
+
+note right of NotaCalculoService
+    MOTOR DE CONVERSIONES
+    
+    • Detección automática de tipo
+    • Conversión dual: alfabético ↔ numérico
+    • Escala unificada 1.0-4.0 para cálculos
+    • Promedios por competencia y curso
 end note
 
 @enduml

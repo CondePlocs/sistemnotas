@@ -42,6 +42,8 @@ else (no)
     endif
 endif
 
+:Nota Convertida a Escala 1.0-4.0;
+
 |RegistroNotaService|
 :Verificar Pertenencia a Colegio;
 if (¿Mismo Colegio?) then (no)
@@ -56,25 +58,27 @@ if (¿Ya Existe?) then (sí)
 endif
 
 note right
-  Sistema automáticamente detecta:
+  DETECCIÓN AUTOMÁTICA
   --
-  Alfabético (AD, A, B, C)
-  Numérico (0-20)
+  • Alfabético: AD, A, B, C
+  • Numérico: 0-20 (decimales permitidos)
+  • Validación dual en tiempo real
 end note
 
 :Guardar Nota con Escala de Cálculo;
 
 note right
-  Escala unificada 1.0-4.0
+  CONVERSIÓN A ESCALA UNIFICADA
   --
-  Alfabético:
-  * AD = 4.0
-  * A  = 3.0
-  * B  = 2.0
-  * C  = 1.0
+  Alfabético → Numérico:
+  • AD = 4.0 (Logro destacado)
+  • A  = 3.0 (Logro esperado)
+  • B  = 2.0 (En proceso)
+  • C  = 1.0 (En inicio)
   --
-  Numérico:
-  * 0-20 -> 1.0-4.0
+  Numérico → Escala 1.0-4.0:
+  • 18-20 = 4.0 | 14-17.9 = 3.0
+  • 11-13.9 = 2.0 | 0-10.9 = 1.0
 end note
 
 split

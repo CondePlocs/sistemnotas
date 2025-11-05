@@ -15,7 +15,11 @@ skinparam {
 title ARQUITECTURA DE COMPONENTES: Sistema de Notas
 
 package "Frontend (Next.js)" {
-    [Páginas y Componentes] as UI
+    [SistemaEvaluaciones] as SistemaEval
+    [TablaEvaluaciones] as TablaEval
+    [VistaMobile] as VistaMobile
+    [useNotasState] as NotasHook
+    [useEstimacionesIA] as IAHook
     [API Routes] as APIRoutes
 }
 
@@ -51,9 +55,14 @@ database "PostgreSQL" {
 }
 
 ' Conexiones Frontend-Backend
-UI --> APIRoutes
-APIRoutes --> NotasController
-APIRoutes --> IAController
+SistemaEval --> TablaEval
+SistemaEval --> VistaMobile
+TablaEval --> NotasHook
+TablaEval --> IAHook
+VistaMobile --> NotasHook
+VistaMobile --> IAHook
+NotasHook --> NotasController
+IAHook --> IAController
 
 ' Conexiones Módulos
 NotasController --> NotasService
