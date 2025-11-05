@@ -31,11 +31,15 @@ package "🎯 Controladores" {
 ' SERVICIOS CORE
 package "⚙️ Servicios Core" {
     class RegistroNotaService {
+        - logger: Logger
         - prisma: PrismaService
         - notaCalculoService: NotaCalculoService
         + crearNota()
+        + actualizarNota()
         + guardarNotasLote()
+        + obtenerNotasPorContexto()
         + calcularPromedioCompetencia()
+        + calcularPromedioCurso()
         - verificarPertenenciaColegio()
     }
 
