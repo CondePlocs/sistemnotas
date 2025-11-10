@@ -51,6 +51,12 @@ export class ReporteRequestDto {
   profesorAsignacionId?: string;
 
   @ApiPropertyOptional({
+    description: 'ID del período académico (para reportes de períodos específicos)',
+  })
+  @IsOptional()
+  periodoId?: number;
+
+  @ApiPropertyOptional({
     description: 'Fecha de inicio del período (opcional)',
   })
   @IsOptional()

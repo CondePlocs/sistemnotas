@@ -406,13 +406,15 @@ export default function VistaMobile({
                           <h4 className="text-sm font-bold text-[#8D2C1D]">
                             🎯 {competencia.nombre}
                           </h4>
-                          <button
-                            onClick={() => handleCrearEvaluacion(competencia.id)}
-                            className="text-[#8D2C1D] hover:text-[#7A2518] hover:bg-[#FCE0C1] p-2 rounded-lg transition-all duration-300 hover:scale-110"
-                            title="Agregar evaluación"
-                          >
-                            <PlusIcon className="w-4 h-4" />
-                          </button>
+                          {!readonly && (
+                            <button
+                              onClick={() => handleCrearEvaluacion(competencia.id)}
+                              className="text-[#8D2C1D] hover:text-[#7A2518] hover:bg-[#FCE0C1] p-2 rounded-lg transition-all duration-300 hover:scale-110"
+                              title="Agregar evaluación"
+                            >
+                              <PlusIcon className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                         
                         {/* Evaluaciones de la competencia */}
@@ -454,9 +456,9 @@ export default function VistaMobile({
                                 ) : (
                                   <div className="relative">
                                     <button
-                                      onClick={() => setEditando(key)}
-                                      className={`w-full h-9 text-sm font-bold rounded-lg transition-all duration-300 hover:scale-105 shadow-sm hover:shadow-md ${getColorNotaMejorado(valorMostrar, !!esEstimacion)}`}
-                                      title={esEstimacion ? `🤖 Estimación IA (${Math.round(estimacion!.confianza * 100)}% confianza): ${estimacion!.mensaje}` : undefined}
+                                      onClick={readonly ? undefined : () => setEditando(key)}
+                                      className={`w-full h-9 text-sm font-bold rounded-lg transition-all duration-300 ${readonly ? 'cursor-default' : 'hover:scale-105 cursor-pointer'} shadow-sm hover:shadow-md ${getColorNotaMejorado(valorMostrar, !!esEstimacion)}`}
+                                      title={readonly ? 'Solo lectura - No se puede editar' : (esEstimacion ? `🤖 Estimación IA (${Math.round(estimacion!.confianza * 100)}% confianza): ${estimacion!.mensaje}` : undefined)}
                                     >
                                       {esEstimacion ? (
                                         <div className="flex items-center justify-center gap-1">

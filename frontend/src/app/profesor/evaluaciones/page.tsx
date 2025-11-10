@@ -76,7 +76,7 @@ export default function ProfesorEvaluacionesPage() {
     try {
       setDescargandoReporte('excel');
       
-      const response = await fetch(`/api/reportes/profesor/hoja-registro?profesorAsignacionId=${asignacionId}`, {
+      const response = await fetch(`/api/reportes/profesor/hoja-registro?profesorAsignacionId=${asignacionId}&periodoId=${periodoId}`, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -130,7 +130,7 @@ export default function ProfesorEvaluacionesPage() {
     try {
       setDescargandoReporte('pdf');
       
-      const response = await fetch(`/api/reportes/profesor/intervencion-temprana?profesorAsignacionId=${asignacionId}`, {
+      const response = await fetch(`/api/reportes/profesor/intervencion-temprana?profesorAsignacionId=${asignacionId}&periodoId=${periodoId}`, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -262,7 +262,10 @@ export default function ProfesorEvaluacionesPage() {
       <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9] flex flex-col">
         {/* Header Simple */}
         <SimpleHeader 
-          title={contexto ? `Evaluaciones: ${contexto.asignacion.curso}` : 'Registro de Evaluaciones'}
+          title={readonly ? 
+            (contexto ? `📚 Hoja Anterior: ${contexto.asignacion.curso}` : 'Hoja de Trabajo Anterior') :
+            (contexto ? `Evaluaciones: ${contexto.asignacion.curso}` : 'Registro de Evaluaciones')
+          }
           showBackButton={true}
           dashboardPath="/profesor/dashboard"
         />
@@ -274,16 +277,21 @@ export default function ProfesorEvaluacionesPage() {
           <div className="mb-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold text-[#8D2C1D] mb-2" style={{ fontFamily: 'var(--font-poppins)' }}>
-                📚 Gestión de Evaluaciones
+                {readonly ? '📚 Visualización de Hoja Anterior' : '📚 Gestión de Evaluaciones'}
               </h1>
               <p className="text-lg text-[#666666]">
-                Administra las evaluaciones de tus estudiantes y descarga reportes de trabajo
+                {readonly ? 
+                  'Visualiza las evaluaciones y notas de períodos académicos anteriores (solo lectura)' :
+                  'Administra las evaluaciones de tus estudiantes y descarga reportes de trabajo'
+                }
               </p>
             </div>
             
-            {/* Botones de Reportes - Horizontales y Compactos */}
+            {/* Botones de Reportes - Disponibles en modo normal y solo lectura */}
             <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-[#666666] mr-2">Reportes:</span>
+              <span className="text-sm font-medium text-[#666666] mr-2">
+                {readonly ? 'Imprimir Hoja Anterior:' : 'Reportes:'}
+              </span>
               
               {/* Botón Excel - Compacto */}
               <button

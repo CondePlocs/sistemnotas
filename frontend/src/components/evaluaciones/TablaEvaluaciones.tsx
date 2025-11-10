@@ -436,13 +436,15 @@ export default function TablaEvaluacionesReal({
                             </div>
                           ))}
                           <div className="w-8 flex justify-center">
-                            <button
-                              onClick={() => handleCrearEvaluacion(competencia.id)}
-                              className="text-[#8D2C1D] hover:text-[#7A2518] hover:bg-[#FCE0C1] p-1.5 rounded-lg transition-all duration-300 hover:scale-110 shadow-sm hover:shadow-md"
-                              title="Agregar evaluación"
-                            >
-                              <PlusIcon className="w-3 h-3" />
-                            </button>
+                            {!readonly && (
+                              <button
+                                onClick={() => handleCrearEvaluacion(competencia.id)}
+                                className="text-[#8D2C1D] hover:text-[#7A2518] hover:bg-[#FCE0C1] p-1.5 rounded-lg transition-all duration-300 hover:scale-110 shadow-sm hover:shadow-md"
+                                title="Agregar evaluación"
+                              >
+                                <PlusIcon className="w-3 h-3" />
+                              </button>
+                            )}
                           </div>
                           <div className="w-20">
                             <div className="text-xs text-[#8D2C1D] text-center font-bold bg-white/70 rounded-lg p-1.5 border border-[#E9E1C9]">
@@ -544,9 +546,9 @@ export default function TablaEvaluacionesReal({
                                   ) : (
                                     <>
                                       <button
-                                        onClick={() => setEditando(key)}
-                                        className={`w-full h-9 text-sm font-bold rounded-lg transition-all duration-300 hover:scale-105 shadow-sm hover:shadow-md border-2 ${getColorNotaMejorado(valorMostrar, !!esEstimacion)}`}
-                                        title={esEstimacion ? `🤖 Estimación IA (${Math.round(estimacion!.confianza * 100)}% confianza): ${estimacion!.mensaje}` : undefined}
+                                        onClick={readonly ? undefined : () => setEditando(key)}
+                                        className={`w-full h-9 text-sm font-bold rounded-lg transition-all duration-300 ${readonly ? 'cursor-default' : 'hover:scale-105 cursor-pointer'} shadow-sm hover:shadow-md border-2 ${getColorNotaMejorado(valorMostrar, !!esEstimacion)}`}
+                                        title={readonly ? 'Solo lectura - No se puede editar' : (esEstimacion ? `🤖 Estimación IA (${Math.round(estimacion!.confianza * 100)}% confianza): ${estimacion!.mensaje}` : undefined)}
                                       >
                                         {esEstimacion ? (
                                           <div className="flex items-center justify-center gap-1">

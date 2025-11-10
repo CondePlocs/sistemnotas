@@ -171,8 +171,9 @@ export class ReportesController {
     @Request() req: any,
     @Response() res: ExpressResponse,
     @Query('profesorAsignacionId') profesorAsignacionId: string,
+    @Query('periodoId') periodoId?: string,
   ) {
-    this.logger.log(`Profesor ${req.user.id} solicitando hoja de registro para asignación ${profesorAsignacionId}`);
+    this.logger.log(`Profesor ${req.user.id} solicitando hoja de registro para asignación ${profesorAsignacionId}${periodoId ? ` y período ${periodoId}` : ''}`);
 
     if (!profesorAsignacionId) {
       throw new Error('profesorAsignacionId es requerido');
@@ -182,6 +183,7 @@ export class ReportesController {
       tipo: TipoReporte.HOJA_REGISTRO_PROFESOR,
       formato: FormatoReporte.EXCEL,
       profesorAsignacionId,
+      periodoId: periodoId ? parseInt(periodoId) : undefined,
     };
 
     // Extraer el rol principal del usuario (primer rol)
@@ -224,8 +226,9 @@ export class ReportesController {
     @Request() req: any,
     @Response() res: ExpressResponse,
     @Query('profesorAsignacionId') profesorAsignacionId: string,
+    @Query('periodoId') periodoId?: string,
   ) {
-    this.logger.log(`Profesor ${req.user.id} solicitando informe de intervención temprana para asignación ${profesorAsignacionId}`);
+    this.logger.log(`Profesor ${req.user.id} solicitando informe de intervención temprana para asignación ${profesorAsignacionId}${periodoId ? ` y período ${periodoId}` : ''}`);
 
     if (!profesorAsignacionId) {
       throw new Error('profesorAsignacionId es requerido');
@@ -235,6 +238,7 @@ export class ReportesController {
       tipo: TipoReporte.INTERVENCION_TEMPRANA_PROFESOR,
       formato: FormatoReporte.PDF,
       profesorAsignacionId,
+      periodoId: periodoId ? parseInt(periodoId) : undefined,
     };
 
     // Extraer el rol principal del usuario (primer rol)

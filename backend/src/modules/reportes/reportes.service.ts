@@ -84,11 +84,11 @@ export class ReportesService {
       
       case TipoReporte.HOJA_REGISTRO_PROFESOR:
         if (!request.profesorAsignacionId) throw new Error('profesorAsignacionId es requerido para este reporte');
-        return this.generarReporteHojaRegistroProfesor(request.formato, request.profesorAsignacionId, usuarioId, colegioId);
+        return this.generarReporteHojaRegistroProfesor(request.formato, request.profesorAsignacionId, usuarioId, colegioId, request.periodoId);
       
       case TipoReporte.INTERVENCION_TEMPRANA_PROFESOR:
         if (!request.profesorAsignacionId) throw new Error('profesorAsignacionId es requerido para este reporte');
-        return this.generarReporteIntervencionTemprana(request.formato, request.profesorAsignacionId, usuarioId, colegioId);
+        return this.generarReporteIntervencionTemprana(request.formato, request.profesorAsignacionId, usuarioId, colegioId, request.periodoId);
       
       case TipoReporte.MINI_LIBRETA_PADRE:
         if (!request.alumnoId) throw new Error('alumnoId es requerido para este reporte');
@@ -159,7 +159,7 @@ export class ReportesService {
     }
 
     // Obtener período académico activo
-    const periodoActivo = await this.prisma.periodoAcademico.findFirst({
+    const periodo = await this.prisma.periodoAcademico.findFirst({
       where: {
         colegioId: colegioId,
         activo: true
@@ -171,7 +171,7 @@ export class ReportesService {
       }
     });
 
-    if (!periodoActivo) {
+    if (!periodo) {
       this.logger.warn(`No hay período académico activo para colegio ${colegioId}`);
       return {
         colegio,
@@ -219,7 +219,7 @@ export class ReportesService {
         INNER JOIN colegio_nivel cn ON s."colegioNivelId" = cn.id
         INNER JOIN nivel n ON cn."nivelId" = n.id
         WHERE a."colegioId" = ${colegioId} 
-          AND e."periodoId" = ${periodoActivo.id}
+          AND e."periodoId" = ${periodo.id}
           AND rn.nota IS NOT NULL AND rn.nota != ''
           AND a.activo = true
         GROUP BY a.id, a.nombres, a.apellidos, a.dni, s.grado, s.seccion, n.nombre, c.id, c.nombre
@@ -279,7 +279,7 @@ export class ReportesService {
 
     return {
       colegio,
-      periodoAcademico: periodoActivo,
+      periodoAcademico: periodo,
       alumnosRiesgo: alumnosEnRiesgo.map(alumno => ({
         nombres: alumno.nombres,
         apellidos: alumno.apellidos,
@@ -487,13 +487,14 @@ export class ReportesService {
     formato: FormatoReporte, 
     profesorAsignacionId: string, 
     usuarioId: number, 
-    colegioId: number
+    colegioId: number,
+    periodoId?: number
   ): Promise<{ buffer: Buffer; nombreArchivo: string; mimeType: string }> {
-    this.logger.log(`Generando hoja de registro Excel para asignación ${profesorAsignacionId}`);
+    this.logger.log(`Generando hoja de registro Excel para asignación ${profesorAsignacionId}${periodoId ? ` y período ${periodoId}` : ''}`);
 
     try {
       // Obtener datos de la hoja de trabajo del profesor
-      const datosHojaTrabajo = await this.obtenerDatosHojaTrabajo(parseInt(profesorAsignacionId), colegioId);
+      const datosHojaTrabajo = await this.obtenerDatosHojaTrabajo(parseInt(profesorAsignacionId), colegioId, periodoId);
 
       // Solo generar Excel para hoja de registro
       return this.generarExcelHojaTrabajo(datosHojaTrabajo);
@@ -510,13 +511,14 @@ export class ReportesService {
     formato: FormatoReporte, 
     profesorAsignacionId: string, 
     usuarioId: number, 
-    colegioId: number
+    colegioId: number,
+    periodoId?: number
   ): Promise<{ buffer: Buffer; nombreArchivo: string; mimeType: string }> {
-    this.logger.log(`Generando informe de intervención temprana PDF para asignación ${profesorAsignacionId}`);
+    this.logger.log(`Generando informe de intervención temprana PDF para asignación ${profesorAsignacionId}${periodoId ? ` y período ${periodoId}` : ''}`);
 
     try {
       // Obtener datos de alumnos en riesgo y tendencias del salón
-      const datosIntervencion = await this.obtenerDatosIntervencionTemprana(parseInt(profesorAsignacionId), colegioId);
+      const datosIntervencion = await this.obtenerDatosIntervencionTemprana(parseInt(profesorAsignacionId), colegioId, periodoId);
 
       // Solo generar PDF para intervención temprana
       return this.generarPdfIntervencionTemprana(datosIntervencion);
@@ -577,18 +579,25 @@ export class ReportesService {
   /**
    * Obtiene datos completos de la hoja de trabajo del profesor
    */
-  private async obtenerDatosHojaTrabajo(profesorAsignacionId: number, colegioId: number) {
-    this.logger.log(`Obteniendo datos de hoja de trabajo para asignación ${profesorAsignacionId}`);
+  private async obtenerDatosHojaTrabajo(profesorAsignacionId: number, colegioId: number, periodoId?: number) {
+    this.logger.log(`Obteniendo datos de hoja de trabajo para asignación ${profesorAsignacionId}${periodoId ? ` y período ${periodoId}` : ' (período activo)'}`);
 
-    // Obtener período académico activo
-    const periodoActivo = await this.prisma.periodoAcademico.findFirst({
-      where: { 
-        colegioId: colegioId,
-        activo: true 
-      },
-    });
+    // Obtener período académico (específico o activo)
+    const periodo = periodoId 
+      ? await this.prisma.periodoAcademico.findFirst({
+          where: { 
+            id: periodoId,
+            colegioId: colegioId
+          },
+        })
+      : await this.prisma.periodoAcademico.findFirst({
+          where: { 
+            colegioId: colegioId,
+            activo: true 
+          },
+        });
 
-    if (!periodoActivo) {
+    if (!periodo) {
       return {
         asignacion: null,
         alumnos: [],
@@ -667,7 +676,7 @@ export class ReportesService {
         FROM evaluacion e
         INNER JOIN competencia comp ON e."competenciaId" = comp.id
         WHERE e."profesorAsignacionId" = ${profesorAsignacionId}
-          AND e."periodoId" = ${periodoActivo.id}
+          AND e."periodoId" = ${periodo.id}
         ORDER BY comp.orden, e."fechaEvaluacion"
       )
       SELECT 
@@ -784,7 +793,7 @@ export class ReportesService {
       where: {
         evaluacion: {
           profesorAsignacionId: profesorAsignacionId,
-          periodoId: periodoActivo.id,
+          periodoId: periodo.id,
         },
       },
       include: {
@@ -854,7 +863,7 @@ export class ReportesService {
         totalEvaluaciones,
         promedioGeneral: Math.round(promedioGeneral * 100) / 100,
       },
-      periodoAcademico: periodoActivo,
+      periodoAcademico: periodo,
       fechaGeneracion: new Date(),
     };
   }
@@ -878,18 +887,25 @@ export class ReportesService {
   /**
    * Obtiene datos de intervención temprana para el profesor
    */
-  private async obtenerDatosIntervencionTemprana(profesorAsignacionId: number, colegioId: number) {
-    this.logger.log(`Obteniendo datos de intervención temprana para asignación ${profesorAsignacionId}`);
+  private async obtenerDatosIntervencionTemprana(profesorAsignacionId: number, colegioId: number, periodoId?: number) {
+    this.logger.log(`Obteniendo datos de intervención temprana para asignación ${profesorAsignacionId}${periodoId ? ` y período ${periodoId}` : ' (período activo)'}`);
 
-    // Obtener período académico activo
-    const periodoActivo = await this.prisma.periodoAcademico.findFirst({
-      where: { 
-        colegioId: colegioId,
-        activo: true 
-      },
-    });
+    // Obtener período académico (específico o activo)
+    const periodo = periodoId 
+      ? await this.prisma.periodoAcademico.findFirst({
+          where: { 
+            id: periodoId,
+            colegioId: colegioId
+          },
+        })
+      : await this.prisma.periodoAcademico.findFirst({
+          where: { 
+            colegioId: colegioId,
+            activo: true 
+          },
+        });
 
-    if (!periodoActivo) {
+    if (!periodo) {
       return {
         asignacion: null,
         alumnosRiesgo: [],
@@ -939,7 +955,7 @@ export class ReportesService {
         INNER JOIN colegio_nivel cn ON s."colegioNivelId" = cn.id
         INNER JOIN nivel n ON cn."nivelId" = n.id
         WHERE pa.id = ${profesorAsignacionId}
-          AND e."periodoId" = ${periodoActivo.id}
+          AND e."periodoId" = ${periodo.id}
           AND rn.nota IS NOT NULL AND rn.nota != ''
           AND a.activo = true
         GROUP BY a.id, a.nombres, a.apellidos, a.dni, s.grado, s.seccion, n.nombre, c.id, c.nombre
@@ -1023,7 +1039,7 @@ export class ReportesService {
       FROM evaluacion e
       INNER JOIN registro_nota rn ON e.id = rn."evaluacionId"
       WHERE e."profesorAsignacionId" = ${profesorAsignacionId}
-        AND e."periodoId" = ${periodoActivo.id}
+        AND e."periodoId" = ${periodo.id}
         AND rn.nota IS NOT NULL AND rn.nota != ''
       GROUP BY e.id, e.nombre, e."fechaEvaluacion"
       ORDER BY e."fechaEvaluacion" DESC
@@ -1066,7 +1082,7 @@ export class ReportesService {
         alumnosEnRiesgo: alumnosEnRiesgoCount,
         porcentajeRiesgo,
       },
-      periodoAcademico: periodoActivo,
+      periodoAcademico: periodo,
       fechaGeneracion: new Date(),
     };
   }
@@ -1116,14 +1132,14 @@ export class ReportesService {
     }
 
     // Obtener período académico activo
-    const periodoActivo = await this.prisma.periodoAcademico.findFirst({
+    const periodo = await this.prisma.periodoAcademico.findFirst({
       where: { 
         colegioId: colegioId,
         activo: true 
       },
     });
 
-    if (!periodoActivo) {
+    if (!periodo) {
       return {
         alumno: null,
         cursos: [],
@@ -1200,7 +1216,7 @@ export class ReportesService {
       LEFT JOIN usuario_rol ur_prof ON p."usuarioRolId" = ur_prof.id
       LEFT JOIN usuario u_prof ON ur_prof.usuario_id = u_prof.id
       LEFT JOIN competencia comp ON comp."cursoId" = cur.id
-      LEFT JOIN evaluacion e ON e."competenciaId" = comp.id AND e."periodoId" = ${periodoActivo.id}
+      LEFT JOIN evaluacion e ON e."competenciaId" = comp.id AND e."periodoId" = ${periodo.id}
       LEFT JOIN registro_nota rn ON rn."evaluacionId" = e.id AND rn."alumnoId" = a.id
       
       WHERE a.id = ${alumnoId} 
@@ -1323,7 +1339,7 @@ export class ReportesService {
         promedioGeneral: Math.round(resultadoPromedio.promedioNumerico * 100) / 100,
         promedioGeneralLiteral: resultadoPromedio.propuestaLiteral,
       },
-      periodoAcademico: periodoActivo,
+      periodoAcademico: periodo,
       fechaGeneracion: new Date(),
     };
   }
