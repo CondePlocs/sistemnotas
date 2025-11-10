@@ -50,6 +50,38 @@ export class CursoController {
     };
   }
 
+  // POST /api/cursos/:id/asignar-salones - Asignar curso a salones existentes (DEBUG)
+  @Post(':id/asignar-salones')
+  @Roles('OWNER')
+  async asignarASalonesExistentes(@Request() req: any, @Param('id') cursoId: string) {
+    const curso = await this.cursoService.obtenerPorId(req.user.id, parseInt(cursoId));
+    
+    // Llamar al método privado usando reflexión para debugging
+    const resultado = await (this.cursoService as any).asignarCursoASalonesExistentes(
+      curso.id, 
+      curso.nivel.nombre, 
+      req.user.id
+    );
+    
+    return {
+      success: true,
+      message: 'Asignación manual completada',
+      resultado
+    };
+  }
+
+  // GET /api/cursos/debug/asignaciones - Ver todas las asignaciones (DEBUG)
+  @Get('debug/asignaciones')
+  @Roles('OWNER')
+  async verAsignaciones(@Request() req: any) {
+    const asignaciones = await this.cursoService.obtenerTodasAsignaciones();
+    
+    return {
+      success: true,
+      asignaciones
+    };
+  }
+
   // GET /api/cursos/estadisticas - Obtener estadísticas
   @Get('estadisticas')
   @Roles('OWNER')

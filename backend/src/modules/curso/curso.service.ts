@@ -86,10 +86,13 @@ export class CursoService {
     });
 
     // NUEVA FUNCIONALIDAD: Asignar automáticamente a salones existentes del mismo nivel
+    this.logger.log(`🚀 Iniciando asignación automática para curso ${resultado.id} - Nivel: ${resultado.nivel.nombre}`);
     try {
-      await this.asignarCursoASalonesExistentes(resultado.id, resultado.nivel.nombre as NivelEducativo, usuarioId);
+      const resultadoAsignacion = await this.asignarCursoASalonesExistentes(resultado.id, resultado.nivel.nombre as NivelEducativo, usuarioId);
+      this.logger.log(`✅ Asignación automática completada:`, resultadoAsignacion);
     } catch (error) {
-      this.logger.error(`Error al asignar curso ${resultado.id} a salones existentes:`, error);
+      this.logger.error(`❌ Error al asignar curso ${resultado.id} a salones existentes:`, error);
+      this.logger.error(`📋 Stack trace:`, error.stack);
       // No fallar la operación principal, solo loguear el error
     }
 
@@ -445,6 +448,59 @@ export class CursoService {
     };
   }
 
+  // Obtener todas las asignaciones de cursos a salones (DEBUG)
+  async obtenerTodasAsignaciones() {
+    return await this.prisma.salonCurso.findMany({
+      include: {
+        salon: {
+          select: {
+            id: true,
+            grado: true,
+            seccion: true,
+            colegio: {
+              select: {
+                id: true,
+                nombre: true
+              }
+            },
+            colegioNivel: {
+              select: {
+                nivel: {
+                  select: {
+                    nombre: true
+                  }
+                }
+              }
+            }
+          }
+        },
+        curso: {
+          select: {
+            id: true,
+            nombre: true,
+            nivel: {
+              select: {
+                nombre: true
+              }
+            }
+          }
+        },
+        asignador: {
+          select: {
+            id: true,
+            nombres: true,
+            apellidos: true
+          }
+        }
+      },
+      orderBy: [
+        { salon: { grado: 'asc' } },
+        { salon: { seccion: 'asc' } },
+        { curso: { nombre: 'asc' } }
+      ]
+    });
+  }
+
   /**
    * Asigna un curso recién creado a todos los salones existentes del mismo nivel educativo
    * Se ejecuta automáticamente cuando se crea un nuevo curso
@@ -453,7 +509,13 @@ export class CursoService {
     this.logger.log(`🎯 Iniciando asignación automática del curso ${cursoId} a salones existentes del nivel: ${nivel}`);
 
     try {
-      // 1. Buscar todos los salones activos del mismo nivel educativo
+      // 1. Primero verificar qué niveles existen en la base de datos
+      const nivelesExistentes = await this.prisma.nivel.findMany({
+        select: { id: true, nombre: true }
+      });
+      this.logger.log(`📚 Niveles educativos disponibles:`, nivelesExistentes);
+
+      // 2. Buscar todos los salones activos del mismo nivel educativo
       const salonesDelNivel = await this.prisma.salon.findMany({
         where: {
           colegioNivel: {
@@ -485,9 +547,40 @@ export class CursoService {
       });
 
       this.logger.log(`📚 Salones encontrados del nivel ${nivel}: ${salonesDelNivel.length}`);
+      
+      // Debug: mostrar detalles de los salones encontrados
+      if (salonesDelNivel.length > 0) {
+        this.logger.log(`🏫 Detalles de salones encontrados:`, salonesDelNivel.map(s => ({
+          id: s.id,
+          salon: `${s.grado}° ${s.seccion}`,
+          colegio: s.colegio.nombre,
+          nivel: s.colegioNivel.nivel.nombre
+        })));
+      }
 
       if (salonesDelNivel.length === 0) {
-        this.logger.log(`ℹ️ No hay salones existentes para el nivel ${nivel}`);
+        this.logger.warn(`⚠️ No hay salones existentes para el nivel ${nivel}`);
+        
+        // Debug: buscar todos los salones para ver qué niveles tienen
+        const todosSalones = await this.prisma.salon.findMany({
+          select: {
+            id: true,
+            grado: true,
+            seccion: true,
+            colegio: { select: { nombre: true } },
+            colegioNivel: {
+              select: {
+                nivel: { select: { nombre: true } }
+              }
+            }
+          }
+        });
+        this.logger.log(`🔍 Todos los salones existentes:`, todosSalones.map(s => ({
+          salon: `${s.grado}° ${s.seccion}`,
+          colegio: s.colegio.nombre,
+          nivel: s.colegioNivel.nivel.nombre
+        })));
+        
         return {
           success: true,
           salonesActualizados: 0,

@@ -298,7 +298,7 @@ export default function VistaMobile({
         onDescartar={descartarCambios}
       />
 
-      <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-xl border-4 border-[#8D2C1D]/30 overflow-hidden">
+      <div className="bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9] backdrop-blur-sm rounded-xl shadow-xl border-4 border-[#8D2C1D]/30 overflow-hidden">
         {/* Header con paleta corporativa */}
         <div className="bg-gradient-to-r from-[#8D2C1D] to-[#D96924] px-4 py-4 border-b-4 border-[#8D2C1D]/40">
           <div className="flex flex-col gap-2">
@@ -329,29 +329,6 @@ export default function VistaMobile({
                   </div>
                 </div>
               )}
-              
-              {/* Botones de herramientas móvil */}
-              <button
-                onClick={() => setModalInfoAbierto(true)}
-                className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 hover:bg-white/30 transition-colors"
-                title="Ver información de tareas"
-              >
-                <div className="text-white text-xs font-semibold flex items-center gap-1">
-                  <span>📊</span>
-                  <span>Info</span>
-                </div>
-              </button>
-              
-              <button
-                onClick={() => setModalCalculadoraAbierto(true)}
-                className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 hover:bg-white/30 transition-colors"
-                title="Calculadora de notas"
-              >
-                <div className="text-white text-xs font-semibold flex items-center gap-1">
-                  <span>🧮</span>
-                  <span>Calc</span>
-                </div>
-              </button>
             </div>
           </div>
         </div>
@@ -361,6 +338,18 @@ export default function VistaMobile({
           <FiltroAlumnos
             alumnos={contexto.alumnos}
             onFiltroChange={setAlumnosFiltrados}
+            extraButton={
+              <button
+                onClick={() => setModalInfoAbierto(true)}
+                className="bg-gradient-to-r from-[#8D2C1D] to-[#D96924] text-white px-4 py-2 rounded-lg hover:from-[#7A2518] hover:to-[#C85A1F] transition-all duration-200 flex items-center gap-2 shadow-md hover:shadow-lg transform hover:scale-105"
+                title="Ver información de tareas pendientes"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                <span className="font-medium">Info</span>
+              </button>
+            }
           />
         </div>
 
@@ -384,8 +373,8 @@ export default function VistaMobile({
                   )}
                 </div>
                 <div className="flex items-center space-x-2">
-                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                    {calcularPromedio(alumno.id)}
+                  <span className={`px-3 py-1.5 rounded-full text-xs font-bold shadow-sm ${getColorPromedio(calcularPromedio(alumno.id))}`}>
+                    🏆 {calcularPromedio(alumno.id)}
                   </span>
                   {alumnoExpandido === alumno.id ? (
                     <ChevronDownIcon className="h-5 w-5 text-gray-400" />
@@ -401,7 +390,7 @@ export default function VistaMobile({
                   {contexto.competencias.map((competencia) => {
                     const evaluacionesCompetencia = obtenerEvaluacionesPorCompetencia(competencia.id);
                     return (
-                      <div key={competencia.id} className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border-3 border-[#8D2C1D]/25 p-4">
+                      <div key={competencia.id} className="bg-gradient-to-br from-[#FCE0C1]/80 to-[#E9E1C9]/80 backdrop-blur-sm rounded-xl shadow-lg border-2 border-[#8D2C1D]/25 p-4">
                         <div className="flex items-center justify-between mb-3">
                           <h4 className="text-sm font-bold text-[#8D2C1D]">
                             🎯 {competencia.nombre}

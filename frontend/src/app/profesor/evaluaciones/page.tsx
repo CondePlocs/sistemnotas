@@ -8,8 +8,9 @@ import ProfesorNavbar from '@/components/layout/ProfesorNavbar';
 import { ContextoTrabajo, CreateEvaluacionDto, Evaluacion } from '@/types/evaluaciones';
 import { evaluacionesAPI } from '@/lib/api/evaluaciones';
 import SistemaEvaluaciones from '@/components/evaluaciones/SistemaEvaluaciones';
-import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, ShieldExclamationIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
+import useHojaTrabajoSecurity from '@/hooks/useHojaTrabajoSecurity';
 
 export default function ProfesorEvaluacionesPage() {
   const { user, logout } = useAuth();
@@ -24,6 +25,9 @@ export default function ProfesorEvaluacionesPage() {
   const [error, setError] = useState<string | null>(null);
   const [descargandoReporte, setDescargandoReporte] = useState<'excel' | 'pdf' | null>(null);
 
+  // Hook de seguridad para validar acceso a la hoja de trabajo
+  const security = useHojaTrabajoSecurity(contexto, asignacionId, periodoId);
+
   useEffect(() => {
     if (asignacionId && periodoId) {
       cargarContextoTrabajo();
@@ -32,6 +36,14 @@ export default function ProfesorEvaluacionesPage() {
       setLoading(false);
     }
   }, [asignacionId, periodoId]);
+
+  // Efecto para manejar validaciones de seguridad
+  useEffect(() => {
+    if (contexto && !security.canAccess && security.redirectTo) {
+      console.warn('Acceso denegado:', security.reason);
+      router.push(security.redirectTo);
+    }
+  }, [security, contexto, router]);
 
   const cargarContextoTrabajo = async () => {
     try {
@@ -217,6 +229,38 @@ export default function ProfesorEvaluacionesPage() {
     );
   }
 
+  // Pantalla de acceso denegado
+  if (contexto && !security.canAccess) {
+    return (
+      <ProtectedRoute requiredRole="PROFESOR">
+        <ProfesorNavbar>
+          <div className="flex-1 flex items-center justify-center p-6">
+            <div className="text-center bg-white/95 backdrop-blur-sm rounded-xl p-8 shadow-lg border-2 border-red-200 max-w-md">
+              <div className="text-red-600 mb-4">
+                <ShieldExclamationIcon className="w-16 h-16 mx-auto" />
+              </div>
+              <h3 className="text-xl font-bold text-red-800 mb-2">Acceso Denegado</h3>
+              <p className="text-red-600 mb-4 text-sm">{security.reason}</p>
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+                <p className="text-xs text-red-700">
+                  🔒 <strong>Política de Privacidad:</strong> Las hojas de trabajo son privadas y personales. 
+                  Solo puedes acceder a tus propias hojas de trabajo del colegio al que perteneces.
+                </p>
+              </div>
+              <Link
+                href="/profesor/dashboard"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                <ArrowLeftIcon className="w-4 h-4" />
+                Volver al Dashboard
+              </Link>
+            </div>
+          </div>
+        </ProfesorNavbar>
+      </ProtectedRoute>
+    );
+  }
+
   if (!contexto) {
     return (
       <ProtectedRoute requiredRole="PROFESOR">
@@ -246,14 +290,30 @@ export default function ProfesorEvaluacionesPage() {
           <div className="mb-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold text-[#8D2C1D] mb-2" style={{ fontFamily: 'var(--font-poppins)' }}>
-                {readonly ? '📚 Visualización de Hoja Anterior' : '📚 Gestión de Evaluaciones'}
+                {readonly || security.isReadonly ? '📚 Visualización de Hoja de Trabajo' : '📚 Gestión de Evaluaciones'}
               </h1>
               <p className="text-lg text-[#666666]">
-                {readonly ? 
-                  'Visualiza las evaluaciones y notas de períodos académicos anteriores (solo lectura)' :
+                {readonly || security.isReadonly ? 
+                  'Visualiza las evaluaciones y notas en modo de solo lectura' :
                   'Administra las evaluaciones de tus estudiantes y descarga reportes de trabajo'
                 }
               </p>
+              
+              {/* Banner de información de seguridad */}
+              {security.isReadonly && !readonly && (
+                <div className="mt-3 p-3 bg-amber-50 border-l-4 border-amber-400 rounded-r-lg">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <ShieldExclamationIcon className="h-5 w-5 text-amber-400" />
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-sm text-amber-700">
+                        <strong>Modo Solo Lectura:</strong> {security.reason}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
             
             {/* Botones de Reportes - Disponibles en modo normal y solo lectura */}
@@ -355,7 +415,7 @@ export default function ProfesorEvaluacionesPage() {
               onCrearEvaluacion={handleCrearEvaluacion}
               asignacionId={parseInt(asignacionId!)}
               periodoId={parseInt(periodoId!)}
-              readonly={readonly}
+              readonly={readonly || security.isReadonly}
             />
           </div>
         </div>

@@ -13,14 +13,12 @@ interface Alumno {
 interface FiltroAlumnosProps {
   alumnos: Alumno[];
   onFiltroChange: (alumnosFiltrados: Alumno[]) => void;
-  className?: string;
   extraButton?: React.ReactNode;
 }
 
 const FiltroAlumnos: React.FC<FiltroAlumnosProps> = ({
   alumnos,
   onFiltroChange,
-  className = '',
   extraButton
 }) => {
   const [textoBusqueda, setTextoBusqueda] = useState('');
@@ -68,7 +66,7 @@ const FiltroAlumnos: React.FC<FiltroAlumnosProps> = ({
   };
 
   return (
-    <div className={`bg-gradient-to-r from-[#FCE0C1] to-[#E9E1C9] rounded-lg border-2 border-[#8D2C1D]/30 shadow-lg p-4 ${className}`}>
+    <div className="bg-gradient-to-r from-[#FCE0C1] to-[#E9E1C9] rounded-lg border-2 border-[#8D2C1D]/30 shadow-lg p-4">
       <div className="flex items-center gap-4 mb-3">
         <div className="flex items-center gap-2 text-[#8D2C1D]">
           <UsersIcon className="w-5 h-5" />
