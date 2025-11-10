@@ -329,7 +329,7 @@ export default function TablaEvaluacionesReal({
         onDescartar={descartarCambios}
       />
 
-      <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-xl border-4 border-[#8D2C1D]/30 overflow-hidden w-full">
+      <div className="bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9] backdrop-blur-sm rounded-xl shadow-xl border-4 border-[#8D2C1D]/30 overflow-hidden w-full">
         {/* Header mejorado con paleta corporativa - Más compacto */}
         <div className="bg-gradient-to-r from-[#8D2C1D] to-[#D96924] px-4 py-4 border-b-4 border-[#8D2C1D]/40">
           <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-3">
@@ -367,30 +367,6 @@ export default function TablaEvaluacionesReal({
                 </div>
               )}
               
-              {/* Botones de herramientas */}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setModalInfoAbierto(true)}
-                  className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-2 hover:bg-white/30 transition-colors group"
-                  title="Ver información de tareas pendientes"
-                >
-                  <div className="text-white text-xs font-semibold flex items-center gap-1">
-                    <span className="group-hover:scale-110 transition-transform">📊</span>
-                    <span>Info</span>
-                  </div>
-                </button>
-                
-                <button
-                  onClick={() => setModalCalculadoraAbierto(true)}
-                  className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-2 hover:bg-white/30 transition-colors group"
-                  title="Calculadora de notas personalizada"
-                >
-                  <div className="text-white text-xs font-semibold flex items-center gap-1">
-                    <span className="group-hover:scale-110 transition-transform">🧮</span>
-                    <span>Calc</span>
-                  </div>
-                </button>
-              </div>
             </div>
           </div>
         </div>
@@ -400,6 +376,18 @@ export default function TablaEvaluacionesReal({
           <FiltroAlumnos
             alumnos={contexto.alumnos}
             onFiltroChange={setAlumnosFiltrados}
+            extraButton={
+              <button
+                onClick={() => setModalInfoAbierto(true)}
+                className="bg-gradient-to-r from-[#8D2C1D] to-[#D96924] text-white px-4 py-2 rounded-lg hover:from-[#7A2518] hover:to-[#C85A1F] transition-all duration-200 flex items-center gap-2 shadow-md hover:shadow-lg transform hover:scale-105"
+                title="Ver información de tareas pendientes"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                <span className="font-medium">Info</span>
+              </button>
+            }
           />
         </div>
 
@@ -408,7 +396,7 @@ export default function TablaEvaluacionesReal({
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-gradient-to-r from-[#FCE0C1] to-[#E9E1C9] border-b-4 border-[#8D2C1D]/30">
-                <th className="px-4 py-4 text-left text-sm font-bold text-[#8D2C1D] border-r-4 border-[#8D2C1D]/30 sticky left-0 bg-gradient-to-r from-[#FCE0C1] to-[#E9E1C9] z-10 min-w-[200px]">
+                <th className="px-3 py-3 text-left text-xs font-bold text-[#8D2C1D] border-r-4 border-[#8D2C1D]/30 sticky left-0 bg-gradient-to-r from-[#FCE0C1] to-[#E9E1C9] z-10 w-[180px] min-w-[180px] max-w-[180px]">
                   👥 ESTUDIANTE
                 </th>
                 {contexto.competencias.map((competencia, compIndex) => {
@@ -416,39 +404,39 @@ export default function TablaEvaluacionesReal({
                   return (
                     <th 
                       key={competencia.id} 
-                      className={`border-r-4 border-[#8D2C1D]/30 min-w-[400px] max-w-[600px] transition-all duration-200 cursor-pointer ${
+                      className={`border-r-4 border-[#8D2C1D]/30 w-[280px] min-w-[280px] max-w-[280px] transition-all duration-200 cursor-pointer ${
                         columnaSeleccionada === compIndex 
                           ? 'bg-[#8D2C1D]/30 shadow-lg border-t-4 border-t-[#8D2C1D]' 
                           : 'hover:bg-[#FCE0C1]/10'
                       }`}
                       onClick={() => setColumnaSeleccionada(columnaSeleccionada === compIndex ? null : compIndex)}
                     >
-                      <div className="px-3 py-4">
-                        <div className="text-center text-sm font-bold text-white px-3 py-2 rounded-xl bg-gradient-to-r from-[#8D2C1D] to-[#D96924] shadow-lg mb-3 mx-1">
+                      <div className="px-2 py-2">
+                        <div className="text-center text-xs font-bold text-white px-2 py-1 rounded-lg bg-gradient-to-r from-[#8D2C1D] to-[#D96924] shadow-md mb-2">
                           🎯 {competencia.nombre}
                         </div>
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-0.5">
                           {evaluacionesCompetencia.map(evaluacion => (
-                            <div key={evaluacion.id} className="flex-1 min-w-[80px]">
-                              <div className="text-xs text-[#666666] text-center font-semibold p-1.5 bg-white/50 rounded-lg border border-[#E9E1C9]">
+                            <div key={evaluacion.id} className="flex-1 min-w-[60px]">
+                              <div className="text-[10px] text-[#666666] text-center font-semibold p-1 bg-white/50 rounded border border-[#E9E1C9] truncate">
                                 {evaluacion.nombre}
                               </div>
                             </div>
                           ))}
-                          <div className="w-8 flex justify-center">
+                          <div className="w-6 flex justify-center">
                             {!readonly && (
                               <button
                                 onClick={() => handleCrearEvaluacion(competencia.id)}
-                                className="text-[#8D2C1D] hover:text-[#7A2518] hover:bg-[#FCE0C1] p-1.5 rounded-lg transition-all duration-300 hover:scale-110 shadow-sm hover:shadow-md"
+                                className="text-[#8D2C1D] hover:text-[#7A2518] hover:bg-[#FCE0C1] p-1 rounded transition-all duration-300 hover:scale-110"
                                 title="Agregar evaluación"
                               >
-                                <PlusIcon className="w-3 h-3" />
+                                <PlusIcon className="w-2.5 h-2.5" />
                               </button>
                             )}
                           </div>
-                          <div className="w-20">
-                            <div className="text-xs text-[#8D2C1D] text-center font-bold bg-white/70 rounded-lg p-1.5 border border-[#E9E1C9]">
-                              📈 Promedio
+                          <div className="w-16">
+                            <div className="text-[10px] text-[#8D2C1D] text-center font-bold bg-white/70 rounded p-1 border border-[#E9E1C9]">
+                              📈 Prom
                             </div>
                           </div>
                         </div>
@@ -456,7 +444,7 @@ export default function TablaEvaluacionesReal({
                     </th>
                   );
                 })}
-                <th className="px-4 py-4 text-center text-sm font-bold text-[#8D2C1D] bg-gradient-to-r from-[#FCE0C1] to-[#E9E1C9] sticky right-0 z-10 min-w-[150px] border-l-4 border-[#8D2C1D]/30">
+                <th className="px-3 py-3 text-center text-xs font-bold text-[#8D2C1D] bg-gradient-to-r from-[#FCE0C1] to-[#E9E1C9] sticky right-0 z-10 w-[120px] min-w-[120px] max-w-[120px] border-l-4 border-[#8D2C1D]/30">
                   🏆 PROMEDIO FINAL
                 </th>
               </tr>
@@ -480,18 +468,18 @@ export default function TablaEvaluacionesReal({
                   }`}
                   onClick={() => setFilaSeleccionada(filaSeleccionada === alumno.id ? null : alumno.id)}
                 >
-                  <td className="px-4 py-3 border-r-4 border-[#8D2C1D]/30 sticky left-0 z-10 bg-inherit">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-[#8D2C1D] to-[#D96924] rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
+                  <td className="px-2 py-2 border-r-4 border-[#8D2C1D]/30 sticky left-0 z-10 bg-inherit w-[180px] min-w-[180px] max-w-[180px]">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-gradient-to-br from-[#8D2C1D] to-[#D96924] rounded-full flex items-center justify-center text-white font-bold text-xs shadow-md">
                         {alumno.nombres.charAt(0)}{alumno.apellidos.charAt(0)}
                       </div>
-                      <div>
-                        <div className="text-sm font-bold text-[#333333]">
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-bold text-[#333333] truncate">
                           {alumno.nombres} {alumno.apellidos}
                         </div>
                         {alumno.dni && (
-                          <div className="text-xs text-[#666666] font-medium">
-                            🎫 DNI: {alumno.dni}
+                          <div className="text-[10px] text-[#666666] font-medium truncate">
+                            🎫 {alumno.dni}
                           </div>
                         )}
                       </div>
@@ -520,7 +508,7 @@ export default function TablaEvaluacionesReal({
                             const esEstimacion = mostrarEstimacion && !nota;
                             
                             return (
-                              <div key={evaluacion.id} className="flex-1 min-w-[80px]">
+                              <div key={evaluacion.id} className="flex-1 min-w-[60px]">
                                 <div className="text-center relative">
                                   {editando === key ? (
                                     <input
@@ -538,8 +526,8 @@ export default function TablaEvaluacionesReal({
                                       onKeyDown={(e) => {
                                         if (e.key === 'Enter') setEditando(null);
                                       }}
-                                      className="w-full text-center text-sm border-2 border-[#8D2C1D] rounded-lg px-2 py-1 font-bold focus:ring-2 focus:ring-[#8D2C1D]"
-                                      placeholder="AD,A,B,C o 0-20"
+                                      className="w-full text-center text-xs border-2 border-[#8D2C1D] rounded px-1 py-1 font-bold focus:ring-2 focus:ring-[#8D2C1D]"
+                                      placeholder="AD,A,B,C"
                                       maxLength={4}
                                       autoFocus
                                     />
@@ -547,12 +535,12 @@ export default function TablaEvaluacionesReal({
                                     <>
                                       <button
                                         onClick={readonly ? undefined : () => setEditando(key)}
-                                        className={`w-full h-9 text-sm font-bold rounded-lg transition-all duration-300 ${readonly ? 'cursor-default' : 'hover:scale-105 cursor-pointer'} shadow-sm hover:shadow-md border-2 ${getColorNotaMejorado(valorMostrar, !!esEstimacion)}`}
+                                        className={`w-full h-7 text-xs font-bold rounded transition-all duration-300 ${readonly ? 'cursor-default' : 'hover:scale-105 cursor-pointer'} shadow-sm hover:shadow-md border-2 ${getColorNotaMejorado(valorMostrar, !!esEstimacion)}`}
                                         title={readonly ? 'Solo lectura - No se puede editar' : (esEstimacion ? `🤖 Estimación IA (${Math.round(estimacion!.confianza * 100)}% confianza): ${estimacion!.mensaje}` : undefined)}
                                       >
                                         {esEstimacion ? (
-                                          <div className="flex items-center justify-center gap-1">
-                                            <span className="text-xs">🤖</span>
+                                          <div className="flex items-center justify-center gap-0.5">
+                                            <span className="text-[10px]">🤖</span>
                                             <span>{valorMostrar}</span>
                                           </div>
                                         ) : (
@@ -560,8 +548,8 @@ export default function TablaEvaluacionesReal({
                                         )}
                                       </button>
                                       {esEstimacion && (
-                                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-purple-500 rounded-full flex items-center justify-center">
-                                          <span className="text-white text-xs font-bold">AI</span>
+                                        <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-purple-500 rounded-full flex items-center justify-center">
+                                          <span className="text-white text-[8px] font-bold">AI</span>
                                         </div>
                                       )}
                                     </>
@@ -570,10 +558,10 @@ export default function TablaEvaluacionesReal({
                               </div>
                             );
                           })}
-                          <div className="w-8"></div>
-                          <div className="w-20">
+                          <div className="w-6"></div>
+                          <div className="w-16">
                             <div className="text-center">
-                              <span className={`px-2 py-1.5 rounded-lg text-xs font-bold shadow-sm ${getColorPromedio(calcularPromedioCompetencia(alumno.id, competencia.id))}`}>
+                              <span className={`px-1 py-1 rounded text-[10px] font-bold shadow-sm ${getColorPromedio(calcularPromedioCompetencia(alumno.id, competencia.id))}`}>
                                 {calcularPromedioCompetencia(alumno.id, competencia.id)}
                               </span>
                             </div>
@@ -582,9 +570,9 @@ export default function TablaEvaluacionesReal({
                       </td>
                     );
                   })}
-                  <td className="px-4 py-3 text-center border-l-4 border-[#8D2C1D] sticky right-0 z-10 bg-inherit">
+                  <td className="px-2 py-2 text-center border-l-4 border-[#8D2C1D] sticky right-0 z-10 bg-inherit w-[120px] min-w-[120px] max-w-[120px]">
                     <div className="flex items-center justify-center">
-                      <span className={`px-3 py-2 rounded-xl text-sm font-bold shadow-lg ${getColorPromedioFinal(calcularPromedio(alumno.id))}`}>
+                      <span className={`px-2 py-1 rounded-lg text-xs font-bold shadow-md ${getColorPromedioFinal(calcularPromedio(alumno.id))}`}>
                         🏆 {calcularPromedio(alumno.id)}
                       </span>
                     </div>

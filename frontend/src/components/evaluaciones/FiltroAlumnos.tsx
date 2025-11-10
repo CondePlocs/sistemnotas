@@ -14,12 +14,14 @@ interface FiltroAlumnosProps {
   alumnos: Alumno[];
   onFiltroChange: (alumnosFiltrados: Alumno[]) => void;
   className?: string;
+  extraButton?: React.ReactNode;
 }
 
 const FiltroAlumnos: React.FC<FiltroAlumnosProps> = ({
   alumnos,
   onFiltroChange,
-  className = ''
+  className = '',
+  extraButton
 }) => {
   const [textoBusqueda, setTextoBusqueda] = useState('');
   const [alumnosFiltrados, setAlumnosFiltrados] = useState<Alumno[]>(alumnos);
@@ -77,27 +79,35 @@ const FiltroAlumnos: React.FC<FiltroAlumnosProps> = ({
         </div>
       </div>
 
-      <div className="relative">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <MagnifyingGlassIcon className="h-4 w-4 text-[#8D2C1D]/60" />
+      <div className="flex items-center gap-3">
+        <div className="relative flex-1">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <MagnifyingGlassIcon className="h-4 w-4 text-[#8D2C1D]/60" />
+          </div>
+          
+          <input
+            type="text"
+            placeholder="Buscar por nombre, apellido o DNI..."
+            value={textoBusqueda}
+            onChange={(e) => setTextoBusqueda(e.target.value)}
+            className="w-full pl-10 pr-10 py-2 border-2 border-[#8D2C1D]/30 rounded-md focus:ring-2 focus:ring-[#8D2C1D] focus:border-[#8D2C1D] transition-colors bg-white/80 backdrop-blur-sm"
+          />
+          
+          {textoBusqueda && (
+            <button
+              onClick={limpiarFiltro}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#8D2C1D]/60 hover:text-[#8D2C1D] transition-colors"
+              title="Limpiar búsqueda"
+            >
+              <XMarkIcon className="h-4 w-4" />
+            </button>
+          )}
         </div>
         
-        <input
-          type="text"
-          placeholder="Buscar por nombre, apellido o DNI..."
-          value={textoBusqueda}
-          onChange={(e) => setTextoBusqueda(e.target.value)}
-          className="w-full pl-10 pr-10 py-2 border-2 border-[#8D2C1D]/30 rounded-md focus:ring-2 focus:ring-[#8D2C1D] focus:border-[#8D2C1D] transition-colors bg-white/80 backdrop-blur-sm"
-        />
-        
-        {textoBusqueda && (
-          <button
-            onClick={limpiarFiltro}
-            className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#8D2C1D]/60 hover:text-[#8D2C1D] transition-colors"
-            title="Limpiar búsqueda"
-          >
-            <XMarkIcon className="h-4 w-4" />
-          </button>
+        {extraButton && (
+          <div className="flex-shrink-0">
+            {extraButton}
+          </div>
         )}
       </div>
 

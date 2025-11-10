@@ -8,8 +8,7 @@ import { ProfesorAsignacion, PeriodoAcademico } from '@/types/evaluaciones';
 import AsignacionCard from '@/components/profesor/AsignacionCard';
 import LoadingCard from '@/components/profesor/LoadingCard';
 import ModalSeleccionPeriodo from '@/components/modals/ModalSeleccionPeriodo';
-import SimpleHeader from '@/components/layout/SimpleHeader';
-import DashboardFooter from '@/components/layout/DashboardFooter';
+import ProfesorNavbar from '@/components/layout/ProfesorNavbar';
 import { AcademicCapIcon, BookOpenIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline';
 
 interface AsignacionesResponse {
@@ -136,38 +135,19 @@ export default function ProfesorDashboard() {
 
   return (
     <ProtectedRoute requiredRole="PROFESOR">
-      <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9] flex flex-col">
-        {/* Header Simple */}
-        <SimpleHeader 
-          title="Dashboard del Profesor"
-          showBackButton={false}
-          showForwardButton={true}
-          dashboardPath="/profesor/dashboard"
-          extraButtons={
-            <button
-              onClick={() => router.push('/profesor/hojas-anteriores')}
-              className="group flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-white/10 hover:bg-white/20 rounded-lg transition-all duration-300 hover:scale-105 active:scale-95"
-              title="Ver hojas de trabajo anteriores"
-            >
-              <svg 
-                className="w-4 h-4 sm:w-5 sm:h-5 text-white group-hover:text-white/90 transition-colors duration-300" 
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
-              >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" 
-                />
-              </svg>
-            </button>
-          }
-        />
+      <ProfesorNavbar>
 
         {/* Contenido principal */}
         <div className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Título del Dashboard */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-[#8D2C1D] mb-2" style={{ fontFamily: 'var(--font-poppins)' }}>
+              🎓 Dashboard general
+            </h1>
+            <p className="text-lg text-[#666666]">
+              Gestiona tus asignaciones académicas y accede a todas las herramientas de evaluación
+            </p>
+          </div>
           {/* Filtros */}
           <div className="mb-6">
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
@@ -357,9 +337,6 @@ export default function ProfesorDashboard() {
           )}
         </div>
 
-        {/* Footer Reutilizable */}
-        <DashboardFooter />
-
         {/* Modal de selección de período */}
         <ModalSeleccionPeriodo
           isOpen={modalPeriodoAbierto}
@@ -370,7 +347,7 @@ export default function ProfesorDashboard() {
           asignacion={asignacionSeleccionada}
           onPeriodoSeleccionado={handlePeriodoSeleccionado}
         />
-      </div>
+      </ProfesorNavbar>
     </ProtectedRoute>
   );
 }

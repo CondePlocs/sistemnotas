@@ -4,8 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import SimpleHeader from '@/components/layout/SimpleHeader';
-import DashboardFooter from '@/components/layout/DashboardFooter';
+import ProfesorNavbar from '@/components/layout/ProfesorNavbar';
 import { ContextoTrabajo, CreateEvaluacionDto, Evaluacion } from '@/types/evaluaciones';
 import { evaluacionesAPI } from '@/lib/api/evaluaciones';
 import SistemaEvaluaciones from '@/components/evaluaciones/SistemaEvaluaciones';
@@ -178,20 +177,14 @@ export default function ProfesorEvaluacionesPage() {
   if (loading) {
     return (
       <ProtectedRoute requiredRole="PROFESOR">
-        <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9] flex flex-col">
-          <SimpleHeader 
-            title="Registro de Evaluaciones"
-            showBackButton={true}
-            dashboardPath="/profesor/dashboard"
-          />
-          <div className="flex-1 flex items-center justify-center">
+        <ProfesorNavbar>
+          <div className="flex-1 flex items-center justify-center p-6">
             <div className="text-center bg-white/95 backdrop-blur-sm rounded-xl p-8 shadow-lg border-2 border-[#E9E1C9]">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8D2C1D] mx-auto"></div>
               <p className="mt-4 text-[#666666] font-medium">Cargando datos de evaluación...</p>
             </div>
           </div>
-          <DashboardFooter />
-        </div>
+        </ProfesorNavbar>
       </ProtectedRoute>
     );
   }
@@ -199,34 +192,27 @@ export default function ProfesorEvaluacionesPage() {
   if (error) {
     return (
       <ProtectedRoute requiredRole="PROFESOR">
-        <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9] flex flex-col">
-          <SimpleHeader 
-            title="Registro de Evaluaciones"
-            showBackButton={true}
-            dashboardPath="/profesor/dashboard"
-          />
-          <div className="flex-1 flex items-center justify-center">
+        <ProfesorNavbar>
+          <div className="flex-1 flex items-center justify-center p-6">
             <div className="text-center bg-white/95 backdrop-blur-sm rounded-xl p-8 shadow-lg border-2 border-red-200">
-              <div className="text-red-600 mb-4 text-lg">⚠️ Error</div>
-              <p className="text-red-700 mb-6 font-medium">{error}</p>
-              <div className="flex flex-col sm:flex-row gap-3">
+              <div className="text-red-600 mb-4">
+                <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-red-800 mb-2">Error al cargar</h3>
+              <p className="text-red-600 mb-4">{error}</p>
+              <div className="flex gap-3 justify-center">
                 <button
-                  onClick={cargarContextoTrabajo}
-                  className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 font-semibold"
+                  onClick={() => window.location.reload()}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                 >
                   Reintentar
                 </button>
-                <Link
-                  href="/profesor/dashboard"
-                  className="bg-gradient-to-r from-[#8D2C1D] to-[#D96924] hover:from-[#7A2518] hover:to-[#C55A1F] text-white px-6 py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 font-semibold text-center"
-                >
-                  Volver al Dashboard
-                </Link>
               </div>
             </div>
           </div>
-          <DashboardFooter />
-        </div>
+        </ProfesorNavbar>
       </ProtectedRoute>
     );
   }
@@ -234,43 +220,26 @@ export default function ProfesorEvaluacionesPage() {
   if (!contexto) {
     return (
       <ProtectedRoute requiredRole="PROFESOR">
-        <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9] flex flex-col">
-          <SimpleHeader 
-            title="Registro de Evaluaciones"
-            showBackButton={true}
-            dashboardPath="/profesor/dashboard"
-          />
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center bg-white/95 backdrop-blur-sm rounded-xl p-8 shadow-lg border-2 border-[#E9E1C9]">
-              <p className="text-[#666666] mb-6 font-medium">No se pudo cargar el contexto de trabajo</p>
-              <Link
-                href="/profesor/dashboard"
-                className="bg-gradient-to-r from-[#8D2C1D] to-[#D96924] hover:from-[#7A2518] hover:to-[#C55A1F] text-white px-6 py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 font-semibold"
-              >
-                Volver al Dashboard
-              </Link>
+        <ProfesorNavbar>
+          <div className="flex-1 flex items-center justify-center p-6">
+            <div className="text-center bg-white/95 backdrop-blur-sm rounded-xl p-8 shadow-lg border-2 border-yellow-200">
+              <div className="text-yellow-600 mb-4">
+                <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-yellow-800 mb-2">Parámetros faltantes</h3>
+              <p className="text-yellow-600 mb-4">Se requieren los parámetros de asignación y período para cargar la hoja de trabajo.</p>
             </div>
           </div>
-          <DashboardFooter />
-        </div>
+        </ProfesorNavbar>
       </ProtectedRoute>
     );
   }
 
   return (
     <ProtectedRoute requiredRole="PROFESOR">
-      <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9] flex flex-col">
-        {/* Header Simple */}
-        <SimpleHeader 
-          title={readonly ? 
-            (contexto ? `📚 Hoja Anterior: ${contexto.asignacion.curso}` : 'Hoja de Trabajo Anterior') :
-            (contexto ? `Evaluaciones: ${contexto.asignacion.curso}` : 'Registro de Evaluaciones')
-          }
-          showBackButton={true}
-          dashboardPath="/profesor/dashboard"
-        />
-
-
+      <ProfesorNavbar>
         {/* Contenido principal - Ancho completo */}
         <div className="flex-1 px-2 sm:px-4 lg:px-6 py-4">
           {/* Título Principal con Botones de Reportes */}
@@ -355,8 +324,32 @@ export default function ProfesorEvaluacionesPage() {
             </div>
           </div>
 
+          {/* Mensaje de Solo Lectura */}
+          {readonly && (
+            <div className="mb-6">
+              <div className="bg-blue-50/95 backdrop-blur-sm border-2 border-blue-200 rounded-xl p-4 shadow-lg">
+                <div className="flex items-center gap-3">
+                  <div className="bg-blue-500 p-2 rounded-lg shadow-md">
+                    <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-blue-800">
+                      🔒 Modo Solo Lectura - Período Anterior
+                    </h3>
+                    <p className="text-xs text-blue-700">
+                      Solo puedes visualizar las notas e imprimir reportes. No es posible crear evaluaciones o modificar calificaciones.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Contenido principal - Sistema de Evaluaciones con ancho completo */}
-          <div className="w-full">
+          <div className="w-full min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9]">
             <SistemaEvaluaciones
               contexto={contexto}
               onCrearEvaluacion={handleCrearEvaluacion}
@@ -366,10 +359,7 @@ export default function ProfesorEvaluacionesPage() {
             />
           </div>
         </div>
-
-        {/* Footer Reutilizable */}
-        <DashboardFooter />
-      </div>
+      </ProfesorNavbar>
     </ProtectedRoute>
   );
 }

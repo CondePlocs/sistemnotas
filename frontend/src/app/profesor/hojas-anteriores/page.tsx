@@ -4,8 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import SimpleHeader from '@/components/layout/SimpleHeader';
-import DashboardFooter from '@/components/layout/DashboardFooter';
+import ProfesorNavbar from '@/components/layout/ProfesorNavbar';
 import { PeriodoAcademico, ProfesorAsignacion } from '@/types/evaluaciones';
 
 interface PeriodosAnterioresResponse {
@@ -136,17 +135,20 @@ export default function HojasAnterioresPage() {
 
   return (
     <ProtectedRoute requiredRole="PROFESOR">
-      <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9] flex flex-col">
-        {/* Header */}
-        <SimpleHeader 
-          title="Hojas de Trabajo Anteriores"
-          showBackButton={true}
-          showForwardButton={false}
-          dashboardPath="/profesor/dashboard"
-        />
+      <ProfesorNavbar>
 
         {/* Contenido principal */}
         <div className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Título de la página */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-[#8D2C1D] mb-2" style={{ fontFamily: 'var(--font-poppins)' }}>
+              📚 Hojas de Trabajo Anteriores
+            </h1>
+            <p className="text-lg text-[#666666]">
+              Visualiza y descarga reportes de tus hojas de trabajo de períodos académicos anteriores
+            </p>
+          </div>
+
           {/* Información */}
           <div className="bg-blue-50/95 backdrop-blur-sm border-2 border-blue-200 rounded-xl p-6 mb-8 shadow-lg">
             <div className="flex items-start gap-4">
@@ -265,9 +267,7 @@ export default function HojasAnterioresPage() {
           )}
         </div>
 
-        {/* Footer */}
-        <DashboardFooter />
-      </div>
+      </ProfesorNavbar>
     </ProtectedRoute>
   );
 }
