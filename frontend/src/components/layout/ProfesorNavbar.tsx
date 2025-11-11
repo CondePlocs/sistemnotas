@@ -89,12 +89,12 @@ export default function ProfesorNavbar({ children }: ProfesorNavbarProps) {
       {/* Overlay para móvil */}
       {!isCollapsed && isMobile && (
         <div 
-          className="fixed inset-0 bg-gradient-to-br from-[#8D2C1D]/30 via-[#D96924]/20 to-[#FCE0C1]/10 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={() => setIsCollapsed(true)}
         />
       )}
 
-      <div className="flex h-screen bg-gradient-to-br from-[#FCE0C1] via-[#F6CBA3] to-[#E9E1C9] fixed inset-0">
+      <div className="flex h-screen bg-gradient-to-br from-[#FCE0C1] via-[#F6CBA3] to-[#E9E1C9]">
         {/* Botón hamburger para móvil */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
