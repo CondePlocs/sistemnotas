@@ -1,94 +1,63 @@
-@startuml Casos de Uso - Sistema de Registro de Notas (Núcleo)
+@startuml Casos de Uso - Sistema de Registro de Notas
 
 skinparam {
-    ActorBackgroundColor #E8F4FD
-    ActorBorderColor #1F2937
-    UsecaseBackgroundColor #F0F9FF
-    UsecaseBorderColor #1E40AF
-    PackageBackgroundColor #F0F9FF
-    PackageBorderColor #1E40AF
-    ArrowColor #1F2937
+    ActorBackgroundColor #E3F2FD
+    ActorBorderColor #1976D2
+    ActorFontSize 11
+    
+    UsecaseBackgroundColor #FFFFFF
+    UsecaseBorderColor #424242
+    UsecaseFontSize 10
+    
+    ArrowColor #424242
+    ArrowThickness 1.5
+    
+    Shadowing false
+    RoundCorner 8
 }
 
-title CASOS DE USO - NÚCLEO DEL SISTEMA: Registro de Notas
+title **CASOS DE USO - CORAZÓN DEL SISTEMA**\n//Registro de Notas//
 
-' ACTORES PRINCIPALES
-actor "Profesor" as Profesor
+left to right direction
+
+actor "Profesor" as profesor
+actor "Sistema IA" as sistemaIA
 
 rectangle "Sistema de Registro de Notas" {
     
-    usecase "Crear Evaluación" as UC1
+    usecase "Crear\nEvaluación" as UC01
+    usecase "Registrar\nNota" as UC02
+    usecase "Actualizar\nNota" as UC03
+    usecase "Consultar\nNotas" as UC04
+    usecase "Procesar Notas\nen Lote" as UC05
+    usecase "Calcular\nPromedios" as UC06
+    usecase "Generar\nReportes" as UC07
     
-    usecase "Registrar Nota\nIndividual" as UC2
-    usecase "Actualizar Nota" as UC3
-    usecase "Guardar Notas\nen Lote" as UC4
-    
-    usecase "Consultar Notas\ndel Contexto" as UC5
-    usecase "Calcular Promedio\nCompetencia" as UC6
-    usecase "Calcular Promedio\nCurso" as UC7
-    
-    usecase "Ver Estimaciones\nIA" as UC8
-    
-    usecase "Descargar Hoja\nExcel" as UC9
-    usecase "Descargar Informe\nPDF" as UC10
+    ' EXTENSIONES OPCIONALES
+    usecase "Ver Estimaciones\nIA" as UC08 <<extend>>
+    usecase "Descargar\nExcel" as UC09 <<extend>>
+    usecase "Descargar\nPDF" as UC10 <<extend>>
 }
 
-' RELACIONES PRINCIPALES - SIN CRUCES
-Profesor --> UC1
-Profesor --> UC2
-Profesor --> UC3
-Profesor --> UC4
-Profesor --> UC5
-Profesor --> UC6
-Profesor --> UC7
-Profesor --> UC8
-Profesor --> UC9
-Profesor --> UC10
+' RELACIONES PRINCIPALES
+profesor --> UC01
+profesor --> UC02
+profesor --> UC03
+profesor --> UC04
+profesor --> UC05
+profesor --> UC06
+profesor --> UC07
 
-' RELACIONES DE EXTENSIÓN (OPCIONALES) - BASADAS EN CÓDIGO REAL
-' Al consultar notas, opcionalmente puede ver estimaciones IA
-UC5 ..> UC8 : <<extend>>
+sistemaIA --> UC08
 
-' Al consultar notas, opcionalmente puede descargar reportes
-UC5 ..> UC9 : <<extend>>
-UC5 ..> UC10 : <<extend>>
+' RELACIONES EXTEND (OPCIONALES)
+UC04 <. UC08 : <<extend>>
+UC07 <. UC09 : <<extend>>
+UC07 <. UC10 : <<extend>>
 
-note right of UC2
-    REGISTRO INDIVIDUAL
-    
-    El profesor:
-    • Selecciona alumno y evaluación
-    • Ingresa nota (AD,A,B,C o 0-20)
-    • Sistema valida y convierte automáticamente
-end note
+' NOTAS EXPLICATIVAS
+note right of UC02 : **ACCIÓN DEL USUARIO**\n• Selecciona alumno y evaluación\n• Ingresa nota (AD,A,B,C o 0-20)\n• Sistema procesa automáticamente
 
-note right of UC8
-    ESTIMACIONES IA
-    
-    El profesor puede:
-    • Ver estimaciones predictivas del sistema
-    • Consultar nivel de confianza
-    • Usar como referencia para calificar
-end note
-
-note right of UC9
-    REPORTES REALES
-    
-    Funcionalidades implementadas:
-    • Hoja de trabajo en Excel
-    • Informe de intervención en PDF
-    • Descarga desde la interfaz
-end note
-
-note bottom
-    FUNCIONALIDADES REALES
-    ==
-    Basado en endpoints implementados:
-    • /api/registro-notas (POST, PUT)
-    • /api/evaluaciones/contexto-trabajo
-    • /api/ia/estimar-nota
-    • /api/reportes/profesor/hoja-registro
-    • /api/reportes/profesor/intervencion-temprana
-end note
+note right of UC08 : **ESTIMACIÓN IA**\n• Solo si hay 2+ notas históricas\n• Confianza variable 30-100%\n• 8 algoritmos predictivos
 
 @enduml

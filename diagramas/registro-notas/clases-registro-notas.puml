@@ -1,229 +1,160 @@
 @startuml Diagrama de Clases - Sistema de Registro de Notas
 
-skinparam class {
-    BackgroundColor #E8F4FD
-    BorderColor #1F2937
-}
-
-skinparam package {
-    BackgroundColor #F0F9FF
-}
-
-title SISTEMA DE REGISTRO DE NOTAS: Diagrama de Clases
-
-' CONTROLADORES
-package "Controladores" {
-    class RegistroNotaController {
-        + crearNota(dto: CrearRegistroNotaDto, usuarioId: number, colegioId: number): Promise<RegistroNota>
-        + actualizarNota(id: number, dto: ActualizarRegistroNotaDto, usuarioId: number, colegioId: number): Promise<RegistroNota>
-        + guardarNotasLote(dto: GuardarNotasLoteDto, usuarioId: number, colegioId: number): Promise<ResultadoLote>
-        + obtenerNotasPorContexto(asignacionId: number, periodoId: number, colegioId: number): Promise<RegistroNota[]>
-        + calcularPromedioCompetencia(alumnoId: number, competenciaId: number, periodoId: number, colegioId: number): Promise<Promedio>
-        + calcularPromedioCurso(alumnoId: number, cursoId: number, periodoId: number, colegioId: number): Promise<Promedio>
-    }
-
-    class EvaluacionController {
-        + crearEvaluacion(dto: CreateEvaluacionDto, usuarioId: number): Promise<Evaluacion>
-        + obtenerContextoTrabajo(asignacionId: number, periodoId: number): Promise<ContextoTrabajo>
-        + findByContext(profesorAsignacionId: number, periodoId: number, usuarioId: number): Promise<Evaluacion[]>
-    }
-
-    class IaController {
-        + estimarNota(dto: EstimacionNotaDto): Promise<EstimacionRespuesta>
-    }
-}
-
-' SERVICIOS
-package "Servicios Core" {
-    class RegistroNotaService {
-        - prisma: PrismaService
-        - notaCalculoService: NotaCalculoService
-        + crearNota(createDto: CrearRegistroNotaDto, registradoPor: number, colegioId: number): Promise<RegistroNota>
-        + actualizarNota(id: number, updateDto: ActualizarRegistroNotaDto, usuarioId: number, colegioId: number): Promise<RegistroNota>
-        + guardarNotasLote(guardarDto: GuardarNotasLoteDto, registradoPor: number, colegioId: number): Promise<ResultadoLote>
-        + obtenerNotasPorContexto(asignacionId: number, periodoId: number, colegioId: number): Promise<RegistroNota[]>
-        + calcularPromedioCompetencia(alumnoId: number, competenciaId: number, periodoId: number, colegioId: number): Promise<Promedio>
-        + calcularPromedioCurso(alumnoId: number, cursoId: number, periodoId: number, colegioId: number): Promise<Promedio>
-        - verificarPertenenciaColegio(alumnoId: number, evaluacionId: number, colegioId: number): Promise<void>
-    }
-
-    class NotaCalculoService {
-        + detectarTipoNota(input: string): 'alfabetico' | 'numerico'
-        + convertirAEscalaCalculo(notaOriginal: string): number
-        + convertirLetraANumero(nota: string): number
-        + convertirNumeroALetra(promedio: number): string
-        + calcularPromedioEscalaCalculo(valoresEscalaCalculo: number[]): PromedioResult
-        + calcularPromedioCurso(promediosCompetencias: number[]): PromedioResult
-        - convertirLetraAEscala4(nota: string): number
-        - convertirNumeroAEscala4(nota: number): number
-    }
-
-    class EvaluacionService {
-        - prisma: PrismaService
-        + crearEvaluacion(createDto: CreateEvaluacionDto, creadoPor: number): Promise<Evaluacion>
-        + obtenerContextoTrabajo(asignacionId: number, periodoId: number): Promise<ContextoTrabajo>
-        + findByContext(profesorAsignacionId: number, periodoId: number, usuarioId: number): Promise<Evaluacion[]>
-        - verificarAccesoAsignacion(profesorAsignacionId: number, usuarioId: number): Promise<void>
-    }
-}
-
-package "Servicios IA" {
-    class IaService {
-        - prisma: PrismaService
-        - config: ConfiguracionIA
-        + estimarNota(dto: EstimacionNotaDto): Promise<EstimacionRespuesta>
-        - validarEntidades(alumnoId: number, competenciaId: number): Promise<void>
-        - obtenerDatosHistoricos(alumnoId: number, competenciaId: number, profesorAsignacionId: number): Promise<DatosHistoricos>
-        - calcularRegresion(datos: DatosHistoricos[]): ResultadoRegresion
-        - calcularEstimacionMejorada(datos: DatosHistoricos[]): EstimacionMejorada
-        - analizarPatronAprendizaje(notas: number[]): PatronAprendizaje
-        - calcularMomentumEducativo(notas: number[]): number
-        - calcularVolatilidadAcademica(notas: number[]): VolatilidadAcademica
-        - proyectarCrecimiento(notas: number[], momentum: number, factorDificultad: number): number
-        - aplicarCorreccionPredictiva(notas: number[], volatilidad: VolatilidadAcademica): number
-        - redNeuronalSimplificada(notas: number[], momentum: number, volatilidad: VolatilidadAcademica): number
-    }
-}
-
-' ENTIDADES
-package "Entidades Core" {
-    class RegistroNota {
-        + id: number
-        + alumnoId: number
-        + evaluacionId: number
-        + nota: string
-        + notaEscalaCalculo: number
-        + registradoPor: number
-        + creadoEn: DateTime
-        + actualizadoEn: DateTime
-    }
-
-    class Evaluacion {
-        + id: number
-        + nombre: string
-        + descripcion: string
-        + fechaEvaluacion: DateTime
-        + competenciaId: number
-        + profesorAsignacionId: number
-        + periodoId: number
-        + creadoPor: number
-        + creadoEn: DateTime
-        + actualizadoEn: DateTime
-    }
-
-    class Competencia {
-        + id: number
-        + nombre: string
-        + descripcion: string
-        + orden: number
-        + activo: boolean
-        + cursoId: number
-        + creadoPor: number
-        + creadoEn: DateTime
-        + actualizadoEn: DateTime
-    }
-
-    class Curso {
-        + id: number
-        + nombre: string
-        + descripcion: string
-        + color: string
-        + nivelId: number
-        + creadoPor: number
-        + creadoEn: DateTime
-        + actualizadoEn: DateTime
-    }
-}
-
-package "Entidades Académicas" {
-    class Alumno {
-        + id: number
-        + nombres: string
-        + apellidos: string
-        + dni: string
-        + fechaNacimiento: DateTime
-        + sexo: string
-        + direccion: string
-        + distrito: string
-        + numeroContacto: string
-        + colegioId: number
-        + activo: boolean
-        + creadoPor: number
-        + creadoEn: DateTime
-        + actualizadoEn: DateTime
-    }
-
-    class ProfesorAsignacion {
-        + id: number
-        + profesorId: number
-        + salonId: number
-        + cursoId: number
-        + activo: boolean
-        + asignadoPor: number
-        + asignadoEn: DateTime
-        + actualizadoEn: DateTime
-    }
-
-    class PeriodoAcademico {
-        + id: number
-        + nombre: string
-        + tipo: string
-        + orden: number
-        + anioAcademico: number
-        + fechaInicio: DateTime
-        + fechaFin: DateTime
-        + activo: boolean
-        + colegioId: number
-        + creadoPor: number
-        + creadoEn: DateTime
-        + actualizadoEn: DateTime
-    }
-}
-
-' RELACIONES
-RegistroNotaController --> RegistroNotaService
-EvaluacionController --> EvaluacionService
-IaController --> IaService
-
-RegistroNotaService --> NotaCalculoService
-RegistroNotaService --> RegistroNota
-EvaluacionService --> Evaluacion
-IaService --> RegistroNota
-
-RegistroNota --> Alumno
-RegistroNota --> Evaluacion
-Evaluacion --> Competencia
-Evaluacion --> ProfesorAsignacion
-Evaluacion --> PeriodoAcademico
-Competencia --> Curso
-ProfesorAsignacion --> Curso
-
-' NOTAS
-note right of RegistroNota
-    CORAZÓN DEL SISTEMA
+skinparam {
+    ClassBackgroundColor #FFFFFF
+    ClassBorderColor #2E2E2E
+    ClassFontSize 11
+    ClassAttributeFontSize 10
+    ClassStereotypeFontSize 9
     
-    • Input dual: AD,A,B,C o 0-20
-    • Conversión automática a escala 1.0-4.0
-    • Constraint único: alumno-evaluación
-    • Auditoría completa con timestamps
-end note
-
-note right of IaService
-    SISTEMA IA AVANZADO
+    ArrowColor #495057
+    ArrowThickness 1.5
     
-    • 8 algoritmos predictivos diferentes
-    • Mínimo 2 notas históricas requeridas
-    • Confianza 30%-100% según patrón
-    • Filtro por profesor y período activo
-end note
-
-note right of NotaCalculoService
-    MOTOR DE CONVERSIONES
+    Shadowing false
+    RoundCorner 5
+    Linetype ortho
     
-    • Detección automática de tipo
-    • Conversión dual: alfabético ↔ numérico
-    • Escala unificada 1.0-4.0 para cálculos
-    • Promedios por competencia y curso
-end note
+    ClassAttributeIconSize 0
+    ClassStereotypeFontColor #666666
+}
+
+title **DIAGRAMA DE CLASES - CORAZÓN DEL SISTEMA**\n//Sistema de Registro de Notas//
+
+' LAYOUT ORGANIZADO - CONTROLADORES ARRIBA
+class RegistroNotaController <<Controller>> {
+    {field} -logger
+    {field} -registroNotaService
+    {field} -notaCalculoService
+    --
+    {method} +crearNota()
+    {method} +actualizarNota()
+    {method} +guardarNotasLote()
+    {method} +obtenerNotasPorContexto()
+    {method} +calcularPromedioCompetencia()
+    {method} +calcularPromedioCurso()
+}
+
+class IaController <<Controller>> {
+    {field} -logger
+    {field} -iaService
+    --
+    {method} +estimarNota()
+}
+
+' SERVICIOS EN EL CENTRO
+class RegistroNotaService <<Service>> {
+    {field} -logger
+    {field} -prisma
+    {field} -notaCalculoService
+    --
+    {method} +crearNota()
+    {method} +actualizarNota()
+    {method} +guardarNotasLote()
+    {method} +obtenerNotasPorContexto()
+    {method} +calcularPromedioCompetencia()
+    {method} +calcularPromedioCurso()
+    --
+    {method} -verificarPertenenciaColegio()
+    {method} -validarNotaExistente()
+}
+
+class NotaCalculoService <<Service>> {
+    {field} -logger
+    --
+    {method} +detectarTipoNota()
+    {method} +convertirAEscalaCalculo()
+    {method} +convertirNumeroALetra()
+    {method} +calcularPromedio()
+    --
+    {method} -convertirLetraAEscala4()
+    {method} -convertirNumeroAEscala4()
+    {method} -validarNotaAlfabetica()
+    {method} -validarNotaNumerica()
+}
+
+class IaService <<Service>> {
+    {field} -logger
+    {field} -prisma
+    {field} -config
+    --
+    {method} +estimarNota()
+    --
+    {method} -obtenerNotasHistoricas()
+    {method} -calcularRegresionLineal()
+    {method} -analizarPatronAprendizaje()
+    {method} -calcularMomentumEducativo()
+    {method} -calcularVolatilidadAcademica()
+    {method} -aplicarAlgoritmoPrediccion()
+    {method} -calcularConfianza()
+}
+
+' ENTIDADES ABAJO
+class RegistroNota <<Entity>> {
+    {field} +id <<PK>>
+    {field} +alumnoId <<FK>>
+    {field} +evaluacionId <<FK>>
+    {field} +nota
+    {field} +notaEscalaCalculo
+    {field} +registradoPor
+    {field} +creadoEn
+    {field} +actualizadoEn
+}
+
+class Evaluacion <<Entity>> {
+    {field} +id <<PK>>
+    {field} +nombre
+    {field} +descripcion
+    {field} +fechaEvaluacion
+    {field} +competenciaId <<FK>>
+    {field} +profesorAsignacionId <<FK>>
+    {field} +periodoId <<FK>>
+    {field} +creadoPor
+    {field} +creadoEn
+    {field} +actualizadoEn
+}
+
+class Alumno <<Entity>> {
+    {field} +id <<PK>>
+    {field} +nombres
+    {field} +apellidos
+    {field} +dni <<unique>>
+    {field} +fechaNacimiento
+    {field} +sexo
+    {field} +colegioId <<FK>>
+    {field} +activo
+    {field} +creadoEn
+    {field} +actualizadoEn
+}
+
+class Competencia <<Entity>> {
+    {field} +id <<PK>>
+    {field} +nombre
+    {field} +descripcion
+    {field} +orden
+    {field} +activo
+    {field} +cursoId <<FK>>
+    {field} +creadoEn
+    {field} +actualizadoEn
+}
+
+' RELACIONES ORGANIZADAS
+RegistroNotaController ..> RegistroNotaService : "usa"
+RegistroNotaController ..> NotaCalculoService : "consulta"
+IaController ..> IaService : "delega"
+
+RegistroNotaService ..> NotaCalculoService : "utiliza"
+RegistroNotaService --> RegistroNota : "gestiona"
+IaService --> RegistroNota : "analiza"
+
+RegistroNota }o--|| Alumno : "pertenece a"
+RegistroNota }o--|| Evaluacion : "corresponde a"
+Evaluacion }o--|| Competencia : "evalúa"
+
+' NOTAS EXPLICATIVAS
+note top of RegistroNota : **CORAZÓN DEL SISTEMA**\n• Input dual: AD,A,B,C o 0-20\n• Conversión automática a 1.0-4.0\n• Constraint único alumno-evaluación\n• Auditoría completa
+
+note right of NotaCalculoService : **MOTOR DE CONVERSIONES**\n• Detección automática de tipo\n• Escalas unificadas\n• Cálculos de promedios
+
+note right of IaService : **SISTEMA IA**\n• 8 algoritmos predictivos\n• Confianza 30%-100%\n• Análisis de patrones
 
 @enduml

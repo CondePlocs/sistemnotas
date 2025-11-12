@@ -1,99 +1,77 @@
 @startuml Diagrama de Actividades - Registro de Notas
 
 skinparam {
-    ActivityBackgroundColor #F0F9FF
-    ActivityBorderColor #1E40AF
-    ActivityDiamondBackgroundColor #EEF2FF
-    ActivityDiamondBorderColor #1E40AF
-    ArrowColor #1F2937
-    PartitionBorderColor #1E40AF
-    SwimlaneBorderColor #1E40AF
+    ActivityBackgroundColor #FFFFFF
+    ActivityBorderColor #424242
+    ActivityFontSize 10
+    
+    ActivityDiamondBackgroundColor #FFFFFF
+    ActivityDiamondBorderColor #424242
+    ActivityDiamondFontSize 9
+    
+    ActivityStartColor #424242
+    ActivityEndColor #424242
+    ActivityBarColor #424242
+    
+    PartitionBackgroundColor #F8F9FA
+    PartitionBorderColor #424242
+    PartitionFontSize 11
+    
+    ArrowColor #424242
+    ArrowThickness 1.5
+    
+    Shadowing false
+    RoundCorner 5
 }
 
-title FLUJO DE ACTIVIDADES: Registro de Notas
+title **DIAGRAMA DE ACTIVIDADES - REGISTRO DE NOTAS**\n//Proceso del Sistema//
 
-|Profesor|
+|**Profesor**|
 start
-:Seleccionar Alumno y Evaluación;
-:Ingresar Nota;
+:Seleccionar alumno y evaluación;
+:Ingresar nota;
 
-|NotaCalculoService|
-:Detectar Tipo de Nota;
-if (¿Formato Válido?) then (no)
-    :Lanzar Error de Formato;
+|**Sistema**|
+:Validar formato de nota;
+
+if (¿Formato válido?) then (no)
+    |**Profesor**|
+    :Mostrar error;
     stop
-endif
-
-if (¿Es Alfabética?) then (sí)
-    :Validar Nota (AD, A, B, C);
-    if (¿Es Válida?) then (sí)
-        :Convertir a Escala de Cálculo;
-    else (no)
-        :Lanzar Error;
+else (sí)
+    :Convertir a escala de cálculo;
+    :Verificar pertenencia a colegio;
+    
+    if (¿Pertenece al colegio?) then (no)
+        |**Profesor**|
+        :Mostrar error de permisos;
         stop
+    else (sí)
+        :Guardar registro de nota;
+        
+        fork
+            :Calcular promedio de competencia;
+        fork again
+            :Calcular promedio de curso;
+        end fork
+        
+        |**Sistema IA**|
+        if (¿Hay datos suficientes?) then (sí)
+            :Generar estimación IA;
+        else (no)
+        endif
+        
+        |**Profesor**|
+        :Confirmar registro exitoso;
+        :Visualizar en tabla;
+        
+        if (¿Registrar otra nota?) then (sí)
+            :Continuar con nueva nota;
+            detach
+        else (no)
+            stop
+        endif
     endif
-else (no)
-    :Validar Nota (0-20);
-    if (¿Rango Válido?) then (sí)
-        :Convertir a Escala de Cálculo;
-    else (no)
-        :Lanzar Error;
-        stop
-    endif
-endif
-
-:Nota Convertida a Escala 1.0-4.0;
-
-|RegistroNotaService|
-:Verificar Pertenencia a Colegio;
-if (¿Mismo Colegio?) then (no)
-    :Lanzar Error;
-    stop
-endif
-
-:Verificar Nota Existente;
-if (¿Ya Existe?) then (sí)
-    :Lanzar Error;
-    stop
-endif
-
-note right
-  DETECCIÓN AUTOMÁTICA
-  --
-  • Alfabético: AD, A, B, C
-  • Numérico: 0-20 (decimales permitidos)
-  • Validación dual en tiempo real
-end note
-
-:Guardar Nota con Escala de Cálculo;
-
-note right
-  CONVERSIÓN A ESCALA UNIFICADA
-  --
-  Alfabético → Numérico:
-  • AD = 4.0 (Logro destacado)
-  • A  = 3.0 (Logro esperado)
-  • B  = 2.0 (En proceso)
-  • C  = 1.0 (En inicio)
-  --
-  Numérico → Escala 1.0-4.0:
-  • 18-20 = 4.0 | 14-17.9 = 3.0
-  • 11-13.9 = 2.0 | 0-10.9 = 1.0
-end note
-
-split
-    :Calcular Promedio de Competencia;
-split again
-    :Calcular Promedio de Curso;
-end split
-
-|Profesor|
-:Ver Confirmación;
-if (¿Registrar Otra Nota?) then (sí)
-    :Seleccionar Nuevo Alumno;
-    detach
-else (no)
-    stop
 endif
 
 @enduml
