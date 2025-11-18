@@ -1,5 +1,5 @@
 # ¡¡¡¡Primero leer la licencia!!!!
-El uso intelectual se detalla en la licensia del proyecto, para evitar cualquier tipo de intervención legal leer la licencia
+El uso intelectual se detalla en la licencia del proyecto, para evitar cualquier tipo de intervención legal leer la licencia
 
 # 🎓 Sistema de Notas - Guía de Instalación
 
