@@ -1,4 +1,4 @@
-# Primero leer la licencia
+# ¡¡¡¡Primero leer la licencia!!!!
 El uso intelectual se detalla en la licencia del proyeceto, para evitar cualquier tipo de intrevneción legal leer la licencia
 
 # 🎓 Sistema de Notas - Guía de Instalación
