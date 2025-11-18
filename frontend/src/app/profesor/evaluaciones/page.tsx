@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -12,7 +12,8 @@ import { ArrowLeftIcon, ShieldExclamationIcon } from '@heroicons/react/24/outlin
 import Link from 'next/link';
 import useHojaTrabajoSecurity from '@/hooks/useHojaTrabajoSecurity';
 
-export default function ProfesorEvaluacionesPage() {
+// Componente interno que usa useSearchParams
+function ProfesorEvaluacionesContent() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -421,5 +422,21 @@ export default function ProfesorEvaluacionesPage() {
         </div>
       </ProfesorNavbar>
     </ProtectedRoute>
+  );
+}
+
+// Componente principal con Suspense boundary
+export default function ProfesorEvaluacionesPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-700">Cargando evaluaciones...</p>
+        </div>
+      </div>
+    }>
+      <ProfesorEvaluacionesContent />
+    </Suspense>
   );
 }
