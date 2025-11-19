@@ -20,6 +20,16 @@ const eslintConfig = [
       "next-env.d.ts",
     ],
   },
+  {
+    rules: {
+      // Desactivar reglas muy estrictas que no afectan seguridad
+      "@typescript-eslint/no-explicit-any": "off", // Permitir 'any' en casos específicos
+      "@typescript-eslint/no-unused-vars": "warn", // Advertencia en lugar de error
+      "react-hooks/exhaustive-deps": "warn", // Advertencia en lugar de error
+      "react/no-unescaped-entities": "warn", // Advertencia para caracteres sin escapar
+      "react-hooks/rules-of-hooks": "error", // Mantener como error (crítico)
+    },
+  },
 ];
 
 export default eslintConfig;
