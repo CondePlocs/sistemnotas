@@ -16,7 +16,7 @@ node "Cliente" as client {
     [Navegador Web] as browser
 }
 
-node "Servidor de Desarrollo" as devserver {
+node "Servidor" as devserver {
     package "Frontend (Next.js)" {
         [Static Files] as static
         [React Components] as components
