@@ -32,11 +32,11 @@ start
 :Ingresar nota;
 
 |**Sistema**|
-:Validar formato de nota;
+:Validar formato \nde nota;
 
 if (¿Formato válido?) then (no)
     |**Profesor**|
-    :Mostrar error;
+    :Mostrar\nerror;
     stop
 else (sí)
     :Convertir a escala de cálculo;
@@ -47,16 +47,16 @@ else (sí)
         :Mostrar error de permisos;
         stop
     else (sí)
-        :Guardar registro de nota;
+        :Guardar registro\n de nota;
         
         fork
-            :Calcular promedio de competencia;
+            :Calcular promedio \nde competencia;
         fork again
-            :Calcular promedio de curso;
+            :Calcular promedio\n de curso;
         end fork
         
         |**Sistema IA**|
-        if (¿Hay datos suficientes?) then (sí)
+        if (¿Hay datos \nsuficientes?) then (sí)
             :Generar estimación IA;
         else (no)
         endif
