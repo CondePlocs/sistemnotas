@@ -1,6 +1,3 @@
-# ¡¡¡¡Primero leer la licencia!!!!
-El uso intelectual se detalla en la licencia del proyecto, para evitar cualquier tipo de intervención legal leer la licencia
-
 # 🎓 Sistema de Notas - Guía de Instalación
 
 Sistema educativo completo con gestión de roles (Owner, Director, Administrativo, Profesor, Apoderado) desarrollado con NestJS + Next.js + PostgreSQL.
