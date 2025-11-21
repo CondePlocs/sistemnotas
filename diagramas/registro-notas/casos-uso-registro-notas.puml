@@ -16,48 +16,58 @@ skinparam {
     RoundCorner 8
 }
 
-title **CASOS DE USO - CORAZÓN DEL SISTEMA**\n//Registro de Notas//
+title **CASOS DE USO - CORAZÓN DEL SISTEMA**\n//Profesor & IA en Registro de Notas//
 
 left to right direction
+skinparam linetype ortho
 
 actor "Profesor" as profesor
 actor "Sistema IA" as sistemaIA
 
 rectangle "Sistema de Registro de Notas" {
-    
-    usecase "Crear\nEvaluación" as UC01
-    usecase "Registrar\nNota" as UC02
-    usecase "Actualizar\nNota" as UC03
-    usecase "Consultar\nNotas" as UC04
-    usecase "Procesar Notas\nen Lote" as UC05
-    usecase "Calcular\nPromedios" as UC06
-    usecase "Generar\nReportes" as UC07
-    
-    ' EXTENSIONES OPCIONALES
-    usecase "Ver Estimaciones\nIA" as UC08 <<extend>>
-    usecase "Descargar\nExcel" as UC09 <<extend>>
-    usecase "Descargar\nPDF" as UC10 <<extend>>
+    together {
+        usecase "Iniciar\nSesión" as UC00
+        usecase "Abrir Hoja\nde Trabajo" as UC01
+        usecase "Registrar\nNota" as UC02
+        usecase "Actualizar\nNota" as UC03
+        usecase "Revisar\nHojas Anteriores" as UC04
+        usecase "Generar\nReportes" as UC05
+        usecase "Cerrar\nSesión" as UC06
+    }
+
+    ' Opcionales del flujo principal
+    together {
+        usecase "Filtrar\nAlumnos" as EX02 <<extend>>
+        usecase "Ver Estimación\nIA" as EX01 <<extend>>
+        usecase "Descargar\nHoja Excel" as EX03 <<extend>>
+        usecase "Descargar\nInforme PDF" as EX04 <<extend>>
+    }
 }
 
-' RELACIONES PRINCIPALES
+' RELACIONES ACTOR->CASO
+profesor --> UC00
 profesor --> UC01
 profesor --> UC02
 profesor --> UC03
 profesor --> UC04
 profesor --> UC05
 profesor --> UC06
-profesor --> UC07
 
-sistemaIA --> UC08
+sistemaIA --> EX01
 
 ' RELACIONES EXTEND (OPCIONALES)
-UC04 <. UC08 : <<extend>>
-UC07 <. UC09 : <<extend>>
-UC07 <. UC10 : <<extend>>
+UC01 <. EX02 : <<extend>>
+UC03 <. EX01 : <<extend>>
+UC05 <. EX03 : <<extend>>
+UC05 <. EX04 : <<extend>>
 
 ' NOTAS EXPLICATIVAS
-note right of UC02 : **ACCIÓN DEL USUARIO**\n• Selecciona alumno y evaluación\n• Ingresa nota (AD,A,B,C o 0-20)\n• Sistema procesa automáticamente
+note right of UC01 : **ABRIR HOJA DE TRABAJO**\n• Selecciona bloque (colegio, período, curso)\n• Carga alumnos y evaluaciones vigentes
 
-note right of UC08 : **ESTIMACIÓN IA**\n• Solo si hay 2+ notas históricas\n• Confianza variable 30-100%\n• 8 algoritmos predictivos
+note right of UC02 : **REGISTRAR NOTA**\n• Selecciona alumno y evaluación\n• Ingresa nota AD/A/B/C o 0-20\n• Guarda con auditoría
+
+note right of EX02 : **FILTRAR ALUMNOS**\n• Buscar por nombre o estado\n• Mostrar listas personalizadas sin recargar
+
+note right of EX01 : **ESTIMACIÓN IA**\n• Profesor solicita sugerencia opcional\n• Muestra nota estimada + confianza
 
 @enduml
