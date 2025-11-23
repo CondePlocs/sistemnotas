@@ -16,7 +16,7 @@ skinparam {
     RoundCorner 8
 }
 
-title **CASOS DE USO - CORAZÓN DEL SISTEMA**\n//Profesor & IA en Registro de Notas//
+title **CASOS DE USO - CORAZÓN DEL SISTEMA**\n//Profesor & Sistema IA//
 
 left to right direction
 skinparam linetype ortho
@@ -26,48 +26,55 @@ actor "Sistema IA" as sistemaIA
 
 rectangle "Sistema de Registro de Notas" {
     together {
-        usecase "Iniciar\nSesión" as UC00
-        usecase "Abrir Hoja\nde Trabajo" as UC01
-        usecase "Registrar\nNota" as UC02
-        usecase "Actualizar\nNota" as UC03
-        usecase "Revisar\nHojas Anteriores" as UC04
-        usecase "Generar\nReportes" as UC05
-        usecase "Cerrar\nSesión" as UC06
+        usecase "Iniciar\nSesión" as UC10
+        usecase "Gestionar Hoja\nde Trabajo" as UC20
+        usecase "Generar\nReportes" as UC30
+        usecase "Cerrar\nSesión" as UC40
     }
 
-    ' Opcionales del flujo principal
     together {
-        usecase "Filtrar\nAlumnos" as EX02 <<extend>>
-        usecase "Ver Estimación\nIA" as EX01 <<extend>>
-        usecase "Descargar\nHoja Excel" as EX03 <<extend>>
-        usecase "Descargar\nInforme PDF" as EX04 <<extend>>
+        usecase "Validar\nCredenciales" as UC11 <<include>>
+        usecase "Abrir Hoja\nde Trabajo" as UC21 <<include>>
+        usecase "Registrar\nNota" as UC22 <<include>>
+        usecase "Actualizar\nNota" as UC23 <<include>>
+        usecase "Revisar Hojas\nAnteriores" as UC24 <<include>>
+    }
+
+    together {
+        usecase "Filtrar\nAlumnos" as EX21 <<extend>>
+        usecase "Solicitar\nEstimación IA" as EX22 <<extend>>
+        usecase "Descargar Hoja\nExcel" as EX31 <<extend>>
+        usecase "Descargar Informe\nPDF" as EX32 <<extend>>
     }
 }
 
+' Mantener flujo horizontal visual
+UC10 -[hidden]-> UC20
+UC20 -[hidden]-> UC30
+UC30 -[hidden]-> UC40
+
 ' RELACIONES ACTOR->CASO
-profesor --> UC00
-profesor --> UC01
-profesor --> UC02
-profesor --> UC03
-profesor --> UC04
-profesor --> UC05
-profesor --> UC06
+profesor --> UC10
+profesor --> UC20
+profesor --> UC30
+profesor --> UC40
 
-sistemaIA --> EX01
+sistemaIA --> EX22
 
-' RELACIONES EXTEND (OPCIONALES)
-UC01 <. EX02 : <<extend>>
-UC03 <. EX01 : <<extend>>
-UC05 <. EX03 : <<extend>>
-UC05 <. EX04 : <<extend>>
+' RELACIONES INCLUDE & EXTEND
+UC10 .> UC11 : <<include>>
+UC20 .> UC21 : <<include>>
+UC20 .> UC22 : <<include>>
+UC20 .> UC23 : <<include>>
+UC20 .> UC24 : <<include>>
+UC30 .> UC20 : <<include>>
+UC40 .> UC10 : <<include>>
 
-' NOTAS EXPLICATIVAS
-note right of UC01 : **ABRIR HOJA DE TRABAJO**\n• Selecciona bloque (colegio, período, curso)\n• Carga alumnos y evaluaciones vigentes
+EX21 .> UC20 : <<extend>>
+EX22 .> UC22 : <<extend>>
+EX22 .> UC23 : <<extend>>
+EX31 .> UC30 : <<extend>>
+EX32 .> UC30 : <<extend>>
 
-note right of UC02 : **REGISTRAR NOTA**\n• Selecciona alumno y evaluación\n• Ingresa nota AD/A/B/C o 0-20\n• Guarda con auditoría
-
-note right of EX02 : **FILTRAR ALUMNOS**\n• Buscar por nombre o estado\n• Mostrar listas personalizadas sin recargar
-
-note right of EX01 : **ESTIMACIÓN IA**\n• Profesor solicita sugerencia opcional\n• Muestra nota estimada + confianza
 
 @enduml

@@ -88,73 +88,91 @@ class IaService <<Service>> {
     {method} -calcularConfianza()
 }
 
-' ENTIDADES ABAJO
-class RegistroNota <<Entity>> {
-    {field} +id <<PK>>
-    {field} +alumnoId <<FK>>
-    {field} +evaluacionId <<FK>>
-    {field} +nota
-    {field} +notaEscalaCalculo
-    {field} +registradoPor
-    {field} +creadoEn
-    {field} +actualizadoEn
+class ContextoTrabajoService <<Service>> {
+    {field} -prisma
+    --
+    {method} +obtenerAsignaciones()
+    {method} +cargarHojaTrabajo()
+    {method} +sincronizarCambios()
 }
 
-class Evaluacion <<Entity>> {
-    {field} +id <<PK>>
-    {field} +nombre
-    {field} +descripcion
-    {field} +fechaEvaluacion
-    {field} +competenciaId <<FK>>
-    {field} +profesorAsignacionId <<FK>>
-    {field} +periodoId <<FK>>
-    {field} +creadoPor
-    {field} +creadoEn
-    {field} +actualizadoEn
+class ReporteNotasService <<Service>> {
+    {field} -reporteNotasFactory
+    --
+    {method} +generarReportePdf()
+    {method} +generarReporteExcel()
+    {method} +descargarHojaTrabajo()
 }
 
-class Alumno <<Entity>> {
-    {field} +id <<PK>>
-    {field} +nombres
-    {field} +apellidos
-    {field} +dni <<unique>>
-    {field} +fechaNacimiento
-    {field} +sexo
-    {field} +colegioId <<FK>>
-    {field} +activo
-    {field} +creadoEn
-    {field} +actualizadoEn
+interface INotaRepository <<Repository>> {
+    +guardarNota()
+    +actualizarNota()
+    +buscarPorContexto()
 }
 
-class Competencia <<Entity>> {
-    {field} +id <<PK>>
-    {field} +nombre
-    {field} +descripcion
-    {field} +orden
-    {field} +activo
-    {field} +cursoId <<FK>>
-    {field} +creadoEn
-    {field} +actualizadoEn
+class HojaTrabajo <<Aggregate>> {
+    {field} +contexto
+    {field} +alumnos : List<AlumnoEnHoja>
+    {field} +evaluaciones : List<EvaluacionActiva>
+    --
+    {method} +filtrarAlumnos()
+    {method} +actualizarNota()
+    {method} +obtenerPendientes()
+}
+
+class AlumnoEnHoja <<Value Object>> {
+    {field} +alumnoId
+    {field} +nombreCompleto
+    {field} +estadoTarea
+    {field} +notas : Map
+    --
+    {method} +registrarNota()
+    {method} +marcarComoActualizado()
+}
+
+class EvaluacionActiva <<Value Object>> {
+    {field} +evaluacionId
+    {field} +competencia
+    {field} +tipoNota
+    --
+    {method} +validarRango()
+}
+
+abstract class ReporteNotas <<Abstract>> {
+    {field} #hojaTrabajo
+    --
+    {method} +prepararDatos()
+    {method} +render()
+}
+
+class ReporteNotasExcel <<Reporte>> {
+    {method} +render()
+}
+
+class ReporteNotasPdf <<Reporte>> {
+    {method} +render()
 }
 
 ' RELACIONES ORGANIZADAS
-RegistroNotaController ..> RegistroNotaService : "usa"
-RegistroNotaController ..> NotaCalculoService : "consulta"
-IaController ..> IaService : "delega"
+RegistroNotaController --> RegistroNotaService
+RegistroNotaController --> NotaCalculoService
+RegistroNotaController --> ContextoTrabajoService
+IaController --> IaService
 
-RegistroNotaService ..> NotaCalculoService : "utiliza"
-RegistroNotaService --> RegistroNota : "gestiona"
-IaService --> RegistroNota : "analiza"
+RegistroNotaService --> NotaCalculoService
+RegistroNotaService o-- HojaTrabajo
+RegistroNotaService o-- INotaRepository
+ContextoTrabajoService o-- HojaTrabajo
+ReporteNotasService ..> HojaTrabajo
+ReporteNotasService ..> ReporteNotas
+NotaCalculoService ..> HojaTrabajo
+IaService ..> HojaTrabajo
 
-RegistroNota }o--|| Alumno : "pertenece a"
-RegistroNota }o--|| Evaluacion : "corresponde a"
-Evaluacion }o--|| Competencia : "evalúa"
+HojaTrabajo *-- AlumnoEnHoja
+HojaTrabajo o-- EvaluacionActiva
+ReporteNotas <|-- ReporteNotasExcel
+ReporteNotas <|-- ReporteNotasPdf
 
-' NOTAS EXPLICATIVAS
-note top of RegistroNota : **CORAZÓN DEL SISTEMA**\n• Input dual: AD,A,B,C o 0-20\n• Conversión automática a 1.0-4.0\n• Constraint único alumno-evaluación\n• Auditoría completa
-
-note right of NotaCalculoService : **MOTOR DE CONVERSIONES**\n• Detección automática de tipo\n• Escalas unificadas\n• Cálculos de promedios
-
-note right of IaService : **SISTEMA IA**\n• 8 algoritmos predictivos\n• Confianza 30%-100%\n• Análisis de patrones
+'
 
 @enduml
