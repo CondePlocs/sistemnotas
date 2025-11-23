@@ -20,7 +20,13 @@ skinparam {
 
 title **DIAGRAMA DE CLASES - CORAZÓN DEL SISTEMA**\n//Sistema de Registro de Notas//
 
+left to right direction
+scale 0.95
+skinparam nodesep 30
+skinparam ranksep 24
+
 ' LAYOUT ORGANIZADO - CONTROLADORES ARRIBA
+together {
 class RegistroNotaController <<Controller>> {
     {field} -logger
     {field} -registroNotaService
@@ -42,6 +48,7 @@ class IaController <<Controller>> {
 }
 
 ' SERVICIOS EN EL CENTRO
+together {
 class RegistroNotaService <<Service>> {
     {field} -logger
     {field} -prisma
@@ -109,7 +116,9 @@ interface INotaRepository <<Repository>> {
     +actualizarNota()
     +buscarPorContexto()
 }
+}
 
+together {
 class HojaTrabajo <<Aggregate>> {
     {field} +contexto
     {field} +alumnos : List<AlumnoEnHoja>
@@ -137,7 +146,9 @@ class EvaluacionActiva <<Value Object>> {
     --
     {method} +validarRango()
 }
+}
 
+together {
 abstract class ReporteNotas <<Abstract>> {
     {field} #hojaTrabajo
     --
@@ -151,6 +162,7 @@ class ReporteNotasExcel <<Reporte>> {
 
 class ReporteNotasPdf <<Reporte>> {
     {method} +render()
+}
 }
 
 ' RELACIONES ORGANIZADAS
