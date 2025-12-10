@@ -59,10 +59,10 @@ export default function AlumnoCard({ alumno }: AlumnoCardProps) {
   };
 
   return (
-    <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border-2 border-[#E9E1C9] overflow-hidden group hover:shadow-xl transition-all duration-300 hover:scale-105 hover:-translate-y-1">
-      {/* Header con nivel educativo */}
-      <div className={`h-3 w-full bg-gradient-to-r ${getNivelColor(alumno.salon?.colegioNivel?.nivel?.nombre)}`}></div>
-      
+    <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border-2 border-[#E9E1C9] overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-105">
+      {/* Línea superior con degradado de marca */}
+      <div className="h-2 w-full bg-gradient-to-r from-[#8D2C1D] to-[#D96924]"></div>
+
       <div className="p-6">
         {/* Avatar y información básica */}
         <div className="flex items-center gap-4 mb-4">
@@ -74,7 +74,7 @@ export default function AlumnoCard({ alumno }: AlumnoCardProps) {
               {getGenderIcon(alumno.sexo)}
             </div>
           </div>
-          
+
           <div className="flex-1 min-w-0">
             <h3 className="text-lg font-bold text-[#333333] mb-1 group-hover:text-[#8D2C1D] transition-colors duration-300 truncate">
               {alumno.nombres} {alumno.apellidos}
@@ -128,20 +128,18 @@ export default function AlumnoCard({ alumno }: AlumnoCardProps) {
 
         {/* Estado del alumno */}
         <div className="flex items-center justify-between mb-4">
-          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold shadow-sm group-hover:shadow-md transition-all duration-300 ${
-            alumno.activo 
-              ? 'bg-green-100 text-green-800' 
+          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold shadow-sm group-hover:shadow-md transition-all duration-300 ${alumno.activo
+              ? 'bg-green-100 text-green-800'
               : 'bg-red-100 text-red-800'
-          }`}>
-            <span className={`w-2 h-2 rounded-full mr-2 ${
-              alumno.activo ? 'bg-green-400 animate-pulse' : 'bg-red-400'
-            }`}></span>
+            }`}>
+            <span className={`w-2 h-2 rounded-full mr-2 ${alumno.activo ? 'bg-green-400 animate-pulse' : 'bg-red-400'
+              }`}></span>
             {alumno.activo ? 'Activo' : 'Inactivo'}
           </span>
         </div>
 
         {/* Botón de acción */}
-        <button 
+        <button
           onClick={handleVerAlumno}
           className="w-full bg-gradient-to-r from-[#8D2C1D] to-[#D96924] hover:from-[#7A2518] hover:to-[#C55A1F] text-white text-sm font-bold py-3 px-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2"
         >

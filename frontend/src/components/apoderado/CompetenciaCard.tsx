@@ -12,7 +12,7 @@ interface CompetenciaCardProps {
 export default function CompetenciaCard({ competencia, index, isExpanded, onToggle }: CompetenciaCardProps) {
   const getNotaColor = (nota?: string | null) => {
     if (!nota) return 'bg-gray-100 text-gray-600 border-gray-300';
-    
+
     switch (nota.toUpperCase()) {
       case 'AD':
         return 'bg-green-100 text-green-800 border-green-300';
@@ -29,7 +29,7 @@ export default function CompetenciaCard({ competencia, index, isExpanded, onTogg
 
   const getNotaTexto = (nota?: string | null) => {
     if (!nota) return 'Sin calificar';
-    
+
     switch (nota.toUpperCase()) {
       case 'AD':
         return 'Logro Destacado';
@@ -64,7 +64,7 @@ export default function CompetenciaCard({ competencia, index, isExpanded, onTogg
   return (
     <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border-2 border-[#E9E1C9] overflow-hidden">
       {/* Header de la competencia */}
-      <div 
+      <div
         className="p-6 cursor-pointer hover:bg-[#F7F3E9] transition-colors"
         onClick={onToggle}
       >
@@ -77,20 +77,20 @@ export default function CompetenciaCard({ competencia, index, isExpanded, onTogg
               <h3 className="text-lg font-bold text-[#8D2C1D] mb-1">
                 {competencia.nombre}
               </h3>
-              <div className="flex items-center gap-4 text-sm text-[#666666]">
-                <span>
-                  {evaluacionesConNota} de {totalEvaluaciones} evaluaciones
-                </span>
-                {promedioCompetencia && (
-                  <div className={`px-2 py-1 rounded-full text-xs font-semibold border ${getNotaColor(promedioCompetencia)}`}>
-                    Promedio: {promedioCompetencia}
-                  </div>
-                )}
+              <div className="text-sm text-[#666666]">
+                {evaluacionesConNota} de {totalEvaluaciones} evaluaciones
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-4">
+            {/* Promedio de la competencia */}
+            {promedioCompetencia && (
+              <div className={`px-3 py-2 rounded-lg text-base font-bold border-2 ${getNotaColor(promedioCompetencia)}`}>
+                Promedio: {promedioCompetencia}
+              </div>
+            )}
+
             {/* Progreso circular */}
             <div className="relative w-16 h-16">
               <svg className="w-16 h-16 transform -rotate-90" viewBox="0 0 36 36">
@@ -132,13 +132,17 @@ export default function CompetenciaCard({ competencia, index, isExpanded, onTogg
         <div className="border-t border-[#E9E1C9] bg-[#FAFAFA]">
           <div className="p-6">
             <h4 className="text-lg font-semibold text-[#8D2C1D] mb-4 flex items-center gap-2">
-              <span>📝</span>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
               Evaluaciones ({competencia.evaluaciones.length})
             </h4>
 
             {competencia.evaluaciones.length === 0 ? (
               <div className="text-center py-8 text-[#666666]">
-                <div className="text-3xl mb-2">📋</div>
+                <svg className="w-12 h-12 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
                 <p>No hay evaluaciones registradas para esta competencia</p>
               </div>
             ) : (
@@ -149,23 +153,27 @@ export default function CompetenciaCard({ competencia, index, isExpanded, onTogg
                     className="bg-white rounded-lg border-2 border-[#E9E1C9] p-4 hover:shadow-md transition-shadow"
                   >
                     <div className="flex items-start justify-between mb-3">
-                      <h5 className="font-semibold text-[#333333] text-sm line-clamp-2">
+                      <h5 className="font-semibold text-[#333333] text-base line-clamp-2">
                         {evaluacion.nombre}
                       </h5>
-                      <div className={`px-2 py-1 rounded-full text-xs font-bold border-2 ${getNotaColor(evaluacion.nota)}`}>
+                      <div className={`px-2 py-1 rounded-full text-sm font-bold border-2 ${getNotaColor(evaluacion.nota)}`}>
                         {evaluacion.nota || 'S/N'}
                       </div>
                     </div>
 
-                    <div className="space-y-2 text-xs text-[#666666]">
+                    <div className="space-y-2 text-sm text-[#666666]">
                       <div className="flex items-center gap-2">
-                        <span>📅</span>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
                         <span>{formatFecha(evaluacion.fechaEvaluacion)}</span>
                       </div>
-                      
+
                       {evaluacion.nota && (
                         <div className="flex items-center gap-2">
-                          <span>🎯</span>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
                           <span className="font-medium">
                             {getNotaTexto(evaluacion.nota)}
                           </span>
@@ -175,8 +183,10 @@ export default function CompetenciaCard({ competencia, index, isExpanded, onTogg
 
                     {!evaluacion.nota && (
                       <div className="mt-3 text-center">
-                        <span className="inline-flex items-center gap-1 text-xs text-yellow-600 bg-yellow-50 px-2 py-1 rounded-full">
-                          <span>⏳</span>
+                        <span className="inline-flex items-center gap-1 text-sm text-yellow-600 bg-yellow-50 px-2 py-1 rounded-full">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
                           Pendiente de calificar
                         </span>
                       </div>
@@ -185,28 +195,10 @@ export default function CompetenciaCard({ competencia, index, isExpanded, onTogg
                 ))}
               </div>
             )}
-
-            {/* Resumen de la competencia */}
-            {competencia.evaluaciones.length > 0 && (
-              <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h5 className="font-semibold text-blue-800 mb-1">Resumen de la Competencia</h5>
-                    <p className="text-sm text-blue-600">
-                      {evaluacionesConNota} evaluaciones calificadas de {totalEvaluaciones} total
-                    </p>
-                  </div>
-                  {promedioCompetencia && (
-                    <div className={`px-4 py-2 rounded-lg font-bold text-lg border-2 ${getNotaColor(promedioCompetencia)}`}>
-                      {promedioCompetencia}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
         </div>
-      )}
-    </div>
+      )
+      }
+    </div >
   );
 }

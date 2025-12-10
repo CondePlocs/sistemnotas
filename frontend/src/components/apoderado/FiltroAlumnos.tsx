@@ -21,54 +21,47 @@ export default function FiltroAlumnos({
 
   return (
     <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border-2 border-[#E9E1C9] p-6 mb-8">
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        {/* Campo de búsqueda */}
-        <div className="flex-1 max-w-md">
-          <label htmlFor="filtro" className="block text-sm font-semibold text-[#333333] mb-2">
-            🔍 Buscar estudiante
+      <div className="flex flex-col gap-4">
+        {/* Campo de búsqueda con contador en la misma línea */}
+        <div>
+          <label htmlFor="filtro" className="block text-sm font-semibold text-[#333333] mb-2 flex items-center gap-2">
+            <svg className="w-4 h-4 text-[#8D2C1D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            Buscar estudiante
           </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <MagnifyingGlassIcon className="h-5 w-5 text-[#8D2C1D]" />
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <MagnifyingGlassIcon className="h-5 w-5 text-[#8D2C1D]" />
+              </div>
+              <input
+                type="text"
+                id="filtro"
+                value={filtro}
+                onChange={(e) => onFiltroChange(e.target.value)}
+                placeholder="Buscar por nombre, apellido..."
+                className="w-full pl-10 pr-10 py-3 border-2 border-[#E9E1C9] rounded-xl focus:ring-2 focus:ring-[#8D2C1D] focus:border-[#8D2C1D] transition-all duration-300 font-medium placeholder-[#999999]"
+              />
+              {filtro && (
+                <button
+                  onClick={handleClearFiltro}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#666666] hover:text-[#8D2C1D] transition-colors duration-300"
+                >
+                  <XMarkIcon className="h-5 w-5" />
+                </button>
+              )}
             </div>
-            <input
-              type="text"
-              id="filtro"
-              value={filtro}
-              onChange={(e) => onFiltroChange(e.target.value)}
-              placeholder="Buscar por nombre, apellido, grado, sección o nivel..."
-              className="w-full pl-10 pr-10 py-3 border-2 border-[#E9E1C9] rounded-xl focus:ring-2 focus:ring-[#8D2C1D] focus:border-[#8D2C1D] transition-all duration-300 font-medium placeholder-[#999999]"
-            />
-            {filtro && (
-              <button
-                onClick={handleClearFiltro}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#666666] hover:text-[#8D2C1D] transition-colors duration-300"
-              >
-                <XMarkIcon className="h-5 w-5" />
-              </button>
-            )}
+            {/* Contador en la misma línea */}
+            <div className="bg-gradient-to-r from-[#8D2C1D] to-[#D96924] rounded-xl px-4 py-3 flex items-center justify-center min-w-[80px] sm:min-w-[100px]">
+              <div className="text-center">
+                <p className="text-xs font-medium text-white/80 hidden sm:block">Mostrando</p>
+                <p className="text-sm sm:text-lg font-bold text-white">
+                  {alumnosFiltrados}/{totalAlumnos}
+                </p>
+              </div>
+            </div>
           </div>
-        </div>
-
-        {/* Estadísticas de filtrado */}
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-          <div className="bg-gradient-to-r from-[#FCE0C1] to-[#E9E1C9] rounded-lg px-4 py-2 border border-[#E9E1C9]">
-            <div className="text-center">
-              <p className="text-xs font-medium text-[#666666]">Mostrando</p>
-              <p className="text-lg font-bold text-[#8D2C1D]">
-                {alumnosFiltrados} de {totalAlumnos}
-              </p>
-            </div>
-          </div>
-
-          {filtro && (
-            <div className="flex items-center gap-2 text-sm text-[#666666]">
-              <span>Filtrado por:</span>
-              <span className="bg-[#8D2C1D] text-white px-3 py-1 rounded-full font-semibold">
-                "{filtro}"
-              </span>
-            </div>
-          )}
         </div>
       </div>
 
@@ -84,8 +77,8 @@ export default function FiltroAlumnos({
             <div>
               <p className="text-yellow-800 font-semibold">No se encontraron estudiantes</p>
               <p className="text-yellow-700 text-sm">
-                Intenta con otros términos de búsqueda o 
-                <button 
+                Intenta con otros términos de búsqueda o
+                <button
                   onClick={handleClearFiltro}
                   className="ml-1 underline hover:text-yellow-900 font-medium"
                 >

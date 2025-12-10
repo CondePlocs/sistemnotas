@@ -149,27 +149,6 @@ export default function HojasAnterioresPage() {
             </p>
           </div>
 
-          {/* Información */}
-          <div className="bg-blue-50/95 backdrop-blur-sm border-2 border-blue-200 rounded-xl p-6 mb-8 shadow-lg">
-            <div className="flex items-start gap-4">
-              <div className="bg-blue-500 p-3 rounded-xl shadow-md">
-                <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-blue-800 mb-2">
-                  📚 Visualización de Hojas de Trabajo Anteriores
-                </h3>
-                <p className="text-blue-700 text-sm leading-relaxed">
-                  Aquí puedes consultar tus hojas de trabajo de períodos académicos anteriores. 
-                  <strong className="font-semibold"> Solo podrás visualizar las notas</strong>, no editarlas. 
-                  Selecciona un período y una asignación para ver el registro histórico.
-                </p>
-              </div>
-            </div>
-          </div>
-
           {loading ? (
             <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border-2 border-[#E9E1C9] p-12 text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8D2C1D] mx-auto mb-4"></div>

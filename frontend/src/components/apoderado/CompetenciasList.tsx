@@ -16,17 +16,13 @@ export default function CompetenciasList({ competencias, onRefresh }: Competenci
     setCompetenciaExpandida(prev => prev === competenciaId ? null : competenciaId);
   };
 
-  // Estadísticas generales
-  const totalEvaluaciones = competencias.reduce((total, comp) => total + comp.evaluaciones.length, 0);
-  const evaluacionesConNota = competencias.reduce((total, comp) => 
-    total + comp.evaluaciones.filter(evaluacion => evaluacion.nota).length, 0
-  );
-
   if (competencias.length === 0) {
     return (
       <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border-2 border-[#E9E1C9] p-8">
         <div className="text-center py-12">
-          <div className="text-6xl mb-4">📋</div>
+          <svg className="w-16 h-16 mx-auto mb-4 text-[#8D2C1D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
           <h3 className="text-2xl font-bold text-[#8D2C1D] mb-2">
             Sin Competencias Definidas
           </h3>
@@ -44,98 +40,52 @@ export default function CompetenciasList({ competencias, onRefresh }: Competenci
     );
   }
 
+  // Dividir competencias en dos columnas manualmente
+  const mitad = Math.ceil(competencias.length / 2);
+  const columna1 = competencias.slice(0, mitad);
+  const columna2 = competencias.slice(mitad);
+
   return (
     <div className="space-y-6">
-      {/* Header con estadísticas */}
-      <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border-2 border-[#E9E1C9] p-6">
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-          <div>
-            <h2 className="text-2xl font-bold text-[#8D2C1D] mb-2">
-              📋 Competencias y Evaluaciones
-            </h2>
-            <div className="flex flex-wrap gap-4 text-sm">
-              <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-medium">
-                Competencias: {competencias.length}
-              </span>
-              <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full font-medium">
-                Total Evaluaciones: {totalEvaluaciones}
-              </span>
-              <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full font-medium">
-                Con Nota: {evaluacionesConNota}
-              </span>
-              {(totalEvaluaciones - evaluacionesConNota) > 0 && (
-                <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full font-medium">
-                  Pendientes: {totalEvaluaciones - evaluacionesConNota}
-                </span>
-              )}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            {/* Progreso general */}
-            <div className="text-right">
-              <div className="text-sm font-medium text-[#666666]">Progreso General</div>
-              <div className="text-lg font-bold text-[#8D2C1D]">
-                {totalEvaluaciones > 0 ? Math.round((evaluacionesConNota / totalEvaluaciones) * 100) : 0}%
-              </div>
-            </div>
-
-            <button
-              onClick={onRefresh}
-              className="flex items-center gap-2 bg-[#8D2C1D] text-white px-4 py-2 rounded-lg hover:bg-[#6D1F14] transition-colors"
-            >
-              <span>🔄</span>
-              Actualizar
-            </button>
-          </div>
-        </div>
-
-        {/* Barra de progreso general */}
-        <div className="mt-4">
-          <div className="w-full bg-gray-200 rounded-full h-3">
-            <div 
-              className="bg-gradient-to-r from-[#8D2C1D] to-[#D96924] h-3 rounded-full transition-all duration-500"
-              style={{ 
-                width: `${totalEvaluaciones > 0 ? (evaluacionesConNota / totalEvaluaciones) * 100 : 0}%` 
-              }}
-            ></div>
-          </div>
-        </div>
+      {/* Header simple */}
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-[#8D2C1D] flex items-center gap-2">
+          <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+          </svg>
+          Competencias del Curso
+        </h2>
       </div>
 
-      {/* Lista de competencias */}
-      <div className="space-y-4">
-        {competencias.map((competencia, index) => (
-          <CompetenciaCard
-            key={competencia.id}
-            competencia={competencia}
-            index={index + 1}
-            isExpanded={competenciaExpandida === competencia.id}
-            onToggle={() => toggleCompetencia(competencia.id)}
-          />
-        ))}
-      </div>
-
-      {/* Consejos para padres */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-6">
-        <div className="flex items-start gap-4">
-          <div className="text-3xl">💡</div>
-          <div>
-            <h3 className="text-lg font-bold text-blue-800 mb-2">
-              Consejos para Apoyar el Aprendizaje
-            </h3>
-            <ul className="text-sm text-blue-700 space-y-1">
-              <li>• <strong>AD (Logro Destacado):</strong> El estudiante supera las expectativas</li>
-              <li>• <strong>A (Logro Esperado):</strong> El estudiante alcanza los objetivos</li>
-              <li>• <strong>B (En Proceso):</strong> El estudiante está desarrollando la competencia</li>
-              <li>• <strong>C (En Inicio):</strong> El estudiante necesita apoyo adicional</li>
-            </ul>
-            <p className="text-xs text-blue-600 mt-3 italic">
-              Recuerda que cada evaluación es una oportunidad de aprendizaje. 
-              Si tienes dudas, no dudes en contactar al profesor.
-            </p>
-          </div>
+      {/* Layout de 2 columnas independientes usando flexbox */}
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
+        {/* Columna 1 */}
+        <div className="flex-1 w-full space-y-6">
+          {columna1.map((competencia, index) => (
+            <CompetenciaCard
+              key={competencia.id}
+              competencia={competencia}
+              index={index + 1}
+              isExpanded={competenciaExpandida === competencia.id}
+              onToggle={() => toggleCompetencia(competencia.id)}
+            />
+          ))}
         </div>
+
+        {/* Columna 2 */}
+        {columna2.length > 0 && (
+          <div className="flex-1 w-full space-y-6">
+            {columna2.map((competencia, index) => (
+              <CompetenciaCard
+                key={competencia.id}
+                competencia={competencia}
+                index={mitad + index + 1}
+                isExpanded={competenciaExpandida === competencia.id}
+                onToggle={() => toggleCompetencia(competencia.id)}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

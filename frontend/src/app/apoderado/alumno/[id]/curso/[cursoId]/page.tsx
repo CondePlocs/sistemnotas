@@ -67,7 +67,9 @@ export default function CursoDetalle() {
       <ProtectedRoute requiredRole={['APODERADO']}>
         <div className="min-h-screen bg-gradient-to-br from-[#F7F3E9] to-[#E9E1C9] flex items-center justify-center">
           <div className="text-center">
-            <div className="text-6xl mb-4">📚</div>
+            <svg className="w-16 h-16 mx-auto mb-4 text-[#8D2C1D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
             <h2 className="text-2xl font-bold text-[#8D2C1D] mb-2">
               {error || 'Curso no encontrado'}
             </h2>
@@ -75,7 +77,7 @@ export default function CursoDetalle() {
               onClick={handleVolver}
               className="bg-[#8D2C1D] text-white px-6 py-2 rounded-lg hover:bg-[#6D1F14] transition-colors"
             >
-              Volver al Alumno
+              Volver
             </button>
           </div>
         </div>
@@ -87,32 +89,21 @@ export default function CursoDetalle() {
     <ProtectedRoute requiredRole={['APODERADO']}>
       <div className="min-h-screen bg-gradient-to-br from-[#F7F3E9] to-[#E9E1C9]">
         {/* Header Simple */}
-        <SimpleHeader 
+        <SimpleHeader
           title={curso?.nombre ? `Curso: ${curso.nombre}` : 'Detalle del Curso'}
           showBackButton={true}
           dashboardPath="/apoderado/dashboard"
         />
-        
-        <main className="container mx-auto px-4 py-8">
-          {/* Botón Volver */}
-          <div className="mb-6">
-            <button
-              onClick={handleVolver}
-              className="flex items-center text-[#8D2C1D] hover:text-[#6D1F14] transition-colors font-medium"
-            >
-              <span className="mr-2">←</span>
-              Volver al Alumno
-            </button>
-          </div>
 
+        <main className="container mx-auto px-4 py-8">
           {/* Información del Curso */}
-          <CursoInfo 
-            curso={curso} 
+          <CursoInfo
+            curso={curso}
             promedioGeneral={curso.promedioGeneral}
           />
 
           {/* Lista de Competencias */}
-          <CompetenciasList 
+          <CompetenciasList
             competencias={curso.competencias}
             onRefresh={cargarDetalleCurso}
           />
