@@ -101,7 +101,7 @@ const RendimientoPorGrado: React.FC<RendimientoPorGradoProps> = ({
     if (active && payload && payload.length) {
       const total = payload.reduce((sum: number, entry: any) => sum + entry.value, 0);
       const gradoData = data.grados.find(g => g.grado === label);
-      
+
       return (
         <div className="bg-white p-4 border rounded-lg shadow-lg">
           <p className="font-semibold text-gray-800 mb-2">{label}</p>
@@ -115,8 +115,8 @@ const RendimientoPorGrado: React.FC<RendimientoPorGradoProps> = ({
             {payload.map((entry: any, index: number) => (
               <div key={index} className="flex items-center justify-between">
                 <span className="flex items-center">
-                  <div 
-                    className="w-3 h-3 rounded mr-2" 
+                  <div
+                    className="w-3 h-3 rounded mr-2"
                     style={{ backgroundColor: entry.color }}
                   ></div>
                   <span className="text-sm">{entry.dataKey}:</span>
@@ -154,8 +154,8 @@ const RendimientoPorGrado: React.FC<RendimientoPorGradoProps> = ({
             }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-            <XAxis 
-              dataKey="grado" 
+            <XAxis
+              dataKey="grado"
               tick={{ fontSize: 12 }}
               angle={-45}
               textAnchor="end"
@@ -163,7 +163,7 @@ const RendimientoPorGrado: React.FC<RendimientoPorGradoProps> = ({
             />
             <YAxis tick={{ fontSize: 12 }} />
             <Tooltip content={<CustomTooltip />} />
-            <Legend 
+            <Legend
               wrapperStyle={{ paddingTop: '20px' }}
               formatter={(value) => <span className="text-sm">{`Logro ${value}`}</span>}
             />
@@ -177,7 +177,7 @@ const RendimientoPorGrado: React.FC<RendimientoPorGradoProps> = ({
 
       {/* Resumen estadístico */}
       <div className="pt-4 border-t">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div className="grid grid-cols-3 gap-4 mb-4">
           <div className="text-center">
             <div className="text-2xl font-bold text-blue-600">{data.totalGrados}</div>
             <div className="text-sm text-gray-600">Grados Analizados</div>
@@ -190,7 +190,7 @@ const RendimientoPorGrado: React.FC<RendimientoPorGradoProps> = ({
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-purple-600">
-              {data.grados.length > 0 
+              {data.grados.length > 0
                 ? (data.grados.reduce((sum, g) => sum + g.promedioNumerico, 0) / data.grados.length).toFixed(2)
                 : '0.00'
               }
@@ -205,11 +205,11 @@ const RendimientoPorGrado: React.FC<RendimientoPorGradoProps> = ({
             <div className="bg-green-50 p-3 rounded-lg">
               <h4 className="font-semibold text-green-800 mb-1">Mejor Rendimiento</h4>
               <p className="text-green-700">
-                {data.grados.reduce((mejor, actual) => 
+                {data.grados.reduce((mejor, actual) =>
                   actual.promedioNumerico > mejor.promedioNumerico ? actual : mejor
                 ).grado}
                 <span className="ml-2 font-medium">
-                  ({data.grados.reduce((mejor, actual) => 
+                  ({data.grados.reduce((mejor, actual) =>
                     actual.promedioNumerico > mejor.promedioNumerico ? actual : mejor
                   ).promedioNumerico.toFixed(2)})
                 </span>
@@ -218,11 +218,11 @@ const RendimientoPorGrado: React.FC<RendimientoPorGradoProps> = ({
             <div className="bg-red-50 p-3 rounded-lg">
               <h4 className="font-semibold text-red-800 mb-1">Requiere Atención</h4>
               <p className="text-red-700">
-                {data.grados.reduce((menor, actual) => 
+                {data.grados.reduce((menor, actual) =>
                   actual.promedioNumerico < menor.promedioNumerico ? actual : menor
                 ).grado}
                 <span className="ml-2 font-medium">
-                  ({data.grados.reduce((menor, actual) => 
+                  ({data.grados.reduce((menor, actual) =>
                     actual.promedioNumerico < menor.promedioNumerico ? actual : menor
                   ).promedioNumerico.toFixed(2)})
                 </span>

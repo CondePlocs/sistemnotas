@@ -12,27 +12,27 @@ interface CursosProblemaDirectorProps {
 
 // Función para obtener el color y estado según el porcentaje de problemas
 const obtenerEstadoRiesgo = (porcentaje: number) => {
-  if (porcentaje >= 70) return { 
-    color: 'bg-red-100 border-red-300 text-red-800', 
-    badge: 'bg-red-500 text-white', 
+  if (porcentaje >= 70) return {
+    color: 'bg-red-100 border-red-300 text-red-800',
+    badge: 'bg-red-500 text-white',
     nivel: 'Crítico',
     icon: '🚨'
   };
-  if (porcentaje >= 50) return { 
-    color: 'bg-orange-100 border-orange-300 text-orange-800', 
-    badge: 'bg-orange-500 text-white', 
+  if (porcentaje >= 50) return {
+    color: 'bg-orange-100 border-orange-300 text-orange-800',
+    badge: 'bg-orange-500 text-white',
     nivel: 'Alto',
     icon: '⚠️'
   };
-  if (porcentaje >= 30) return { 
-    color: 'bg-yellow-100 border-yellow-300 text-yellow-800', 
-    badge: 'bg-yellow-500 text-white', 
+  if (porcentaje >= 30) return {
+    color: 'bg-yellow-100 border-yellow-300 text-yellow-800',
+    badge: 'bg-yellow-500 text-white',
     nivel: 'Moderado',
     icon: '⚡'
   };
-  return { 
-    color: 'bg-green-100 border-green-300 text-green-800', 
-    badge: 'bg-green-500 text-white', 
+  return {
+    color: 'bg-green-100 border-green-300 text-green-800',
+    badge: 'bg-green-500 text-white',
     nivel: 'Bajo',
     icon: '✅'
   };
@@ -178,7 +178,7 @@ const CursosProblemaDirector: React.FC<CursosProblemaDirectorProps> = ({
       </div>
 
       {/* Resumen estadístico */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t mb-4">
+      <div className="grid grid-cols-3 gap-4 pt-6 border-t mb-6">
         <div className="text-center">
           <div className="text-2xl font-bold text-blue-600">{data.cursosAnalizados}</div>
           <div className="text-sm text-gray-600">Cursos Analizados</div>
@@ -195,7 +195,7 @@ const CursosProblemaDirector: React.FC<CursosProblemaDirectorProps> = ({
 
       {/* Lista detallada de cursos problema */}
       {data.cursosProblema.length > 0 && (
-        <div className="space-y-3">
+        <div className="space-y-3 mt-6">
           <h4 className="font-semibold text-gray-800 text-sm">
             Cursos que requieren atención inmediata:
           </h4>
@@ -207,7 +207,7 @@ const CursosProblemaDirector: React.FC<CursosProblemaDirectorProps> = ({
                   <span className="text-xs bg-gray-100 px-2 py-1 rounded">({curso.nivel})</span>
                 </div>
                 <div className="text-sm text-gray-600 mt-1">
-                  Alumnos con promedio final: 
+                  Alumnos con promedio final:
                   <span className="ml-1 text-yellow-600">B: {curso.detalleProblemas.B}</span>
                   <span className="ml-2 text-red-600">C: {curso.detalleProblemas.C}</span>
                 </div>
@@ -233,7 +233,7 @@ const CursosProblemaDirector: React.FC<CursosProblemaDirectorProps> = ({
             <div>
               <p className="text-sm font-medium text-blue-800">Recomendaciones:</p>
               <p className="text-sm text-blue-700 mt-1">
-                Considera implementar programas de refuerzo académico para estos cursos, 
+                Considera implementar programas de refuerzo académico para estos cursos,
                 revisar metodologías de enseñanza y brindar apoyo adicional a los estudiantes.
               </p>
             </div>

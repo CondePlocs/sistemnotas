@@ -60,7 +60,7 @@ export default function DirectorSidebar({ children }: DirectorSidebarProps) {
   if (isAdministrativo) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#FCE0C1] via-[#E9E1C9] to-[#D4C5A9]">
-        <SimpleHeader 
+        <SimpleHeader
           title="Gestión Administrativa"
           showBackButton={true}
           showForwardButton={true}
@@ -170,15 +170,15 @@ export default function DirectorSidebar({ children }: DirectorSidebarProps) {
     if (href === '/director/administrativos' && pathname === '/director/permisos') {
       return true;
     }
-    
+
     // Caso especial: rutas de salones con ID y /gestion deben marcar como activo "Salones"
     if (href === '/director/salones' && (
-      pathname.match(/^\/director\/salones\/\d+/) || 
+      pathname.match(/^\/director\/salones\/\d+/) ||
       pathname === '/director/salones/gestion'
     )) {
       return true;
     }
-    
+
     return pathname === href || (href !== '/director/dashboard' && pathname.startsWith(href));
   };
 
@@ -186,13 +186,13 @@ export default function DirectorSidebar({ children }: DirectorSidebarProps) {
     <>
       {/* Overlay para móvil */}
       {!isCollapsed && isMobile && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={() => setIsCollapsed(true)}
         />
       )}
 
-      <div className="flex h-screen bg-gradient-to-br from-[#FCE0C1] via-[#F6CBA3] to-[#E9E1C9]">
+      <div className="flex h-screen bg-gradient-to-br from-[#FCE0C1] via-[#F6CBA3] to-[#E9E1C9] overflow-hidden">
         {/* Botón hamburger para móvil */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
@@ -208,13 +208,10 @@ export default function DirectorSidebar({ children }: DirectorSidebarProps) {
         </button>
 
         {/* Sidebar */}
-        <div className={`${
-          isCollapsed ? 'w-16' : 'w-64'
-        } ${
-          isCollapsed ? '-translate-x-full lg:translate-x-0' : 'translate-x-0'
-        } ${
-          !isInitialized ? 'opacity-0' : 'opacity-100'
-        } fixed lg:relative z-50 bg-gradient-to-b from-[#8D2C1D] to-[#D96924] text-white transition-all duration-300 ease-in-out flex flex-col shadow-2xl h-full`}>
+        <div className={`${isCollapsed ? 'w-16' : 'w-64'
+          } ${isCollapsed ? '-translate-x-full lg:translate-x-0' : 'translate-x-0'
+          } ${!isInitialized ? 'opacity-0' : 'opacity-100'
+          } fixed lg:relative z-50 bg-gradient-to-b from-[#8D2C1D] to-[#D96924] text-white transition-all duration-300 ease-in-out flex flex-col shadow-2xl h-full`}>
           {/* Header del Sidebar */}
           <div className="p-4 border-b border-white/20 flex-shrink-0">
             <div className="flex items-center justify-between">
@@ -222,7 +219,7 @@ export default function DirectorSidebar({ children }: DirectorSidebarProps) {
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
                     <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.84L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.84l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"/>
+                      <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.84L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.84l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
                     </svg>
                   </div>
                   <div>
@@ -235,10 +232,10 @@ export default function DirectorSidebar({ children }: DirectorSidebarProps) {
                 onClick={() => setIsCollapsed(!isCollapsed)}
                 className="p-2 rounded-lg hover:bg-white/10 transition-colors hidden lg:block"
               >
-                <svg 
-                  className={`w-5 h-5 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`} 
-                  fill="none" 
-                  stroke="currentColor" 
+                <svg
+                  className={`w-5 h-5 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -256,53 +253,53 @@ export default function DirectorSidebar({ children }: DirectorSidebarProps) {
                   <div className="absolute -inset-1 border-2 border-white/80 rounded-xl" />
                 )}
                 <button
-                onClick={() => {
-                  router.push(item.href);
-                  // Cerrar sidebar en móvil después de navegar
-                  if (isMobile) {
-                    setIsCollapsed(true);
-                  }
-                }}
-                className={`
+                  onClick={() => {
+                    router.push(item.href);
+                    // Cerrar sidebar en móvil después de navegar
+                    if (isMobile) {
+                      setIsCollapsed(true);
+                    }
+                  }}
+                  className={`
                   w-full text-left rounded-lg transition-all duration-300
                   flex items-center group relative overflow-hidden
                   ${isCollapsed ? 'p-2 justify-center' : 'p-3 gap-3'}
                   ${isActiveRoute(item.href)
-                    ? 'bg-white/20 text-white shadow-lg'
-                    : 'text-[#FCE0C1] hover:bg-white/10 hover:text-white'
-                  }
+                      ? 'bg-white/20 text-white shadow-lg'
+                      : 'text-[#FCE0C1] hover:bg-white/10 hover:text-white'
+                    }
                   hover:scale-105 hover:shadow-lg active:scale-95
                 `}
-              >
-                {/* Indicador activo - solo barra cuando está expandido */}
-                {isActiveRoute(item.href) && !isCollapsed && (
-                  <div className="absolute left-1 w-1 h-6 bg-white rounded-full" />
-                )}
-                
-                {/* Icono */}
-                <div className={`
+                >
+                  {/* Indicador activo - solo barra cuando está expandido */}
+                  {isActiveRoute(item.href) && !isCollapsed && (
+                    <div className="absolute left-1 w-1 h-6 bg-white rounded-full" />
+                  )}
+
+                  {/* Icono */}
+                  <div className={`
                   flex-shrink-0 transition-all duration-300 
                   ${isActiveRoute(item.href) && !isCollapsed ? 'ml-2' : ''}
                   ${isActiveRoute(item.href) ? 'text-white' : 'text-[#FCE0C1] group-hover:text-white'}
                   ${isCollapsed ? 'w-8 h-8 flex items-center justify-center' : ''}
                 `}>
-                  <div className={`${isCollapsed ? 'scale-125' : ''} transition-transform duration-300`}>
-                    {item.icon}
-                  </div>
-                </div>
-                
-                {/* Texto */}
-                {!isCollapsed && (
-                  <div className="flex-1 animate-fade-in">
-                    <div className="font-semibold text-sm leading-tight">
-                      {item.label}
-                    </div>
-                    <div className="text-xs opacity-75 mt-0.5 leading-tight">
-                      {item.description}
+                    <div className={`${isCollapsed ? 'scale-125' : ''} transition-transform duration-300`}>
+                      {item.icon}
                     </div>
                   </div>
-                )}
-              </button>
+
+                  {/* Texto */}
+                  {!isCollapsed && (
+                    <div className="flex-1 animate-fade-in">
+                      <div className="font-semibold text-sm leading-tight">
+                        {item.label}
+                      </div>
+                      <div className="text-xs opacity-75 mt-0.5 leading-tight">
+                        {item.description}
+                      </div>
+                    </div>
+                  )}
+                </button>
               </div>
             ))}
           </nav>
@@ -315,21 +312,21 @@ export default function DirectorSidebar({ children }: DirectorSidebarProps) {
                 <div className="flex items-center gap-2">
                   {/* Avatar */}
                   <div className="bg-white/20 backdrop-blur-sm p-1.5 rounded-full flex-shrink-0">
-                    <svg 
-                      className="w-6 h-6 text-white" 
-                      fill="none" 
-                      stroke="currentColor" 
+                    <svg
+                      className="w-6 h-6 text-white"
+                      fill="none"
+                      stroke="currentColor"
                       viewBox="0 0 24 24"
                     >
-                      <path 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round" 
-                        strokeWidth={2} 
-                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" 
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                       />
                     </svg>
                   </div>
-                  
+
                   {/* Datos */}
                   <div className="flex-1 min-w-0">
                     <p className="text-white font-medium text-sm truncate leading-tight">
@@ -359,17 +356,17 @@ export default function DirectorSidebar({ children }: DirectorSidebarProps) {
               `}
             >
               <div className={`${isCollapsed ? 'scale-110' : ''} transition-transform duration-300`}>
-                <svg 
-                  className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" 
-                  fill="none" 
-                  stroke="currentColor" 
+                <svg
+                  className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300"
+                  fill="none"
+                  stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={2} 
-                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" 
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                   />
                 </svg>
               </div>
@@ -379,7 +376,7 @@ export default function DirectorSidebar({ children }: DirectorSidebarProps) {
         </div>
 
         {/* Contenido Principal */}
-        <div className="flex-1 flex flex-col min-h-screen lg:ml-0">
+        <div className="flex-1 flex flex-col min-h-screen lg:ml-0 overflow-x-hidden">
           {children}
         </div>
       </div>

@@ -18,14 +18,14 @@ export default function LoginLeftPanel() {
 
       {/* Contenido principal - Mucho más espaciado y expandido */}
       <div className="relative z-10 flex flex-col justify-center w-full pl-20 pr-4 py-12 text-white">
-        
+
         {/* Logo/Icono principal - Alineado a la izquierda */}
         <div className="mb-10 relative">
           <div className="w-32 h-32 relative">
             {/* Aura/Glow effect */}
             <div className="absolute inset-0 bg-gradient-to-r from-[#FCE0C1] to-[#F6CBA3] rounded-full blur-xl opacity-30 scale-110"></div>
             <div className="absolute inset-0 bg-gradient-to-r from-[#D96924] to-[#8D2C1D] rounded-full blur-lg opacity-20 scale-125"></div>
-            
+
             {/* Imagen redondeada */}
             <div className="relative w-full h-full rounded-full overflow-hidden border-4 border-white/20 shadow-2xl">
               <Image
@@ -56,7 +56,7 @@ export default function LoginLeftPanel() {
             Sistema de Gestión Educativa
           </h3>
           <p className="text-sm text-white/90 leading-relaxed">
-            Plataforma integral para la administración de notas, estudiantes, profesores y apoderados. 
+            Plataforma integral para la administración de notas, estudiantes, profesores y apoderados.
             Optimiza los procesos educativos con tecnología moderna y segura.
           </p>
         </div>
@@ -72,7 +72,7 @@ export default function LoginLeftPanel() {
             </div>
             <div>
               <p className="text-[#FCE0C1] font-medium">Correo Electrónico</p>
-              <p className="text-white/80 text-xs">contacto@sistemanotas.edu.pe</p>
+              <p className="text-white/80 text-xs">soportenotas@gmail.com</p>
             </div>
           </div>
 
@@ -84,7 +84,7 @@ export default function LoginLeftPanel() {
             </div>
             <div>
               <p className="text-[#FCE0C1] font-medium">Teléfono de Soporte</p>
-              <p className="text-white/80 text-xs">+51 054 123-456</p>
+              <p className="text-white/80 text-xs">987 654 321</p>
             </div>
           </div>
         </div>
