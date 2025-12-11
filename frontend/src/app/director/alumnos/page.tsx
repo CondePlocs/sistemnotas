@@ -318,119 +318,117 @@ function AlumnosContent() {
         </div>
 
         {/* Lista de Alumnos */}
-        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg border-2 border-[#E9E1C9] overflow-hidden">
-          {alumnosFiltrados.length === 0 ? (
-            <div className="px-6 py-12 text-center">
-              <svg className="mx-auto h-16 w-16 text-[#8D2C1D]/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-              </svg>
-              <h3 className="mt-4 text-lg font-semibold text-[#8D2C1D]">
-                {busqueda ? 'No se encontraron alumnos' : 'No hay alumnos registrados'}
-              </h3>
-              <p className="mt-2 text-[#666666]">
-                {busqueda 
-                  ? 'Intenta con otros términos de búsqueda'
-                  : 'Comienza registrando tu primer alumno'
-                }
-              </p>
-              {!busqueda && (
-                <button
-                  onClick={() => {
-                    setSelectedAlumno(null);
-                    setIsEditing(false);
+        {alumnosFiltrados.length === 0 ? (
+          <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg border-2 border-[#E9E1C9] px-6 py-12 text-center">
+            <svg className="mx-auto h-16 w-16 text-[#8D2C1D]/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+            </svg>
+            <h3 className="mt-4 text-lg font-semibold text-[#8D2C1D]">
+              {busqueda ? 'No se encontraron alumnos' : 'No hay alumnos registrados'}
+            </h3>
+            <p className="mt-2 text-[#666666]">
+              {busqueda 
+                ? 'Intenta con otros términos de búsqueda'
+                : 'Comienza registrando tu primer alumno'
+              }
+            </p>
+            {!busqueda && (
+              <button
+                onClick={() => {
+                  setSelectedAlumno(null);
+                  setIsEditing(false);
+                  setIsModalOpen(true);
+                }}
+                className="mt-4 px-6 py-3 bg-gradient-to-r from-[#8D2C1D] to-[#D96924] text-white font-semibold rounded-xl hover:from-[#D96924] hover:to-[#8D2C1D] transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+              >
+                Registrar Primer Alumno
+              </button>
+            )}
+          </div>
+        ) : (
+          <>
+            {/* Grid de alumnos */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 mb-6">
+              {alumnosPaginados.map((alumno) => (
+                <AlumnoCard
+                  key={alumno.id}
+                  alumno={alumno}
+                  onView={(alumno) => {
+                    setSelectedAlumno(alumno);
+                    setIsViewModalOpen(true);
+                  }}
+                  onEdit={(alumno) => {
+                    setSelectedAlumno(alumno);
+                    setIsEditing(true);
                     setIsModalOpen(true);
                   }}
-                  className="mt-4 px-6 py-3 bg-gradient-to-r from-[#8D2C1D] to-[#D96924] text-white font-semibold rounded-xl hover:from-[#D96924] hover:to-[#8D2C1D] transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
-                >
-                  Registrar Primer Alumno
-                </button>
-              )}
+                  onStatusChange={handleStatusChange}
+                />
+              ))}
             </div>
-          ) : (
-            <>
-              {/* Grid de alumnos */}
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-                {alumnosPaginados.map((alumno) => (
-                  <AlumnoCard
-                    key={alumno.id}
-                    alumno={alumno}
-                    onView={(alumno) => {
-                      setSelectedAlumno(alumno);
-                      setIsViewModalOpen(true);
-                    }}
-                    onEdit={(alumno) => {
-                      setSelectedAlumno(alumno);
-                      setIsEditing(true);
-                      setIsModalOpen(true);
-                    }}
-                    onStatusChange={handleStatusChange}
-                  />
-                ))}
-              </div>
 
-              {/* Paginación */}
-              {totalPaginas > 1 && (
-                <div className="px-6 py-4 border-t border-[#E9E1C9] bg-white/50">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm text-[#666666]">
-                      Mostrando {indiceInicio + 1} - {Math.min(indiceFin, alumnosFiltrados.length)} de {alumnosFiltrados.length} alumnos
-                    </div>
+            {/* Paginación */}
+            {totalPaginas > 1 && (
+              <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg border-2 border-[#E9E1C9] px-6 py-4">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-[#666666]">
+                    Mostrando {indiceInicio + 1} - {Math.min(indiceFin, alumnosFiltrados.length)} de {alumnosFiltrados.length} alumnos
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => setPaginaActual(Math.max(1, paginaActual - 1))}
+                      disabled={paginaActual === 1}
+                      className="px-3 py-2 rounded-lg border border-[#E9E1C9] text-[#666666] hover:bg-[#8D2C1D] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
                     
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => setPaginaActual(Math.max(1, paginaActual - 1))}
-                        disabled={paginaActual === 1}
-                        className="px-3 py-2 rounded-lg border border-[#E9E1C9] text-[#666666] hover:bg-[#8D2C1D] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
-                      </button>
+                    {/* Números de página */}
+                    {Array.from({ length: Math.min(5, totalPaginas) }, (_, i) => {
+                      let pageNum;
+                      if (totalPaginas <= 5) {
+                        pageNum = i + 1;
+                      } else if (paginaActual <= 3) {
+                        pageNum = i + 1;
+                      } else if (paginaActual >= totalPaginas - 2) {
+                        pageNum = totalPaginas - 4 + i;
+                      } else {
+                        pageNum = paginaActual - 2 + i;
+                      }
                       
-                      {/* Números de página */}
-                      {Array.from({ length: Math.min(5, totalPaginas) }, (_, i) => {
-                        let pageNum;
-                        if (totalPaginas <= 5) {
-                          pageNum = i + 1;
-                        } else if (paginaActual <= 3) {
-                          pageNum = i + 1;
-                        } else if (paginaActual >= totalPaginas - 2) {
-                          pageNum = totalPaginas - 4 + i;
-                        } else {
-                          pageNum = paginaActual - 2 + i;
-                        }
-                        
-                        return (
-                          <button
-                            key={pageNum}
-                            onClick={() => setPaginaActual(pageNum)}
-                            className={`px-3 py-2 rounded-lg border transition-colors ${
-                              paginaActual === pageNum
-                                ? 'bg-[#8D2C1D] text-white border-[#8D2C1D]'
-                                : 'border-[#E9E1C9] text-[#666666] hover:bg-[#8D2C1D] hover:text-white'
-                            }`}
-                          >
-                            {pageNum}
-                          </button>
-                        );
-                      })}
-                      
-                      <button
-                        onClick={() => setPaginaActual(Math.min(totalPaginas, paginaActual + 1))}
-                        disabled={paginaActual === totalPaginas}
-                        className="px-3 py-2 rounded-lg border border-[#E9E1C9] text-[#666666] hover:bg-[#8D2C1D] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </button>
-                    </div>
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => setPaginaActual(pageNum)}
+                          className={`px-3 py-2 rounded-lg border transition-colors ${
+                            paginaActual === pageNum
+                              ? 'bg-[#8D2C1D] text-white border-[#8D2C1D]'
+                              : 'border-[#E9E1C9] text-[#666666] hover:bg-[#8D2C1D] hover:text-white'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                    
+                    <button
+                      onClick={() => setPaginaActual(Math.min(totalPaginas, paginaActual + 1))}
+                      disabled={paginaActual === totalPaginas}
+                      className="px-3 py-2 rounded-lg border border-[#E9E1C9] text-[#666666] hover:bg-[#8D2C1D] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
-              )}
-            </>
-          )}
-        </div>
+              </div>
+            )}
+          </>
+        )}
       </main>
 
       {/* Modales */}
