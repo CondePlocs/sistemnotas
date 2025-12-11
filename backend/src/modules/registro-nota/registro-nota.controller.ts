@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Delete,
   Body,
   Param,
   Query,
@@ -17,10 +18,10 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { RegistroNotaService } from './registro-nota.service';
-import { 
-  CrearRegistroNotaDto, 
-  ActualizarRegistroNotaDto, 
-  GuardarNotasLoteDto 
+import {
+  CrearRegistroNotaDto,
+  ActualizarRegistroNotaDto,
+  GuardarNotasLoteDto
 } from './dto';
 
 @Controller('api/registro-notas')
@@ -28,7 +29,7 @@ import {
 export class RegistroNotaController {
   private readonly logger = new Logger(RegistroNotaController.name);
 
-  constructor(private readonly registroNotaService: RegistroNotaService) {}
+  constructor(private readonly registroNotaService: RegistroNotaService) { }
 
   /**
    * Crear una nota individual
@@ -42,7 +43,7 @@ export class RegistroNotaController {
     @Request() req: any
   ) {
     this.logger.log(`Creando nota: ${createDto.nota} para alumno ${createDto.alumnoId} por usuario ${req.user.id}`);
-    
+
     return await this.registroNotaService.crearNota(
       createDto,
       req.user.id,
@@ -62,7 +63,7 @@ export class RegistroNotaController {
     @Request() req: any
   ) {
     this.logger.log(`Actualizando nota ${id} por usuario ${req.user.id}`);
-    
+
     return await this.registroNotaService.actualizarNota(
       id,
       updateDto,
@@ -83,7 +84,7 @@ export class RegistroNotaController {
     @Request() req: any
   ) {
     this.logger.log(`Guardando lote de ${guardarDto.notas.length} notas por usuario ${req.user.id}`);
-    
+
     return await this.registroNotaService.guardarNotasLote(
       guardarDto,
       req.user.id,
@@ -103,7 +104,7 @@ export class RegistroNotaController {
     @Request() req: any
   ) {
     this.logger.log(`Obteniendo notas del contexto asignación ${asignacionId}, período ${periodoId}`);
-    
+
     return await this.registroNotaService.obtenerNotasPorContexto(
       asignacionId,
       periodoId,
@@ -123,7 +124,7 @@ export class RegistroNotaController {
     @Request() req: any
   ) {
     this.logger.log(`Obteniendo notas del alumno ${alumnoId} en período ${periodoId}`);
-    
+
     return await this.registroNotaService.obtenerNotasAlumnoPeriodo(
       alumnoId,
       periodoId,
@@ -144,7 +145,7 @@ export class RegistroNotaController {
     @Request() req: any
   ) {
     this.logger.log(`Calculando promedio de competencia ${competenciaId} para alumno ${alumnoId} en período ${periodoId}`);
-    
+
     return await this.registroNotaService.calcularPromedioCompetencia(
       alumnoId,
       competenciaId,
@@ -166,11 +167,30 @@ export class RegistroNotaController {
     @Request() req: any
   ) {
     this.logger.log(`Calculando promedio de curso ${cursoId} para alumno ${alumnoId} en período ${periodoId}`);
-    
+
     return await this.registroNotaService.calcularPromedioCurso(
       alumnoId,
       cursoId,
       periodoId,
+      req.user.colegioId
+    );
+  }
+
+  /**
+   * Eliminar una nota (hard delete)
+   * DELETE /api/registro-notas/:id
+   */
+  @Delete(':id')
+  @Roles('PROFESOR', 'DIRECTOR', 'ADMINISTRATIVO')
+  async eliminarNota(
+    @Param('id', ParseIntPipe) id: number,
+    @Request() req: any
+  ) {
+    this.logger.log(`Eliminando nota ${id} por usuario ${req.user.id}`);
+
+    return await this.registroNotaService.eliminarNota(
+      id,
+      req.user.id,
       req.user.colegioId
     );
   }
@@ -186,7 +206,7 @@ export class RegistroNotaController {
     @Request() req: any
   ) {
     this.logger.log(`Obteniendo estadísticas de evaluación ${evaluacionId}`);
-    
+
     // Esta funcionalidad se puede implementar después
     return {
       message: 'Estadísticas de evaluación - Por implementar',

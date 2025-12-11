@@ -22,8 +22,8 @@ interface TablaEvaluacionesRealProps {
   readonly?: boolean;
 }
 
-export default function TablaEvaluacionesReal({ 
-  contexto, 
+export default function TablaEvaluacionesReal({
+  contexto,
   onCrearEvaluacion,
   asignacionId,
   periodoId,
@@ -88,14 +88,15 @@ export default function TablaEvaluacionesReal({
       console.log('Cargando notas para asignación:', asignacionId, 'período:', periodoId);
       const notasExistentes = await registroNotaAPI.obtenerNotasPorContexto(asignacionId, periodoId);
       console.log('Notas cargadas:', notasExistentes);
-      
-      // Convertir las notas del backend al formato esperado por el hook
+
+      // Convertir las notas del backend al formato esperado por el hook (incluyendo ID)
       const notasFormateadas = notasExistentes.map(nota => ({
+        id: nota.id, // Incluir el ID para poder eliminar después
         alumnoId: nota.alumnoId,
         evaluacionId: nota.evaluacionId,
         nota: nota.nota as NotaInput // Ahora acepta tanto letras como números
       }));
-      
+
       establecerNotasIniciales(notasFormateadas);
     } catch (error) {
       console.error('Error al cargar notas existentes:', error);
@@ -112,18 +113,18 @@ export default function TablaEvaluacionesReal({
   // Función personalizada para guardar y recargar notas
   const guardarYRecargarNotas = async () => {
     const resultado = await guardarNotas();
-    
+
     if (resultado.success) {
       // Recargar notas después de guardar exitosamente
       await cargarNotasExistentes();
       // Recargar promedios después de guardar
       await cargarPromediosCompetencias();
       await cargarPromediosCurso();
-      
+
       // Las estimaciones se actualizarán automáticamente por el useEffect
       // cuando cambien las notasExistentesMap
     }
-    
+
     return resultado;
   };
 
@@ -164,13 +165,13 @@ export default function TablaEvaluacionesReal({
   // Cargar promedios de competencias
   const cargarPromediosCompetencias = async () => {
     const nuevosPromedios = new Map<string, string>();
-    
+
     for (const alumno of contexto.alumnos) {
       for (const competencia of contexto.competencias) {
         try {
           const promedio = await registroNotaAPI.calcularPromedioCompetencia(
-            alumno.id, 
-            competencia.id, 
+            alumno.id,
+            competencia.id,
             periodoId
           );
           const clave = `${alumno.id}-${competencia.id}`;
@@ -182,23 +183,23 @@ export default function TablaEvaluacionesReal({
         }
       }
     }
-    
+
     setPromediosCompetencia(nuevosPromedios);
   };
 
   // Cargar promedios de curso
   const cargarPromediosCurso = async () => {
     const nuevosPromedios = new Map<number, string>();
-    
+
     for (const alumno of contexto.alumnos) {
       try {
         // Obtener cursoId desde la primera competencia
         const cursoId = contexto.competencias[0]?.cursoId;
         if (!cursoId) return;
-        
+
         const promedio = await registroNotaAPI.calcularPromedioCurso(
-          alumno.id, 
-          cursoId, 
+          alumno.id,
+          cursoId,
           periodoId
         );
         nuevosPromedios.set(alumno.id, promedio.propuestaLiteral);
@@ -207,7 +208,7 @@ export default function TablaEvaluacionesReal({
         nuevosPromedios.set(alumno.id, '-');
       }
     }
-    
+
     setPromediosCurso(nuevosPromedios);
   };
 
@@ -218,20 +219,20 @@ export default function TablaEvaluacionesReal({
     }
 
     const notaLimpia = nota.trim().toUpperCase();
-    
+
     // Verificar si es alfabético (AD, A, B, C)
     const esAlfabetico = /^(AD|A|B|C)$/i.test(notaLimpia);
     if (esAlfabetico) {
       return true;
     }
-    
+
     // Verificar si es numérico (0-20, incluyendo decimales)
     const esNumerico = /^\d+(\.\d+)?$/.test(notaLimpia);
     if (esNumerico) {
       const valor = parseFloat(notaLimpia);
       return valor >= 0 && valor <= 20;
     }
-    
+
     return false;
   };
 
@@ -259,7 +260,7 @@ export default function TablaEvaluacionesReal({
       if (['AD', 'A', 'B', 'C'].includes(valor)) {
         return valor as NotaLiteral;
       }
-      
+
       // Si es un número, convertir a letra equivalente
       const num = parseFloat(valor);
       if (!isNaN(num)) {
@@ -268,10 +269,10 @@ export default function TablaEvaluacionesReal({
         if (num >= 11) return 'B';
         return 'C';
       }
-      
+
       return null;
     };
-    
+
     const notaParaColor = nota ? convertirALetra(nota) : null;
     if (esEstimacion) {
       // Colores suaves para estimaciones de IA
@@ -283,7 +284,7 @@ export default function TablaEvaluacionesReal({
         default: return 'bg-gradient-to-br from-gray-200 to-gray-300 text-gray-700 border-gray-400 hover:from-gray-300 hover:to-gray-400 ring-2 ring-gray-200 border-dashed';
       }
     }
-    
+
     if (notaParaColor === null) return 'bg-white/80 text-[#666666] border-[#E9E1C9] hover:bg-[#FCE0C1] hover:border-[#8D2C1D]';
     switch (notaParaColor) {
       case 'AD': return 'bg-gradient-to-br from-emerald-200 to-emerald-300 text-emerald-800 border-emerald-300 hover:from-emerald-300 hover:to-emerald-400 hover:text-emerald-900';
@@ -366,7 +367,7 @@ export default function TablaEvaluacionesReal({
                   </div>
                 </div>
               )}
-              
+
             </div>
           </div>
         </div>
@@ -402,13 +403,12 @@ export default function TablaEvaluacionesReal({
                 {contexto.competencias.map((competencia, compIndex) => {
                   const evaluacionesCompetencia = obtenerEvaluacionesPorCompetencia(competencia.id);
                   return (
-                    <th 
-                      key={competencia.id} 
-                      className={`border-r-4 border-[#8D2C1D]/30 w-[280px] min-w-[280px] max-w-[280px] transition-all duration-200 cursor-pointer ${
-                        columnaSeleccionada === compIndex 
-                          ? 'bg-[#8D2C1D]/30 shadow-lg border-t-4 border-t-[#8D2C1D]' 
+                    <th
+                      key={competencia.id}
+                      className={`border-r-4 border-[#8D2C1D]/30 w-[280px] min-w-[280px] max-w-[280px] transition-all duration-200 cursor-pointer ${columnaSeleccionada === compIndex
+                          ? 'bg-[#8D2C1D]/30 shadow-lg border-t-4 border-t-[#8D2C1D]'
                           : 'hover:bg-[#FCE0C1]/10'
-                      }`}
+                        }`}
                       onClick={() => setColumnaSeleccionada(columnaSeleccionada === compIndex ? null : compIndex)}
                     >
                       <div className="px-2 py-2">
@@ -458,126 +458,124 @@ export default function TablaEvaluacionesReal({
                       <td colSpan={contexto.competencias.length + 2} className="h-2 bg-gradient-to-r from-[#8D2C1D]/10 via-[#8D2C1D]/20 to-[#8D2C1D]/10 border-y-2 border-[#8D2C1D]/30"></td>
                     </tr>
                   )}
-                <tr 
-                  className={`transition-all duration-200 border-l-4 cursor-pointer ${
-                    filaSeleccionada === alumno.id 
-                      ? 'bg-[#8D2C1D]/30 border-l-[#8D2C1D] shadow-lg' 
-                      : index % 2 === 0 
-                        ? 'bg-white/50 border-l-[#8D2C1D]/20 hover:bg-[#FCE0C1]/10' 
-                        : 'bg-[#FCE0C1]/10 border-l-[#8D2C1D]/20 hover:bg-[#FCE0C1]/15'
-                  }`}
-                  onClick={() => setFilaSeleccionada(filaSeleccionada === alumno.id ? null : alumno.id)}
-                >
-                  <td className="px-3 py-2 border-r-4 border-[#8D2C1D]/30 sticky left-0 z-10 bg-inherit w-[220px] min-w-[220px] max-w-[220px]">
-                    <div className="flex items-center gap-2">
-                      <div className="w-9 h-9 bg-gradient-to-br from-[#8D2C1D] to-[#D96924] rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md">
-                        {alumno.nombres.charAt(0)}{alumno.apellidos.charAt(0)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-bold text-[#333333]" title={`${alumno.nombres} ${alumno.apellidos}`}>
-                          {alumno.nombres} {alumno.apellidos}
+                  <tr
+                    className={`transition-all duration-200 border-l-4 cursor-pointer ${filaSeleccionada === alumno.id
+                        ? 'bg-[#8D2C1D]/30 border-l-[#8D2C1D] shadow-lg'
+                        : index % 2 === 0
+                          ? 'bg-white/50 border-l-[#8D2C1D]/20 hover:bg-[#FCE0C1]/10'
+                          : 'bg-[#FCE0C1]/10 border-l-[#8D2C1D]/20 hover:bg-[#FCE0C1]/15'
+                      }`}
+                    onClick={() => setFilaSeleccionada(filaSeleccionada === alumno.id ? null : alumno.id)}
+                  >
+                    <td className="px-3 py-2 border-r-4 border-[#8D2C1D]/30 sticky left-0 z-10 bg-inherit w-[220px] min-w-[220px] max-w-[220px]">
+                      <div className="flex items-center gap-2">
+                        <div className="w-9 h-9 bg-gradient-to-br from-[#8D2C1D] to-[#D96924] rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md">
+                          {alumno.nombres.charAt(0)}{alumno.apellidos.charAt(0)}
                         </div>
-                        {alumno.dni && (
-                          <div className="text-xs text-[#666666] font-medium">
-                            🎫 {alumno.dni}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-bold text-[#333333]" title={`${alumno.nombres} ${alumno.apellidos}`}>
+                            {alumno.nombres} {alumno.apellidos}
                           </div>
-                        )}
+                          {alumno.dni && (
+                            <div className="text-xs text-[#666666] font-medium">
+                              🎫 {alumno.dni}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  {contexto.competencias.map(competencia => {
-                    const evaluacionesCompetencia = obtenerEvaluacionesPorCompetencia(competencia.id);
-                    return (
-                      <td 
-                        key={competencia.id} 
-                        className={`border-r-4 border-[#8D2C1D]/30 p-1 transition-all duration-200 ${
-                          columnaSeleccionada === contexto.competencias.findIndex(c => c.id === competencia.id)
-                            ? 'bg-[#8D2C1D]/30'
-                            : ''
-                        }`}
-                      >
-                        <div className="flex items-center gap-0.5">
-                          {evaluacionesCompetencia.map(evaluacion => {
-                            const nota = obtenerNota(alumno.id, evaluacion.id);
-                            const estimacion = obtenerEstimacion(alumno.id, evaluacion.id);
-                            const key = `${alumno.id}-${evaluacion.id}`;
-                            
-                            // Determinar qué mostrar: nota real o estimación
-                            const mostrarEstimacion = !nota && estimacion;
-                            const valorMostrar = nota || (mostrarEstimacion ? estimacion.notaEstimada : null);
-                            const esEstimacion = mostrarEstimacion && !nota;
-                            
-                            return (
-                              <div key={evaluacion.id} className="flex-1 min-w-[70px]">
-                                <div className="text-center relative">
-                                  {editando === key ? (
-                                    <input
-                                      type="text"
-                                      value={nota || ''}
-                                      onChange={(e) => {
-                                        let valor = e.target.value.trim();
-                                        // Solo convertir a mayúsculas si parece ser una letra
-                                        if (isNaN(Number(valor))) {
-                                          valor = valor.toUpperCase();
-                                        }
-                                        manejarCambioNota(alumno.id, evaluacion.id, valor);
-                                      }}
-                                      onBlur={() => setEditando(null)}
-                                      onKeyDown={(e) => {
-                                        if (e.key === 'Enter') setEditando(null);
-                                      }}
-                                      className="w-full text-center text-sm border-2 border-[#8D2C1D] rounded px-2 py-1 font-bold focus:ring-2 focus:ring-[#8D2C1D]"
-                                      placeholder="AD,A,B,C"
-                                      maxLength={4}
-                                      autoFocus
-                                    />
-                                  ) : (
-                                    <>
-                                      <button
-                                        onClick={readonly ? undefined : () => setEditando(key)}
-                                        className={`w-full h-8 text-sm font-bold rounded transition-all duration-300 ${readonly ? 'cursor-default' : 'hover:scale-105 cursor-pointer'} shadow-sm hover:shadow-md border-2 ${getColorNotaMejorado(valorMostrar, !!esEstimacion)}`}
-                                        title={readonly ? 'Solo lectura - No se puede editar' : (esEstimacion ? `🤖 Estimación IA (${Math.round(estimacion!.confianza * 100)}% confianza): ${estimacion!.mensaje}` : undefined)}
-                                      >
-                                        {esEstimacion ? (
-                                          <div className="flex items-center justify-center gap-1">
-                                            <span className="text-xs">🤖</span>
-                                            <span>{valorMostrar}</span>
+                    </td>
+                    {contexto.competencias.map(competencia => {
+                      const evaluacionesCompetencia = obtenerEvaluacionesPorCompetencia(competencia.id);
+                      return (
+                        <td
+                          key={competencia.id}
+                          className={`border-r-4 border-[#8D2C1D]/30 p-1 transition-all duration-200 ${columnaSeleccionada === contexto.competencias.findIndex(c => c.id === competencia.id)
+                              ? 'bg-[#8D2C1D]/30'
+                              : ''
+                            }`}
+                        >
+                          <div className="flex items-center gap-0.5">
+                            {evaluacionesCompetencia.map(evaluacion => {
+                              const nota = obtenerNota(alumno.id, evaluacion.id);
+                              const estimacion = obtenerEstimacion(alumno.id, evaluacion.id);
+                              const key = `${alumno.id}-${evaluacion.id}`;
+
+                              // Determinar qué mostrar: nota real o estimación
+                              const mostrarEstimacion = !nota && estimacion;
+                              const valorMostrar = nota || (mostrarEstimacion ? estimacion.notaEstimada : null);
+                              const esEstimacion = mostrarEstimacion && !nota;
+
+                              return (
+                                <div key={evaluacion.id} className="flex-1 min-w-[70px]">
+                                  <div className="text-center relative">
+                                    {editando === key ? (
+                                      <input
+                                        type="text"
+                                        value={nota || ''}
+                                        onChange={(e) => {
+                                          let valor = e.target.value.trim();
+                                          // Solo convertir a mayúsculas si parece ser una letra
+                                          if (isNaN(Number(valor))) {
+                                            valor = valor.toUpperCase();
+                                          }
+                                          manejarCambioNota(alumno.id, evaluacion.id, valor);
+                                        }}
+                                        onBlur={() => setEditando(null)}
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter') setEditando(null);
+                                        }}
+                                        className="w-full text-center text-sm border-2 border-[#8D2C1D] rounded px-2 py-1 font-bold focus:ring-2 focus:ring-[#8D2C1D]"
+                                        placeholder="AD,A,B,C"
+                                        maxLength={4}
+                                        autoFocus
+                                      />
+                                    ) : (
+                                      <>
+                                        <button
+                                          onClick={readonly ? undefined : () => setEditando(key)}
+                                          className={`w-full h-8 text-sm font-bold rounded transition-all duration-300 ${readonly ? 'cursor-default' : 'hover:scale-105 cursor-pointer'} shadow-sm hover:shadow-md border-2 ${getColorNotaMejorado(valorMostrar, !!esEstimacion)}`}
+                                          title={readonly ? 'Solo lectura - No se puede editar' : (esEstimacion ? `🤖 Estimación IA (${Math.round(estimacion!.confianza * 100)}% confianza): ${estimacion!.mensaje}` : undefined)}
+                                        >
+                                          {esEstimacion ? (
+                                            <div className="flex items-center justify-center gap-1">
+                                              <span className="text-xs">🤖</span>
+                                              <span>{valorMostrar}</span>
+                                            </div>
+                                          ) : (
+                                            valorMostrar || '➕'
+                                          )}
+                                        </button>
+                                        {esEstimacion && (
+                                          <div className="absolute -top-1 -right-1 w-4 h-4 bg-purple-500 rounded-full flex items-center justify-center">
+                                            <span className="text-white text-xs font-bold">AI</span>
                                           </div>
-                                        ) : (
-                                          valorMostrar || '➕'
                                         )}
-                                      </button>
-                                      {esEstimacion && (
-                                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-purple-500 rounded-full flex items-center justify-center">
-                                          <span className="text-white text-xs font-bold">AI</span>
-                                        </div>
-                                      )}
-                                    </>
-                                  )}
+                                      </>
+                                    )}
+                                  </div>
                                 </div>
+                              );
+                            })}
+                            <div className="w-7"></div>
+                            <div className="w-18">
+                              <div className="text-center">
+                                <span className={`px-2 py-1 rounded text-xs font-bold shadow-sm ${getColorPromedio(calcularPromedioCompetencia(alumno.id, competencia.id))}`}>
+                                  {calcularPromedioCompetencia(alumno.id, competencia.id)}
+                                </span>
                               </div>
-                            );
-                          })}
-                          <div className="w-7"></div>
-                          <div className="w-18">
-                            <div className="text-center">
-                              <span className={`px-2 py-1 rounded text-xs font-bold shadow-sm ${getColorPromedio(calcularPromedioCompetencia(alumno.id, competencia.id))}`}>
-                                {calcularPromedioCompetencia(alumno.id, competencia.id)}
-                              </span>
                             </div>
                           </div>
-                        </div>
-                      </td>
-                    );
-                  })}
-                  <td className="px-3 py-2 text-center border-l-4 border-[#8D2C1D] sticky right-0 z-10 bg-inherit w-[140px] min-w-[140px] max-w-[140px]">
-                    <div className="flex items-center justify-center">
-                      <span className={`px-3 py-1.5 rounded-lg text-sm font-bold shadow-md ${getColorPromedioFinal(calcularPromedio(alumno.id))}`}>
-                        🏆 {calcularPromedio(alumno.id)}
-                      </span>
-                    </div>
-                  </td>
-                </tr>
+                        </td>
+                      );
+                    })}
+                    <td className="px-3 py-2 text-center border-l-4 border-[#8D2C1D] sticky right-0 z-10 bg-inherit w-[140px] min-w-[140px] max-w-[140px]">
+                      <div className="flex items-center justify-center">
+                        <span className={`px-3 py-1.5 rounded-lg text-sm font-bold shadow-md ${getColorPromedioFinal(calcularPromedio(alumno.id))}`}>
+                          🏆 {calcularPromedio(alumno.id)}
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
                 </React.Fragment>
               ))}
             </tbody>

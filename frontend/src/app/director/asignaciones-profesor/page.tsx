@@ -7,13 +7,14 @@ import { useAuth } from '@/context/AuthContext';
 import DirectorSidebar from '@/components/layout/DirectorSidebar';
 import ModalAsignacionProfesor from '@/components/modals/ModalAsignacionProfesor';
 import ModalConfirmarPassword from '@/components/modals/ModalConfirmarPassword';
+import ModalTransferirProfesor from '@/components/modals/ModalTransferirProfesor';
 import AsignacionCard from '@/components/director/AsignacionCard';
 import FiltrosAsignaciones from '@/components/director/FiltrosAsignaciones';
 import Paginacion from '@/components/common/Paginacion';
-import { 
-  ProfesorAsignacion, 
+import {
+  ProfesorAsignacion,
   ListaAsignacionesResponse,
-  ProfesorAsignacionFormData 
+  ProfesorAsignacionFormData
 } from '@/types/profesor-asignacion';
 import { PlusIcon, UserGroupIcon } from '@heroicons/react/24/outline';
 
@@ -26,13 +27,13 @@ function AsignacionesProfesorContent() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [permisoVerificado, setPermisoVerificado] = useState(false);
-  
+
   // Estados para filtros y paginación
   const [busqueda, setBusqueda] = useState('');
   const [filtroActivo, setFiltroActivo] = useState<boolean | null>(null);
   const [paginaActual, setPaginaActual] = useState(1);
   const elementosPorPagina = 20; // 4 columnas x 5 filas
-  
+
   // Estados para confirmación de contraseña
   const [modalConfirmacion, setModalConfirmacion] = useState(false);
   const [accionPendiente, setAccionPendiente] = useState<{
@@ -40,6 +41,10 @@ function AsignacionesProfesorContent() {
     asignacionId: number;
     activo?: boolean;
   } | null>(null);
+
+  // Estados para modal de transferir profesor
+  const [modalTransferir, setModalTransferir] = useState(false);
+  const [asignacionATransferir, setAsignacionATransferir] = useState<ProfesorAsignacion | null>(null);
 
   // Verificar permisos para administrativos
   const verificarPermisos = async () => {
@@ -174,31 +179,31 @@ function AsignacionesProfesorContent() {
     if (filtroActivo !== null && asignacion.activo !== filtroActivo) {
       return false;
     }
-    
+
     // Filtro por búsqueda
     if (busqueda.trim() !== '') {
       const termino = busqueda.toLowerCase();
       const profesor = `${asignacion.profesor.usuarioRol.usuario.nombres} ${asignacion.profesor.usuarioRol.usuario.apellidos}`.toLowerCase();
       const curso = asignacion.curso.nombre.toLowerCase();
       const salon = `${asignacion.salon.grado} ${asignacion.salon.seccion} ${asignacion.salon.colegioNivel.nivel.nombre}`.toLowerCase();
-      
+
       return profesor.includes(termino) || curso.includes(termino) || salon.includes(termino);
     }
-    
+
     return true;
   });
-  
+
   // Cálculos de paginación
   const totalPaginas = Math.ceil(asignacionesFiltradas.length / elementosPorPagina);
   const indiceInicio = (paginaActual - 1) * elementosPorPagina;
   const indiceFin = indiceInicio + elementosPorPagina;
   const asignacionesPaginadas = asignacionesFiltradas.slice(indiceInicio, indiceFin);
-  
+
   // Resetear página cuando cambian los filtros
   useEffect(() => {
     setPaginaActual(1);
   }, [busqueda, filtroActivo]);
-  
+
   // Manejar acciones con confirmación
   const handleCambiarEstado = (asignacionId: number, activo: boolean) => {
     setAccionPendiente({
@@ -208,28 +213,62 @@ function AsignacionesProfesorContent() {
     });
     setModalConfirmacion(true);
   };
-  
+
   const handlePasarGrupo = (asignacionId: number) => {
-    setAccionPendiente({
-      tipo: 'pasar-grupo',
-      asignacionId
-    });
-    setModalConfirmacion(true);
+    const asignacion = asignaciones.find(a => a.id === asignacionId);
+    if (asignacion) {
+      setAsignacionATransferir(asignacion);
+      setModalTransferir(true);
+    }
   };
-  
+
+  // Confirmar transferencia de profesor
+  const handleConfirmarTransferencia = async (nuevoProfesorId: number) => {
+    if (!asignacionATransferir) return;
+
+    try {
+      const response = await fetch(
+        `http://localhost:3001/api/profesor-asignaciones/${asignacionATransferir.id}/transferir-profesor`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ nuevoProfesorId })
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        await cargarAsignaciones();
+        setModalTransferir(false);
+        setAsignacionATransferir(null);
+        setError(null);
+
+        // Mostrar mensaje de éxito con detalles
+        alert(
+          `✅ ${result.message}\n\n` +
+          `Profesor anterior: ${result.cambio.profesorAnterior.nombre}\n` +
+          `Profesor nuevo: ${result.cambio.profesorNuevo.nombre}\n` +
+          `Evaluaciones preservadas: ${result.cambio.evaluacionesPreservadas}`
+        );
+      } else {
+        const errorData = await response.json();
+        setError(errorData.message || 'Error al transferir profesor');
+        setModalTransferir(false);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      setError('Error de conexión al transferir profesor');
+      setModalTransferir(false);
+    }
+  };
+
   // Ejecutar acción confirmada
   const ejecutarAccion = async (password: string) => {
     if (!accionPendiente) return;
-    
+
     try {
-      if (accionPendiente.tipo === 'pasar-grupo') {
-        // Por ahora solo mostrar mensaje
-        alert('Funcionalidad "Pasar Grupo" será implementada próximamente');
-        setModalConfirmacion(false);
-        setAccionPendiente(null);
-        return;
-      }
-      
+
       const endpoint = accionPendiente.activo ? 'activar' : 'desactivar';
       const response = await fetch(`http://localhost:3001/api/profesor-asignaciones/${accionPendiente.asignacionId}/${endpoint}`, {
         method: 'PUT',
@@ -283,8 +322,8 @@ function AsignacionesProfesorContent() {
       <main className="flex-1 p-8 overflow-auto">
         {/* Header de la página */}
         <div className="mb-8">
-          <h1 
-            className="text-3xl font-bold text-[#333333] mb-2" 
+          <h1
+            className="text-3xl font-bold text-[#333333] mb-2"
             style={{ fontFamily: 'var(--font-poppins)' }}
           >
             Asignación de Profesores
@@ -310,7 +349,7 @@ function AsignacionesProfesorContent() {
                 className="block w-full pl-10 pr-3 py-3 border border-[#E9E1C9] rounded-xl leading-5 bg-white text-[#333333] placeholder:text-[#999999] focus:outline-none focus:ring-2 focus:ring-[#8D2C1D] focus:border-[#8D2C1D] transition-colors"
               />
             </div>
-            
+
             {/* Botón Nueva Asignación - Siempre a la derecha */}
             <button
               onClick={() => setModalOpen(true)}
@@ -321,7 +360,7 @@ function AsignacionesProfesorContent() {
             </button>
           </div>
         </div>
-        
+
         {/* Filtros compactos */}
         <FiltrosAsignaciones
           busqueda={busqueda}
@@ -354,7 +393,7 @@ function AsignacionesProfesorContent() {
                 {asignaciones.length === 0 ? 'No hay asignaciones' : 'No se encontraron resultados'}
               </h3>
               <p className="text-sm text-gray-500 mb-6">
-                {asignaciones.length === 0 
+                {asignaciones.length === 0
                   ? 'Comienza creando tu primera asignación de profesor.'
                   : 'Intenta ajustar los filtros de búsqueda.'
                 }
@@ -383,7 +422,7 @@ function AsignacionesProfesorContent() {
                 />
               ))}
             </div>
-            
+
             {/* Paginación */}
             {totalPaginas > 1 && (
               <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-[#E9E1C9]/30">
@@ -407,7 +446,7 @@ function AsignacionesProfesorContent() {
         onSubmit={handleCrearAsignacion}
         loading={submitting}
       />
-      
+
       <ModalConfirmarPassword
         isOpen={modalConfirmacion}
         onClose={() => {
@@ -417,6 +456,21 @@ function AsignacionesProfesorContent() {
         onConfirm={ejecutarAccion}
         title={`Confirmar ${accionPendiente?.tipo === 'activar' ? 'Activación' : accionPendiente?.tipo === 'desactivar' ? 'Desactivación' : 'Acción'}`}
         message={`¿Estás seguro de que deseas ${accionPendiente?.tipo === 'activar' ? 'activar' : accionPendiente?.tipo === 'desactivar' ? 'desactivar' : 'realizar esta acción en'} esta asignación?`}
+      />
+
+      <ModalTransferirProfesor
+        isOpen={modalTransferir}
+        onClose={() => {
+          setModalTransferir(false);
+          setAsignacionATransferir(null);
+        }}
+        onConfirm={handleConfirmarTransferencia}
+        asignacionActual={asignacionATransferir ? {
+          id: asignacionATransferir.id,
+          profesorActual: `${asignacionATransferir.profesor.usuarioRol.usuario.nombres} ${asignacionATransferir.profesor.usuarioRol.usuario.apellidos}`,
+          curso: asignacionATransferir.curso.nombre,
+          salon: `${asignacionATransferir.salon.grado} ${asignacionATransferir.salon.seccion} - ${asignacionATransferir.salon.colegioNivel.nivel.nombre}`
+        } : null}
       />
     </DirectorSidebar>
   );

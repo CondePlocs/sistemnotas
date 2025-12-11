@@ -10,13 +10,13 @@ export class RegistroNotaService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notaCalculoService: NotaCalculoService,
-  ) {}
+  ) { }
 
   /**
    * Crear una nota individual
    */
   async crearNota(
-    createDto: CrearRegistroNotaDto, 
+    createDto: CrearRegistroNotaDto,
     registradoPor: number,
     colegioId: number
   ) {
@@ -68,7 +68,7 @@ export class RegistroNotaService {
    * Actualizar una nota existente
    */
   async actualizarNota(
-    id: number, 
+    id: number,
     updateDto: ActualizarRegistroNotaDto,
     usuarioId: number,
     colegioId: number
@@ -146,7 +146,7 @@ export class RegistroNotaService {
             const notaEscalaCalculo = this.notaCalculoService.convertirAEscalaCalculo(notaDto.nota);
             nota = await prisma.registroNota.update({
               where: { id: notaExistente.id },
-              data: { 
+              data: {
                 nota: notaDto.nota,
                 notaEscalaCalculo
               },
@@ -278,8 +278,8 @@ export class RegistroNotaService {
    * Calcular promedio de competencia para un alumno en un período
    */
   async calcularPromedioCompetencia(
-    alumnoId: number, 
-    competenciaId: number, 
+    alumnoId: number,
+    competenciaId: number,
     periodoId: number,
     colegioId: number
   ) {
@@ -307,10 +307,10 @@ export class RegistroNotaService {
     });
 
     // Convertir todas las notas a escala de cálculo (1.0-4.0) usando el nuevo sistema dual
-    const valoresEscalaCalculo = notas.map(n => 
+    const valoresEscalaCalculo = notas.map(n =>
       this.notaCalculoService.convertirAEscalaCalculo(n.nota)
     );
-    
+
     const resultado = this.notaCalculoService.calcularPromedioEscalaCalculo(valoresEscalaCalculo);
 
     return {
@@ -325,8 +325,8 @@ export class RegistroNotaService {
    * Calcular promedio de curso para un alumno en un período
    */
   async calcularPromedioCurso(
-    alumnoId: number, 
-    cursoId: number, 
+    alumnoId: number,
+    cursoId: number,
     periodoId: number,
     colegioId: number
   ) {
@@ -349,12 +349,12 @@ export class RegistroNotaService {
     const promediosCompetencias: number[] = [];
     for (const competencia of competencias) {
       const promedio = await this.calcularPromedioCompetencia(
-        alumnoId, 
-        competencia.id, 
-        periodoId, 
+        alumnoId,
+        competencia.id,
+        periodoId,
         colegioId
       );
-      
+
       if (promedio.cantidadNotas > 0) {
         promediosCompetencias.push(promedio.promedioNumerico);
       }
@@ -374,12 +374,12 @@ export class RegistroNotaService {
    * Verificar que alumno y evaluación pertenezcan al mismo colegio
    */
   private async verificarPertenenciaColegio(
-    alumnoId: number, 
-    evaluacionId: number, 
+    alumnoId: number,
+    evaluacionId: number,
     colegioId: number
   ) {
     this.logger.debug(`Verificando pertenencia: alumnoId=${alumnoId}, evaluacionId=${evaluacionId}, colegioId=${colegioId}`);
-    
+
     const alumno = await this.prisma.alumno.findUnique({
       where: { id: alumnoId }
     });
@@ -406,12 +406,68 @@ export class RegistroNotaService {
       throw new NotFoundException(`Evaluación con ID ${evaluacionId} no encontrada`);
     }
 
-    if (alumno.colegioId !== colegioId || 
-        evaluacion.profesorAsignacion.salon.colegioId !== colegioId) {
+    if (alumno.colegioId !== colegioId ||
+      evaluacion.profesorAsignacion.salon.colegioId !== colegioId) {
       this.logger.error(`Error de pertenencia: alumno.colegioId=${alumno.colegioId}, evaluacion.salon.colegioId=${evaluacion.profesorAsignacion.salon.colegioId}, colegioId esperado=${colegioId}`);
       throw new ForbiddenException('El alumno y la evaluación deben pertenecer al mismo colegio');
     }
-    
+
     this.logger.debug(`Verificación exitosa para alumno ${alumnoId} y evaluación ${evaluacionId}`);
+  }
+
+  /**
+   * Eliminar una nota (hard delete)
+   */
+  async eliminarNota(
+    id: number,
+    usuarioId: number,
+    colegioId: number
+  ) {
+    // Verificar que la nota existe y pertenece al colegio
+    const nota = await this.prisma.registroNota.findUnique({
+      where: { id },
+      include: {
+        alumno: {
+          select: {
+            id: true,
+            nombres: true,
+            apellidos: true,
+            colegioId: true
+          }
+        },
+        evaluacion: {
+          select: {
+            id: true,
+            nombre: true
+          }
+        }
+      }
+    });
+
+    if (!nota) {
+      throw new NotFoundException(`Nota con ID ${id} no encontrada`);
+    }
+
+    if (nota.alumno.colegioId !== colegioId) {
+      throw new ForbiddenException('No tienes permisos para eliminar esta nota');
+    }
+
+    // Hard delete
+    await this.prisma.registroNota.delete({
+      where: { id }
+    });
+
+    this.logger.log(`Nota ${id} eliminada exitosamente por usuario ${usuarioId}`);
+
+    return {
+      success: true,
+      message: 'Nota eliminada exitosamente',
+      notaEliminada: {
+        id: nota.id,
+        alumno: `${nota.alumno.nombres} ${nota.alumno.apellidos}`,
+        evaluacion: nota.evaluacion.nombre,
+        nota: nota.nota
+      }
+    };
   }
 }

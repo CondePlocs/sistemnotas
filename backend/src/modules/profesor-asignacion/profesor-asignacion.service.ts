@@ -1,10 +1,12 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException, ConflictException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../providers/prisma.service';
 import { CrearProfesorAsignacionDto, ActualizarProfesorAsignacionDto } from './dto';
 
 @Injectable()
 export class ProfesorAsignacionService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(ProfesorAsignacionService.name);
+
+  constructor(private readonly prisma: PrismaService) { }
 
   // Verificar que el usuario sea DIRECTOR o ADMINISTRATIVO con permisos y obtener su colegioId
   private async verificarPermisoYColegio(usuarioId: number) {
@@ -464,6 +466,183 @@ export class ProfesorAsignacionService {
     } else {
       return this.desactivarAsignacion(id, usuarioId);
     }
+  }
+
+  /**
+   * Transferir asignación a otro profesor
+   * Cambia el profesor de una asignación existente SIN perder las evaluaciones
+   */
+  async transferirProfesor(
+    asignacionId: number,
+    nuevoProfesorId: number,
+    usuarioId: number
+  ) {
+    const colegioId = await this.verificarPermisoYColegio(usuarioId);
+
+    // 1. Obtener asignación actual
+    const asignacionActual = await this.prisma.profesorAsignacion.findFirst({
+      where: {
+        id: asignacionId,
+        profesor: {
+          usuarioRol: { colegio_id: colegioId }
+        }
+      },
+      include: {
+        profesor: {
+          include: {
+            usuarioRol: {
+              include: {
+                usuario: true
+              }
+            }
+          }
+        },
+        salon: {
+          include: {
+            colegioNivel: {
+              include: {
+                nivel: true
+              }
+            }
+          }
+        },
+        curso: true
+      }
+    });
+
+    if (!asignacionActual) {
+      throw new NotFoundException('Asignación no encontrada');
+    }
+
+    // 2. Verificar que no sea el mismo profesor
+    if (asignacionActual.profesorId === nuevoProfesorId) {
+      throw new BadRequestException(
+        'El nuevo profesor es el mismo que el actual. No se requiere transferencia.'
+      );
+    }
+
+    // 3. Verificar que el nuevo profesor existe y pertenece al colegio
+    const nuevoProfesor = await this.prisma.profesor.findFirst({
+      where: {
+        id: nuevoProfesorId,
+        usuarioRol: {
+          colegio_id: colegioId
+        }
+      },
+      include: {
+        usuarioRol: {
+          include: {
+            usuario: true
+          }
+        }
+      }
+    });
+
+    if (!nuevoProfesor) {
+      throw new NotFoundException('El nuevo profesor no fue encontrado en este colegio');
+    }
+
+    // 4. VALIDACIÓN CRÍTICA: Verificar que el nuevo profesor NO tenga ya una asignación
+    //    para este mismo salón-curso (activa o inactiva)
+    const asignacionExistente = await this.prisma.profesorAsignacion.findFirst({
+      where: {
+        profesorId: nuevoProfesorId,
+        salonId: asignacionActual.salonId,
+        cursoId: asignacionActual.cursoId,
+        id: { not: asignacionId } // Excluir la asignación actual
+      }
+    });
+
+    if (asignacionExistente) {
+      const estado = asignacionExistente.activo ? 'activa' : 'inactiva';
+      throw new ConflictException(
+        `No se puede transferir la asignación. El profesor ${nuevoProfesor.usuarioRol.usuario.nombres} ${nuevoProfesor.usuarioRol.usuario.apellidos} ` +
+        `ya tiene una asignación ${estado} para el curso "${asignacionActual.curso.nombre}" ` +
+        `en el salón "${asignacionActual.salon.grado} ${asignacionActual.salon.seccion}". ` +
+        `${asignacionExistente.activo ? 'Debe desactivar la asignación existente primero.' : 'Existe una asignación inactiva previa que debe eliminarse.'}`
+      );
+    }
+
+    // 5. Contar evaluaciones vinculadas (para información)
+    const totalEvaluaciones = await this.prisma.evaluacion.count({
+      where: {
+        profesorAsignacionId: asignacionId
+      }
+    });
+
+    // 6. Actualizar la asignación (las evaluaciones permanecen vinculadas automáticamente)
+    const asignacionActualizada = await this.prisma.profesorAsignacion.update({
+      where: { id: asignacionId },
+      data: {
+        profesorId: nuevoProfesorId,
+        asignadoPor: usuarioId, // Actualizar quien hizo el cambio
+        actualizadoEn: new Date()
+      },
+      include: {
+        profesor: {
+          include: {
+            usuarioRol: {
+              include: {
+                usuario: {
+                  select: {
+                    nombres: true,
+                    apellidos: true,
+                    email: true
+                  }
+                }
+              }
+            }
+          }
+        },
+        salon: {
+          include: {
+            colegioNivel: {
+              include: {
+                nivel: true
+              }
+            }
+          }
+        },
+        curso: {
+          select: {
+            id: true,
+            nombre: true,
+            descripcion: true,
+            color: true
+          }
+        }
+      }
+    });
+
+    // 7. Log de auditoría
+    this.logger.log(
+      `✅ Asignación #${asignacionId} transferida exitosamente:\n` +
+      `   Profesor anterior: ${asignacionActual.profesor.usuarioRol.usuario.nombres} ${asignacionActual.profesor.usuarioRol.usuario.apellidos}\n` +
+      `   Profesor nuevo: ${nuevoProfesor.usuarioRol.usuario.nombres} ${nuevoProfesor.usuarioRol.usuario.apellidos}\n` +
+      `   Curso: ${asignacionActual.curso.nombre}\n` +
+      `   Salón: ${asignacionActual.salon.grado} ${asignacionActual.salon.seccion}\n` +
+      `   Evaluaciones preservadas: ${totalEvaluaciones}\n` +
+      `   Realizado por usuario #${usuarioId}`
+    );
+
+    return {
+      success: true,
+      message: 'Asignación transferida exitosamente. Todas las evaluaciones y notas han sido preservadas.',
+      data: asignacionActualizada,
+      cambio: {
+        profesorAnterior: {
+          id: asignacionActual.profesorId,
+          nombre: `${asignacionActual.profesor.usuarioRol.usuario.nombres} ${asignacionActual.profesor.usuarioRol.usuario.apellidos}`,
+          email: asignacionActual.profesor.usuarioRol.usuario.email
+        },
+        profesorNuevo: {
+          id: nuevoProfesorId,
+          nombre: `${nuevoProfesor.usuarioRol.usuario.nombres} ${nuevoProfesor.usuarioRol.usuario.apellidos}`,
+          email: nuevoProfesor.usuarioRol.usuario.email
+        },
+        evaluacionesPreservadas: totalEvaluaciones
+      }
+    };
   }
 
   // Obtener asignaciones de un profesor específico (para su dashboard)

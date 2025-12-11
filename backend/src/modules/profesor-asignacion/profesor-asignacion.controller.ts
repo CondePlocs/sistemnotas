@@ -8,7 +8,7 @@ import { CrearProfesorAsignacionDto, ActualizarProfesorAsignacionDto } from './d
 @Controller('api/profesor-asignaciones')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ProfesorAsignacionController {
-  constructor(private readonly profesorAsignacionService: ProfesorAsignacionService) {}
+  constructor(private readonly profesorAsignacionService: ProfesorAsignacionService) { }
 
   // Crear nueva asignación (DIRECTOR y ADMINISTRATIVO con permisos)
   @Post()
@@ -67,6 +67,21 @@ export class ProfesorAsignacionController {
   @Roles('DIRECTOR', 'ADMINISTRATIVO')
   async desactivar(@Param('id') id: string, @Req() req: any) {
     return this.profesorAsignacionService.cambiarEstado(parseInt(id), false, req.user.id);
+  }
+
+  // Transferir asignación a otro profesor (DIRECTOR y ADMINISTRATIVO con permisos)
+  @Put(':id/transferir-profesor')
+  @Roles('DIRECTOR', 'ADMINISTRATIVO')
+  async transferirProfesor(
+    @Param('id') id: string,
+    @Body() transferirDto: any, // TransferirProfesorDto
+    @Req() req: any
+  ) {
+    return this.profesorAsignacionService.transferirProfesor(
+      parseInt(id),
+      transferirDto.nuevoProfesorId,
+      req.user.id
+    );
   }
 
   // Obtener asignaciones de un profesor específico (para dashboard del profesor)
