@@ -6,7 +6,7 @@ import { CreateEvaluacionDto, UpdateEvaluacionDto } from './dto';
 export class EvaluacionService {
   private readonly logger = new Logger(EvaluacionService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   /**
    * Obtiene el contexto completo de trabajo del profesor
@@ -17,7 +17,7 @@ export class EvaluacionService {
 
     // 🔒 SEGURIDAD: Verificar que la asignación existe Y pertenece al profesor autenticado
     const asignacion = await this.prisma.profesorAsignacion.findFirst({
-      where: { 
+      where: {
         id: profesorAsignacionId,
         profesor: {
           usuarioRol: {
@@ -192,6 +192,7 @@ export class EvaluacionService {
       data: {
         ...createEvaluacionDto,
         fechaEvaluacion: createEvaluacionDto.fechaEvaluacion ? new Date(createEvaluacionDto.fechaEvaluacion) : null,
+        fechaRevision: createEvaluacionDto.fechaRevision ? new Date(createEvaluacionDto.fechaRevision) : null,
         creadoPor: usuarioId
       },
       include: {
@@ -255,7 +256,7 @@ export class EvaluacionService {
     this.logger.log(`Obteniendo evaluación ID: ${id}`);
 
     const evaluacion = await this.prisma.evaluacion.findFirst({
-      where: { 
+      where: {
         id,
         profesorAsignacion: {
           profesor: {
@@ -303,11 +304,32 @@ export class EvaluacionService {
     // 🔒 SEGURIDAD: Verificar que la evaluación existe Y pertenece al profesor autenticado
     await this.findOne(id, usuarioId);
 
+    // 🔒 SEGURIDAD: Verificar contraseña del usuario
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { id: usuarioId },
+      select: { password_hash: true }
+    });
+
+    if (!usuario) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    const bcrypt = require('bcrypt');
+    const passwordValida = await bcrypt.compare(updateEvaluacionDto.password, usuario.password_hash);
+
+    if (!passwordValida) {
+      throw new BadRequestException('Contraseña incorrecta');
+    }
+
+    // Extraer password del DTO antes de actualizar
+    const { password, ...dataToUpdate } = updateEvaluacionDto;
+
     const evaluacion = await this.prisma.evaluacion.update({
       where: { id },
       data: {
-        ...updateEvaluacionDto,
-        fechaEvaluacion: updateEvaluacionDto.fechaEvaluacion ? new Date(updateEvaluacionDto.fechaEvaluacion) : undefined
+        ...dataToUpdate,
+        fechaEvaluacion: dataToUpdate.fechaEvaluacion ? new Date(dataToUpdate.fechaEvaluacion) : undefined,
+        fechaRevision: dataToUpdate.fechaRevision ? new Date(dataToUpdate.fechaRevision) : undefined
       },
       include: {
         competencia: true,

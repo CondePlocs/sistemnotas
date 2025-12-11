@@ -492,6 +492,7 @@ model Evaluacion {
   periodoId             Int
   nombre                String
   fechaEvaluacion       DateTime?          @db.Date
+  fechaRevision         DateTime?          @db.Date
   
   // Auditoría
   creadoPor             Int
@@ -511,6 +512,7 @@ model Evaluacion {
   @@index([periodoId])
   @@index([creadoPor])
   @@index([fechaEvaluacion])
+  @@index([fechaRevision])
   @@index([profesorAsignacionId, periodoId])
   @@index([competenciaId, profesorAsignacionId])
   @@map("evaluacion")

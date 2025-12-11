@@ -14,6 +14,7 @@ export interface Evaluacion {
   nombre: string;
   descripcion?: string;
   fechaEvaluacion: string | null;
+  fechaRevision?: string | null;
   competenciaId: number;
   profesorAsignacionId: number;
   periodoId: number;
@@ -103,7 +104,14 @@ export interface CreateEvaluacionDto {
   nombre: string;
   descripcion?: string;
   fechaEvaluacion?: string;
+  fechaRevision?: string;
   competenciaId: number;
   profesorAsignacionId: number;
   periodoId: number;
+}
+
+export interface UpdateEvaluacionDto {
+  nombre?: string;
+  fechaRevision?: string;
+  password: string;
 }

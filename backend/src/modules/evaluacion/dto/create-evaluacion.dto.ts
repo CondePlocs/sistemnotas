@@ -23,4 +23,8 @@ export class CreateEvaluacionDto {
   @IsOptional()
   @IsDateString({}, { message: 'La fecha de evaluación debe tener un formato válido (YYYY-MM-DD)' })
   fechaEvaluacion?: string;
+
+  @IsOptional()
+  @IsDateString({}, { message: 'La fecha de revisión debe tener un formato válido (YYYY-MM-DD)' })
+  fechaRevision?: string;
 }

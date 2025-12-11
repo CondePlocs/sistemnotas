@@ -16,6 +16,7 @@ import {
 import { useNotasState } from '@/hooks/useNotasState';
 import { useEstimacionesIA } from '@/hooks/useEstimacionesIA';
 import ModalCrearEvaluacion from '../modals/ModalCrearEvaluacion';
+import ModalDetalleEvaluacion from '../modals/ModalDetalleEvaluacion';
 import BotonGuardarNotas from './BotonGuardarNotas';
 import FiltroAlumnos from './FiltroAlumnos';
 import ModalInformacionTareas from '../modals/ModalInformacionTareas';
@@ -44,6 +45,8 @@ export default function TablaEvaluacionesReal({
   const [modalCrearAbierto, setModalCrearAbierto] = useState(false);
   const [modalInfoAbierto, setModalInfoAbierto] = useState(false);
   const [modalCalculadoraAbierto, setModalCalculadoraAbierto] = useState(false);
+  const [modalDetalleAbierto, setModalDetalleAbierto] = useState(false);
+  const [evaluacionSeleccionada, setEvaluacionSeleccionada] = useState<Evaluacion | null>(null);
   const [competenciaSeleccionada, setCompetenciaSeleccionada] = useState<number | null>(null);
   const [filaSeleccionada, setFilaSeleccionada] = useState<number | null>(null);
   const [columnaSeleccionada, setColumnaSeleccionada] = useState<number | null>(null);
@@ -434,9 +437,16 @@ export default function TablaEvaluacionesReal({
                         <div className="flex items-center gap-1">
                           {evaluacionesCompetencia.map(evaluacion => (
                             <div key={evaluacion.id} className="flex-1 min-w-[70px]">
-                              <div className="text-xs text-[#666666] text-center font-semibold p-1.5 bg-white/50 rounded border border-[#E9E1C9]" title={evaluacion.nombre}>
+                              <button
+                                onClick={() => {
+                                  setEvaluacionSeleccionada(evaluacion);
+                                  setModalDetalleAbierto(true);
+                                }}
+                                className="w-full text-xs text-[#666666] text-center font-semibold p-1.5 bg-white/50 rounded border border-[#E9E1C9] hover:bg-[#FCE0C1] hover:border-[#8D2C1D] hover:text-[#8D2C1D] transition-all cursor-pointer"
+                                title={`Ver detalles: ${evaluacion.nombre}`}
+                              >
                                 {evaluacion.nombre}
-                              </div>
+                              </button>
                             </div>
                           ))}
                           <div className="w-7 flex justify-center">
@@ -628,10 +638,29 @@ export default function TablaEvaluacionesReal({
         salonNombre={contexto.asignacion.salon}
       />
 
-      {/* Modal calculadora de notas */}
+      {/* Modal de Calculadora de Notas */}
       <ModalCalculadoraNotas
         isOpen={modalCalculadoraAbierto}
         onClose={() => setModalCalculadoraAbierto(false)}
+      />
+
+      {/* Modal de Detalle de Evaluación */}
+      <ModalDetalleEvaluacion
+        isOpen={modalDetalleAbierto}
+        onClose={() => {
+          setModalDetalleAbierto(false);
+          setEvaluacionSeleccionada(null);
+        }}
+        evaluacion={evaluacionSeleccionada}
+        onUpdate={(evaluacionActualizada) => {
+          // Actualizar la evaluación en el contexto
+          const evaluacionesActualizadas = contexto.evaluaciones.map(ev =>
+            ev.id === evaluacionActualizada.id ? evaluacionActualizada : ev
+          );
+          contexto.evaluaciones = evaluacionesActualizadas;
+          setModalDetalleAbierto(false);
+          setEvaluacionSeleccionada(null);
+        }}
       />
     </>
   );

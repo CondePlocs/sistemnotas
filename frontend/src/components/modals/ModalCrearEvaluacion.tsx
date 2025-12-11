@@ -23,6 +23,7 @@ export default function ModalCrearEvaluacion({
 }: ModalCrearEvaluacionProps) {
   const [nombre, setNombre] = useState('');
   const [descripcion, setDescripcion] = useState('');
+  const [fechaRevision, setFechaRevision] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,7 +32,7 @@ export default function ModalCrearEvaluacion({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!competenciaId || !nombre.trim()) {
       setError('El nombre de la evaluación es requerido');
       return;
@@ -45,16 +46,18 @@ export default function ModalCrearEvaluacion({
         nombre: nombre.trim(),
         descripcion: descripcion.trim() || undefined,
         fechaEvaluacion: fechaActual, // Fecha actual automática
+        fechaRevision: fechaRevision || undefined,
         competenciaId,
         profesorAsignacionId: asignacionId,
         periodoId
       };
 
       await onCrearEvaluacion(data);
-      
+
       // Limpiar formulario y cerrar modal
       setNombre('');
       setDescripcion('');
+      setFechaRevision('');
       onClose();
     } catch (error) {
       console.error('Error creando evaluación:', error);
@@ -68,6 +71,7 @@ export default function ModalCrearEvaluacion({
     if (!loading) {
       setNombre('');
       setDescripcion('');
+      setFechaRevision('');
       setError(null);
       onClose();
     }
@@ -138,6 +142,24 @@ export default function ModalCrearEvaluacion({
               required
               maxLength={100}
             />
+          </div>
+
+          {/* Fecha de Revisión (Opcional) */}
+          <div className="mb-4">
+            <label className="block text-sm font-semibold text-[#333333] mb-2">
+              <CalendarIcon className="h-4 w-4 inline mr-2 text-[#8D2C1D]" />
+              Fecha de Revisión (Opcional)
+            </label>
+            <input
+              type="date"
+              value={fechaRevision}
+              onChange={(e) => setFechaRevision(e.target.value)}
+              className="w-full px-4 py-3 border-2 border-[#E9E1C9] rounded-xl focus:ring-2 focus:ring-[#8D2C1D] focus:border-[#8D2C1D] transition-all duration-300 font-medium"
+              disabled={loading}
+            />
+            <p className="text-xs text-[#666666] mt-2 font-medium">
+              ℹ️ Fecha límite para revisar esta evaluación
+            </p>
           </div>
 
           {/* Botones */}

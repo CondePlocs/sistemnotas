@@ -18,6 +18,7 @@ import {
 import { useNotasState } from '@/hooks/useNotasState';
 import { useEstimacionesIA } from '@/hooks/useEstimacionesIA';
 import ModalCrearEvaluacion from '../modals/ModalCrearEvaluacion';
+import ModalDetalleEvaluacion from '../modals/ModalDetalleEvaluacion';
 import ModalInformacionTareas from '../modals/ModalInformacionTareas';
 import ModalCalculadoraNotas from '../modals/ModalCalculadoraNotas';
 import BotonGuardarNotas from './BotonGuardarNotas';
@@ -44,6 +45,8 @@ export default function VistaMobile({
   const [modalCrearAbierto, setModalCrearAbierto] = useState(false);
   const [modalInfoAbierto, setModalInfoAbierto] = useState(false);
   const [modalCalculadoraAbierto, setModalCalculadoraAbierto] = useState(false);
+  const [modalDetalleAbierto, setModalDetalleAbierto] = useState(false);
+  const [evaluacionSeleccionada, setEvaluacionSeleccionada] = useState<Evaluacion | null>(null);
   const [competenciaSeleccionada, setCompetenciaSeleccionada] = useState<number | null>(null);
   const [alumnoExpandido, setAlumnoExpandido] = useState<number | null>(null);
   const [alumnosFiltrados, setAlumnosFiltrados] = useState(contexto.alumnos);
@@ -438,7 +441,15 @@ export default function VistaMobile({
 
                             return (
                               <div key={evaluacion.id} className="text-center">
-                                <div className="text-xs text-[#666666] mb-1 font-medium">{evaluacion.nombre}</div>
+                                <button
+                                  onClick={() => {
+                                    setEvaluacionSeleccionada(evaluacion);
+                                    setModalDetalleAbierto(true);
+                                  }}
+                                  className="text-xs text-[#666666] mb-1 font-medium hover:text-[#8D2C1D] hover:underline transition-colors"
+                                >
+                                  {evaluacion.nombre}
+                                </button>
                                 {editando === key ? (
                                   <input
                                     type="text"
@@ -539,10 +550,29 @@ export default function VistaMobile({
         salonNombre={contexto.asignacion.salon}
       />
 
-      {/* Modal calculadora de notas */}
+      {/* Modal de Calculadora de Notas */}
       <ModalCalculadoraNotas
         isOpen={modalCalculadoraAbierto}
         onClose={() => setModalCalculadoraAbierto(false)}
+      />
+
+      {/* Modal de Detalle de Evaluación */}
+      <ModalDetalleEvaluacion
+        isOpen={modalDetalleAbierto}
+        onClose={() => {
+          setModalDetalleAbierto(false);
+          setEvaluacionSeleccionada(null);
+        }}
+        evaluacion={evaluacionSeleccionada}
+        onUpdate={(evaluacionActualizada) => {
+          // Actualizar la evaluación en el contexto
+          const evaluacionesActualizadas = contexto.evaluaciones.map(ev =>
+            ev.id === evaluacionActualizada.id ? evaluacionActualizada : ev
+          );
+          contexto.evaluaciones = evaluacionesActualizadas;
+          setModalDetalleAbierto(false);
+          setEvaluacionSeleccionada(null);
+        }}
       />
     </>
   );
