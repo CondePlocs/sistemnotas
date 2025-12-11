@@ -3,7 +3,18 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { ContextoTrabajo, CreateEvaluacionDto, Evaluacion } from '@/types/evaluaciones';
 import { NotaLiteral, NotaInput } from '@/types/registro-nota';
-import { PlusIcon, ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import {
+  PlusIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  BookOpenIcon,
+  MapIcon,
+  UserGroupIcon,
+  AcademicCapIcon,
+  TrophyIcon,
+  SparklesIcon,
+  ChartBarIcon
+} from '@heroicons/react/24/outline';
 import { useNotasState } from '@/hooks/useNotasState';
 import { useEstimacionesIA } from '@/hooks/useEstimacionesIA';
 import ModalCrearEvaluacion from '../modals/ModalCrearEvaluacion';
@@ -22,8 +33,8 @@ interface VistaMobileProps {
   readonly?: boolean;
 }
 
-export default function VistaMobile({ 
-  contexto, 
+export default function VistaMobile({
+  contexto,
   onCrearEvaluacion,
   asignacionId,
   periodoId,
@@ -85,14 +96,14 @@ export default function VistaMobile({
       console.log('Cargando notas para asignación:', asignacionId, 'período:', periodoId);
       const notasExistentes = await registroNotaAPI.obtenerNotasPorContexto(asignacionId, periodoId);
       console.log('Notas cargadas:', notasExistentes);
-      
+
       // Convertir las notas del backend al formato esperado por el hook
       const notasFormateadas = notasExistentes.map(nota => ({
         alumnoId: nota.alumnoId,
         evaluacionId: nota.evaluacionId,
         nota: nota.nota as NotaInput // Ahora acepta tanto letras como números
       }));
-      
+
       establecerNotasIniciales(notasFormateadas);
     } catch (error) {
       console.error('Error al cargar notas existentes:', error);
@@ -118,13 +129,13 @@ export default function VistaMobile({
   // Cargar promedios de competencias
   const cargarPromediosCompetencias = async () => {
     const nuevosPromedios = new Map<string, string>();
-    
+
     for (const alumno of contexto.alumnos) {
       for (const competencia of contexto.competencias) {
         try {
           const promedio = await registroNotaAPI.calcularPromedioCompetencia(
-            alumno.id, 
-            competencia.id, 
+            alumno.id,
+            competencia.id,
             periodoId
           );
           const clave = `${alumno.id}-${competencia.id}`;
@@ -136,23 +147,23 @@ export default function VistaMobile({
         }
       }
     }
-    
+
     setPromediosCompetencia(nuevosPromedios);
   };
 
   // Cargar promedios de curso
   const cargarPromediosCurso = async () => {
     const nuevosPromedios = new Map<number, string>();
-    
+
     for (const alumno of contexto.alumnos) {
       try {
         // Obtener cursoId desde la primera competencia
         const cursoId = contexto.competencias[0]?.cursoId;
         if (!cursoId) return;
-        
+
         const promedio = await registroNotaAPI.calcularPromedioCurso(
-          alumno.id, 
-          cursoId, 
+          alumno.id,
+          cursoId,
           periodoId
         );
         nuevosPromedios.set(alumno.id, promedio.propuestaLiteral);
@@ -161,14 +172,14 @@ export default function VistaMobile({
         nuevosPromedios.set(alumno.id, '-');
       }
     }
-    
+
     setPromediosCurso(nuevosPromedios);
   };
 
   // Función personalizada para guardar y recargar notas
   const guardarYRecargarNotas = async () => {
     const resultado = await guardarNotas();
-    
+
     if (resultado.success) {
       // Recargar notas después de guardar exitosamente
       await cargarNotasExistentes();
@@ -176,7 +187,7 @@ export default function VistaMobile({
       await cargarPromediosCompetencias();
       await cargarPromediosCurso();
     }
-    
+
     return resultado;
   };
 
@@ -211,20 +222,20 @@ export default function VistaMobile({
     }
 
     const notaLimpia = nota.trim().toUpperCase();
-    
+
     // Verificar si es alfabético (AD, A, B, C)
     const esAlfabetico = /^(AD|A|B|C)$/i.test(notaLimpia);
     if (esAlfabetico) {
       return true;
     }
-    
+
     // Verificar si es numérico (0-20, incluyendo decimales)
     const esNumerico = /^\d+(\.\d+)?$/.test(notaLimpia);
     if (esNumerico) {
       const valor = parseFloat(notaLimpia);
       return valor >= 0 && valor <= 20;
     }
-    
+
     return false;
   };
 
@@ -252,7 +263,7 @@ export default function VistaMobile({
       if (['AD', 'A', 'B', 'C'].includes(valor)) {
         return valor as NotaLiteral;
       }
-      
+
       // Si es un número, convertir a letra equivalente
       const num = parseFloat(valor);
       if (!isNaN(num)) {
@@ -261,7 +272,7 @@ export default function VistaMobile({
         if (num >= 11) return 'B';
         return 'C';
       }
-      
+
       return null;
     };
 
@@ -271,7 +282,7 @@ export default function VistaMobile({
 
     const letraEquivalente = convertirALetra(nota);
     const baseClasses = esEstimacion ? 'border-2 border-dashed' : 'border-2';
-    
+
     switch (letraEquivalente) {
       case 'AD': return `bg-gradient-to-br from-emerald-200 to-emerald-300 text-emerald-800 ${baseClasses} border-emerald-400`;
       case 'A': return `bg-gradient-to-br from-blue-200 to-blue-300 text-blue-800 ${baseClasses} border-blue-400`;
@@ -302,29 +313,31 @@ export default function VistaMobile({
         {/* Header con paleta corporativa */}
         <div className="bg-gradient-to-r from-[#8D2C1D] to-[#D96924] px-4 py-4 border-b-4 border-[#8D2C1D]/40">
           <div className="flex flex-col gap-2">
-            <h2 className="text-lg font-bold text-white">
-              📚 {contexto.asignacion.curso} - {contexto.asignacion.salon}
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <BookOpenIcon className="h-5 w-5" />
+              {contexto.asignacion.curso} - {contexto.asignacion.salon}
             </h2>
-            <p className="text-[#FCE0C1] text-sm font-medium">
-              🗺️ {contexto.periodo.tipo} {contexto.periodo.nombre} - {contexto.periodo.anioAcademico}
+            <p className="text-[#FCE0C1] text-sm font-medium flex items-center gap-2">
+              <MapIcon className="h-4 w-4" />
+              {contexto.periodo.tipo} {contexto.periodo.nombre} - {contexto.periodo.anioAcademico}
             </p>
             <div className="flex flex-wrap gap-2 mt-2">
               <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1">
                 <div className="text-white text-xs font-semibold flex items-center gap-1">
-                  <span>👥</span>
+                  <UserGroupIcon className="h-4 w-4" />
                   <span>{alumnosFiltrados.length} estudiantes</span>
                 </div>
               </div>
               <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1">
                 <div className="text-white text-xs font-semibold flex items-center gap-1">
-                  <span>🎯</span>
+                  <AcademicCapIcon className="h-4 w-4" />
                   <span>{contexto.competencias.length} competencias</span>
                 </div>
               </div>
               {totalEstimaciones > 0 && (
                 <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1">
                   <div className="text-white text-xs font-semibold flex items-center gap-1">
-                    <span>🤖</span>
+                    <SparklesIcon className="h-4 w-4" />
                     <span>{totalEstimaciones} IA</span>
                   </div>
                 </div>
@@ -353,12 +366,15 @@ export default function VistaMobile({
           />
         </div>
 
-        {/* Lista de alumnos */}
+        {/* Lista de alumnos con colores alternados */}
         <div className="divide-y-2 divide-[#8D2C1D]/20">
-          {alumnosFiltrados.map((alumno) => (
-            <div key={alumno.id} className="p-4">
+          {alumnosFiltrados.map((alumno, index) => (
+            <div
+              key={alumno.id}
+              className={`p-4 ${index % 2 === 0 ? 'bg-white' : 'bg-[#FCE0C1]/30'}`}
+            >
               {/* Header del alumno */}
-              <div 
+              <div
                 className="flex items-center justify-between cursor-pointer"
                 onClick={() => setAlumnoExpandido(
                   alumnoExpandido === alumno.id ? null : alumno.id
@@ -373,8 +389,9 @@ export default function VistaMobile({
                   )}
                 </div>
                 <div className="flex items-center space-x-2">
-                  <span className={`px-3 py-1.5 rounded-full text-xs font-bold shadow-sm ${getColorPromedio(calcularPromedio(alumno.id))}`}>
-                    🏆 {calcularPromedio(alumno.id)}
+                  <span className={`px-3 py-1.5 rounded-full text-xs font-bold shadow-sm flex items-center gap-1 ${getColorPromedio(calcularPromedio(alumno.id))}`}>
+                    <TrophyIcon className="h-3 w-3" />
+                    {calcularPromedio(alumno.id)}
                   </span>
                   {alumnoExpandido === alumno.id ? (
                     <ChevronDownIcon className="h-5 w-5 text-gray-400" />
@@ -392,32 +409,33 @@ export default function VistaMobile({
                     return (
                       <div key={competencia.id} className="bg-gradient-to-br from-[#FCE0C1]/80 to-[#E9E1C9]/80 backdrop-blur-sm rounded-xl shadow-lg border-2 border-[#8D2C1D]/25 p-4">
                         <div className="flex items-center justify-between mb-3">
-                          <h4 className="text-sm font-bold text-[#8D2C1D]">
-                            🎯 {competencia.nombre}
+                          <h4 className="text-sm font-bold text-[#8D2C1D] flex items-center gap-2">
+                            <AcademicCapIcon className="h-4 w-4" />
+                            {competencia.nombre}
                           </h4>
                           {!readonly && (
                             <button
                               onClick={() => handleCrearEvaluacion(competencia.id)}
-                              className="text-[#8D2C1D] hover:text-[#7A2518] hover:bg-[#FCE0C1] p-2 rounded-lg transition-all duration-300 hover:scale-110"
+                              className="bg-gradient-to-r from-[#8D2C1D] to-[#D96924] text-white p-2 rounded-lg hover:from-[#7A2518] hover:to-[#C85A1F] transition-all duration-300 hover:scale-110 shadow-md hover:shadow-lg"
                               title="Agregar evaluación"
                             >
-                              <PlusIcon className="w-4 h-4" />
+                              <PlusIcon className="w-5 h-5" />
                             </button>
                           )}
                         </div>
-                        
+
                         {/* Evaluaciones de la competencia */}
                         <div className="grid grid-cols-2 gap-2 mb-3">
                           {evaluacionesCompetencia.map(evaluacion => {
                             const nota = obtenerNota(alumno.id, evaluacion.id);
                             const estimacion = obtenerEstimacion(alumno.id, evaluacion.id);
                             const key = `${alumno.id}-${evaluacion.id}`;
-                            
+
                             // Determinar qué mostrar: nota real o estimación
                             const mostrarEstimacion = !nota && estimacion;
                             const valorMostrar = nota || (mostrarEstimacion ? estimacion.notaEstimada : null);
                             const esEstimacion = mostrarEstimacion && !nota;
-                            
+
                             return (
                               <div key={evaluacion.id} className="text-center">
                                 <div className="text-xs text-[#666666] mb-1 font-medium">{evaluacion.nombre}</div>
@@ -451,11 +469,15 @@ export default function VistaMobile({
                                     >
                                       {esEstimacion ? (
                                         <div className="flex items-center justify-center gap-1">
-                                          <span className="text-xs">🤖</span>
+                                          <SparklesIcon className="h-3 w-3" />
                                           <span>{valorMostrar}</span>
                                         </div>
+                                      ) : valorMostrar ? (
+                                        valorMostrar
                                       ) : (
-                                        valorMostrar || '➕'
+                                        <div className="flex items-center justify-center">
+                                          <PlusIcon className="h-4 w-4" />
+                                        </div>
                                       )}
                                     </button>
                                     {esEstimacion && (
@@ -469,11 +491,14 @@ export default function VistaMobile({
                             );
                           })}
                         </div>
-                        
+
                         {/* Promedio de la competencia */}
                         <div className="pt-3 border-t-2 border-[#8D2C1D]/25">
                           <div className="flex justify-between items-center">
-                            <span className="text-xs font-medium text-[#666666]">📈 Promedio:</span>
+                            <span className="text-xs font-medium text-[#666666] flex items-center gap-1">
+                              <ChartBarIcon className="h-3 w-3" />
+                              Promedio:
+                            </span>
                             <span className={`px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm ${getColorPromedio(calcularPromedioCompetencia(alumno.id, competencia.id))}`}>
                               {calcularPromedioCompetencia(alumno.id, competencia.id)}
                             </span>
