@@ -436,35 +436,36 @@ export default function TablaEvaluacionesReal({
                         </div>
                         <div className="flex items-center gap-1">
                           {evaluacionesCompetencia.map(evaluacion => (
-                            <div key={evaluacion.id} className="flex-1 min-w-[70px]">
+                            <div key={evaluacion.id} className="flex-1 min-w-[70px] max-w-[120px]">
                               <button
                                 onClick={() => {
                                   setEvaluacionSeleccionada(evaluacion);
                                   setModalDetalleAbierto(true);
                                 }}
-                                className="w-full text-xs text-[#666666] text-center font-semibold p-1.5 bg-white/50 rounded border border-[#E9E1C9] hover:bg-[#FCE0C1] hover:border-[#8D2C1D] hover:text-[#8D2C1D] transition-all cursor-pointer"
-                                title={`Ver detalles: ${evaluacion.nombre}`}
+                                className="w-full text-xs text-[#666666] text-center font-semibold p-1.5 bg-white/50 rounded border border-[#E9E1C9] hover:bg-[#FCE0C1] hover:border-[#8D2C1D] hover:text-[#8D2C1D] transition-all cursor-pointer truncate"
+                                title={evaluacion.nombre}
                               >
                                 {evaluacion.nombre}
                               </button>
                             </div>
                           ))}
-                          <div className="w-7 flex justify-center">
-                            {!readonly && (
-                              <button
-                                onClick={() => handleCrearEvaluacion(competencia.id)}
-                                className="bg-gradient-to-r from-[#8D2C1D] to-[#D96924] text-white p-1.5 rounded-lg hover:from-[#7A2518] hover:to-[#C85A1F] transition-all duration-300 hover:scale-110 shadow-md hover:shadow-lg"
-                                title="Agregar evaluación"
-                              >
-                                <PlusIcon className="w-4 h-4" />
-                              </button>
-                            )}
+                          <div className="w-6 flex justify-center">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCrearEvaluacion(competencia.id);
+                              }}
+                              className="bg-gradient-to-r from-[#8D2C1D] to-[#D96924] text-white p-1 rounded-lg hover:from-[#7A2518] hover:to-[#C55A1F] transition-all shadow-md hover:shadow-lg hover:scale-105"
+                              title="Agregar evaluación"
+                            >
+                              <PlusIcon className="w-4 h-4" />
+                            </button>
                           </div>
-                          <div className="w-18">
-                            <div className="text-xs text-[#8D2C1D] text-center font-bold bg-white/70 rounded p-1.5 border border-[#E9E1C9] flex items-center justify-center gap-1">
-                              <ChartBarIcon className="h-3 w-3" />
+                          <div className="w-16 flex justify-center">
+                            <span className="text-xs font-medium text-[#666666]">
+                              <ChartBarIcon className="h-4 w-4 inline mr-1" />
                               Prom
-                            </div>
+                            </span>
                           </div>
                         </div>
                       </div>

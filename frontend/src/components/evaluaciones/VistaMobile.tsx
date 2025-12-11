@@ -446,7 +446,8 @@ export default function VistaMobile({
                                     setEvaluacionSeleccionada(evaluacion);
                                     setModalDetalleAbierto(true);
                                   }}
-                                  className="text-xs text-[#666666] mb-1 font-medium hover:text-[#8D2C1D] hover:underline transition-colors"
+                                  className="text-xs text-[#666666] mb-1 font-medium hover:text-[#8D2C1D] hover:underline transition-colors truncate max-w-[100px] mx-auto block"
+                                  title={evaluacion.nombre}
                                 >
                                   {evaluacion.nombre}
                                 </button>
