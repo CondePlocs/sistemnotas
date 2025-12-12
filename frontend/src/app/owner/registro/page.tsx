@@ -73,16 +73,6 @@ function RegistroOwnerContent() {
 
           {/* Usar el componente reutilizable */}
           <RegistroUsuarioForm onSubmit={handleRegistroOwner} />
-          
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-            <h3 className="font-medium text-blue-900 mb-2">Información sobre el rol Owner:</h3>
-            <ul className="text-sm text-blue-800 space-y-1">
-              <li>• Puede crear y gestionar directores</li>
-              <li>• Puede crear y aprobar colegios</li>
-              <li>• Tiene acceso completo al sistema</li>
-              <li>• No está vinculado a un colegio específico</li>
-            </ul>
-          </div>
         </div>
         </div>
       </main>

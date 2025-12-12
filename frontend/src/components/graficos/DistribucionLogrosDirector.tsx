@@ -98,15 +98,15 @@ const DistribucionLogrosDirector: React.FC<DistribucionLogrosDirectorProps> = ({
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-white p-3 border rounded-lg shadow-lg">
-          <p className="font-semibold" style={{ color: data.color }}>
+        <div className="bg-white p-3 border-2 border-gray-300 rounded-lg shadow-lg">
+          <p className="font-semibold text-lg" style={{ color: data.color }}>
             {data.name}
           </p>
-          <p className="text-sm">
-            Cantidad: <span className="font-medium">{data.value}</span>
+          <p className="text-sm text-gray-900 font-medium">
+            Cantidad: <span className="font-bold text-gray-900">{data.value}</span>
           </p>
-          <p className="text-sm">
-            Porcentaje: <span className="font-medium">{data.porcentaje}%</span>
+          <p className="text-sm text-gray-900 font-medium">
+            Porcentaje: <span className="font-bold text-gray-900">{data.porcentaje}%</span>
           </p>
         </div>
       );
@@ -142,8 +142,8 @@ const DistribucionLogrosDirector: React.FC<DistribucionLogrosDirectorProps> = ({
               ))}
             </Pie>
             <Tooltip content={<CustomTooltip />} />
-            <Legend 
-              verticalAlign="bottom" 
+            <Legend
+              verticalAlign="bottom"
               height={36}
               formatter={(value, entry: any) => (
                 <span style={{ color: entry.color }}>{value}</span>

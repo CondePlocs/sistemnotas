@@ -50,12 +50,12 @@ function ProfesorEvaluacionesContent() {
     try {
       setLoading(true);
       setError(null);
-      
+
       const contextoData = await evaluacionesAPI.obtenerContextoTrabajo(
         parseInt(asignacionId!),
         parseInt(periodoId!)
       );
-      
+
       setContexto(contextoData);
     } catch (error) {
       console.error('Error cargando contexto de trabajo:', error);
@@ -68,10 +68,10 @@ function ProfesorEvaluacionesContent() {
   const handleCrearEvaluacion = async (data: CreateEvaluacionDto): Promise<Evaluacion> => {
     try {
       const nuevaEvaluacion = await evaluacionesAPI.crearEvaluacion(data);
-      
+
       // Recargar el contexto para mostrar la nueva evaluación
       await cargarContextoTrabajo();
-      
+
       return nuevaEvaluacion;
     } catch (error) {
       console.error('Error creando evaluación:', error);
@@ -84,10 +84,10 @@ function ProfesorEvaluacionesContent() {
    */
   const descargarHojaRegistroExcel = async () => {
     if (!asignacionId) return;
-    
+
     try {
       setDescargandoReporte('excel');
-      
+
       const response = await fetch(`/api/reportes/profesor/hoja-registro?profesorAsignacionId=${asignacionId}&periodoId=${periodoId}`, {
         method: 'GET',
         credentials: 'include',
@@ -104,9 +104,9 @@ function ProfesorEvaluacionesContent() {
       // Obtener el nombre del archivo del header Content-Disposition
       const contentDisposition = response.headers.get('Content-Disposition');
       let filename = `hoja-trabajo-${new Date().toISOString().split('T')[0]}.xlsx`;
-      
+
       if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="(.+)"/);        if (filenameMatch) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/); if (filenameMatch) {
           filename = filenameMatch[1];
         }
       }
@@ -124,7 +124,7 @@ function ProfesorEvaluacionesContent() {
 
       // Mostrar mensaje de éxito
       alert(`✅ ¡Hoja de Registro descargada exitosamente!\nArchivo: ${filename}`);
-      
+
     } catch (error) {
       console.error('Error al descargar hoja de registro:', error);
       alert(`❌ Error al generar la hoja de registro: ${error instanceof Error ? error.message : 'Error desconocido'}`);
@@ -138,10 +138,10 @@ function ProfesorEvaluacionesContent() {
    */
   const descargarInformeIntervencionPDF = async () => {
     if (!asignacionId) return;
-    
+
     try {
       setDescargandoReporte('pdf');
-      
+
       const response = await fetch(`/api/reportes/profesor/intervencion-temprana?profesorAsignacionId=${asignacionId}&periodoId=${periodoId}`, {
         method: 'GET',
         credentials: 'include',
@@ -158,9 +158,9 @@ function ProfesorEvaluacionesContent() {
       // Obtener el nombre del archivo del header Content-Disposition
       const contentDisposition = response.headers.get('Content-Disposition');
       let filename = `informe-intervencion-${new Date().toISOString().split('T')[0]}.pdf`;
-      
+
       if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="(.+)"/);        if (filenameMatch) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/); if (filenameMatch) {
           filename = filenameMatch[1];
         }
       }
@@ -178,7 +178,7 @@ function ProfesorEvaluacionesContent() {
 
       // Mostrar mensaje de éxito
       alert(`✅ ¡Informe de Intervención descargado exitosamente!\nArchivo: ${filename}`);
-      
+
     } catch (error) {
       console.error('Error al descargar informe de intervención:', error);
       alert(`❌ Error al generar el informe: ${error instanceof Error ? error.message : 'Error desconocido'}`);
@@ -230,8 +230,25 @@ function ProfesorEvaluacionesContent() {
     );
   }
 
-  // Pantalla de acceso denegado
-  if (contexto && !security.canAccess) {
+  // Pantalla de validación de permisos
+  if (contexto && security.isValidating) {
+    return (
+      <ProtectedRoute requiredRole="PROFESOR">
+        <ProfesorNavbar>
+          <div className="flex-1 flex items-center justify-center p-6">
+            <div className="text-center bg-white/95 backdrop-blur-sm rounded-xl p-8 shadow-lg border-2 border-[#E9E1C9]">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8D2C1D] mx-auto"></div>
+              <p className="mt-4 text-[#666666] font-medium">Validando permisos de acceso...</p>
+              <p className="mt-2 text-sm text-gray-500">{security.reason}</p>
+            </div>
+          </div>
+        </ProfesorNavbar>
+      </ProtectedRoute>
+    );
+  }
+
+  // Pantalla de acceso denegado (solo se muestra si la validación terminó y fue denegada)
+  if (contexto && !security.isValidating && !security.canAccess) {
     return (
       <ProtectedRoute requiredRole="PROFESOR">
         <ProfesorNavbar>
@@ -244,7 +261,7 @@ function ProfesorEvaluacionesContent() {
               <p className="text-red-600 mb-4 text-sm">{security.reason}</p>
               <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
                 <p className="text-xs text-red-700">
-                  🔒 <strong>Política de Privacidad:</strong> Las hojas de trabajo son privadas y personales. 
+                  🔒 <strong>Política de Privacidad:</strong> Las hojas de trabajo son privadas y personales.
                   Solo puedes acceder a tus propias hojas de trabajo del colegio al que perteneces.
                 </p>
               </div>
@@ -294,12 +311,12 @@ function ProfesorEvaluacionesContent() {
                 {readonly || security.isReadonly ? '📚 Visualización de Hoja de Trabajo' : '📚 Gestión de Evaluaciones'}
               </h1>
               <p className="text-lg text-[#666666]">
-                {readonly || security.isReadonly ? 
+                {readonly || security.isReadonly ?
                   'Visualiza las evaluaciones y notas en modo de solo lectura' :
                   'Administra las evaluaciones de tus estudiantes y descarga reportes de trabajo'
                 }
               </p>
-              
+
               {/* Banner de información de seguridad */}
               {security.isReadonly && !readonly && (
                 <div className="mt-3 p-3 bg-amber-50 border-l-4 border-amber-400 rounded-r-lg">
@@ -316,22 +333,21 @@ function ProfesorEvaluacionesContent() {
                 </div>
               )}
             </div>
-            
+
             {/* Botones de Reportes - Disponibles en modo normal y solo lectura */}
             <div className="flex items-center gap-3">
               <span className="text-sm font-medium text-[#666666] mr-2">
                 {readonly ? 'Imprimir Hoja Anterior:' : 'Reportes:'}
               </span>
-              
+
               {/* Botón Excel - Compacto */}
               <button
                 onClick={descargarHojaRegistroExcel}
                 disabled={descargandoReporte !== null}
-                className={`group relative overflow-hidden rounded-lg px-4 py-2.5 transition-all duration-300 transform hover:scale-105 ${
-                  descargandoReporte === 'excel'
+                className={`group relative overflow-hidden rounded-lg px-4 py-2.5 transition-all duration-300 transform hover:scale-105 ${descargandoReporte === 'excel'
                     ? 'bg-gray-400 cursor-not-allowed'
                     : 'bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 shadow-md hover:shadow-lg'
-                }`}
+                  }`}
               >
                 <div className="relative z-10 flex items-center space-x-2">
                   <div className="bg-white/20 p-1.5 rounded backdrop-blur-sm">
@@ -357,11 +373,10 @@ function ProfesorEvaluacionesContent() {
               <button
                 onClick={descargarInformeIntervencionPDF}
                 disabled={descargandoReporte !== null}
-                className={`group relative overflow-hidden rounded-lg px-4 py-2.5 transition-all duration-300 transform hover:scale-105 ${
-                  descargandoReporte === 'pdf'
+                className={`group relative overflow-hidden rounded-lg px-4 py-2.5 transition-all duration-300 transform hover:scale-105 ${descargandoReporte === 'pdf'
                     ? 'bg-gray-400 cursor-not-allowed'
                     : 'bg-gradient-to-br from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 shadow-md hover:shadow-lg'
-                }`}
+                  }`}
               >
                 <div className="relative z-10 flex items-center space-x-2">
                   <div className="bg-white/20 p-1.5 rounded backdrop-blur-sm">

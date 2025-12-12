@@ -204,12 +204,12 @@ const CursosProblemaDirector: React.FC<CursosProblemaDirectorProps> = ({
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-gray-800">{curso.nombre}</span>
-                  <span className="text-xs bg-gray-100 px-2 py-1 rounded">({curso.nivel})</span>
+                  <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded font-medium">{curso.nivel}</span>
                 </div>
                 <div className="text-sm text-gray-600 mt-1">
                   Alumnos con promedio final:
-                  <span className="ml-1 text-yellow-600">B: {curso.detalleProblemas.B}</span>
-                  <span className="ml-2 text-red-600">C: {curso.detalleProblemas.C}</span>
+                  <span className="ml-1 text-yellow-600 font-medium">B: {curso.detalleProblemas.B}</span>
+                  <span className="ml-2 text-red-600 font-medium">C: {curso.detalleProblemas.C}</span>
                 </div>
               </div>
               <div className="text-right">
@@ -221,25 +221,6 @@ const CursosProblemaDirector: React.FC<CursosProblemaDirectorProps> = ({
         </div>
       )}
 
-      {/* Mensaje de acción */}
-      {data.cursosProblema.length > 0 && (
-        <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-          <div className="flex items-start">
-            <div className="text-blue-500 mr-2 mt-0.5">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-blue-800">Recomendaciones:</p>
-              <p className="text-sm text-blue-700 mt-1">
-                Considera implementar programas de refuerzo académico para estos cursos,
-                revisar metodologías de enseñanza y brindar apoyo adicional a los estudiantes.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

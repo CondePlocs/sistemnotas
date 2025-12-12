@@ -103,13 +103,13 @@ const RendimientoPorGrado: React.FC<RendimientoPorGradoProps> = ({
       const gradoData = data.grados.find(g => g.grado === label);
 
       return (
-        <div className="bg-white p-4 border rounded-lg shadow-lg">
-          <p className="font-semibold text-gray-800 mb-2">{label}</p>
-          <p className="text-sm text-gray-600 mb-2">
-            Total alumnos: <span className="font-medium">{gradoData?.totalAlumnos}</span>
+        <div className="bg-white p-4 border-2 border-gray-300 rounded-lg shadow-lg">
+          <p className="font-semibold text-gray-900 mb-2 text-base">{label}</p>
+          <p className="text-sm text-gray-900 mb-2 font-medium">
+            Total alumnos: <span className="font-bold text-gray-900">{gradoData?.totalAlumnos}</span>
           </p>
-          <p className="text-sm text-gray-600 mb-2">
-            Promedio: <span className="font-medium">{gradoData?.promedioNumerico.toFixed(2)}</span>
+          <p className="text-sm text-gray-900 mb-2 font-medium">
+            Promedio: <span className="font-bold text-gray-900">{gradoData?.promedioNumerico.toFixed(2)}</span>
           </p>
           <div className="space-y-1">
             {payload.map((entry: any, index: number) => (
@@ -119,9 +119,9 @@ const RendimientoPorGrado: React.FC<RendimientoPorGradoProps> = ({
                     className="w-3 h-3 rounded mr-2"
                     style={{ backgroundColor: entry.color }}
                   ></div>
-                  <span className="text-sm">{entry.dataKey}:</span>
+                  <span className="text-sm font-medium text-gray-900">{entry.dataKey}:</span>
                 </span>
-                <span className="font-medium ml-2">{entry.value}</span>
+                <span className="font-bold ml-2 text-gray-900">{entry.value}</span>
               </div>
             ))}
           </div>
@@ -133,13 +133,34 @@ const RendimientoPorGrado: React.FC<RendimientoPorGradoProps> = ({
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm border">
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold text-gray-800">
-          Rendimiento por Grado
-        </h3>
-        <p className="text-sm text-gray-600">
-          Comparación del desempeño entre los diferentes niveles y grados
-        </p>
+      <div className="mb-4 flex items-start justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-800">
+            Rendimiento por Grado
+          </h3>
+          <p className="text-sm text-gray-600">
+            Comparación del desempeño entre los diferentes niveles y grados
+          </p>
+        </div>
+        {/* Leyenda compacta en la esquina superior derecha */}
+        <div className="flex items-center gap-3 text-xs">
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 rounded" style={{ backgroundColor: COLORES_LOGROS.AD }}></div>
+            <span className="text-gray-700">AD</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 rounded" style={{ backgroundColor: COLORES_LOGROS.A }}></div>
+            <span className="text-gray-700">A</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 rounded" style={{ backgroundColor: COLORES_LOGROS.B }}></div>
+            <span className="text-gray-700">B</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 rounded" style={{ backgroundColor: COLORES_LOGROS.C }}></div>
+            <span className="text-gray-700">C</span>
+          </div>
+        </div>
       </div>
 
       <div className="h-80 mb-4">
@@ -153,7 +174,7 @@ const RendimientoPorGrado: React.FC<RendimientoPorGradoProps> = ({
               bottom: 60
             }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#d1d5db" strokeWidth={1.5} />
             <XAxis
               dataKey="grado"
               tick={{ fontSize: 12 }}
@@ -163,10 +184,6 @@ const RendimientoPorGrado: React.FC<RendimientoPorGradoProps> = ({
             />
             <YAxis tick={{ fontSize: 12 }} />
             <Tooltip content={<CustomTooltip />} />
-            <Legend
-              wrapperStyle={{ paddingTop: '20px' }}
-              formatter={(value) => <span className="text-sm">{`Logro ${value}`}</span>}
-            />
             <Bar dataKey="AD" stackId="a" fill={COLORES_LOGROS.AD} name="AD" />
             <Bar dataKey="A" stackId="a" fill={COLORES_LOGROS.A} name="A" />
             <Bar dataKey="B" stackId="a" fill={COLORES_LOGROS.B} name="B" />
