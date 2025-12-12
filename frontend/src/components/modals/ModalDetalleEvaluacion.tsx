@@ -213,7 +213,7 @@ export default function ModalDetalleEvaluacion({
                                                     />
                                                 ) : (
                                                     <div className="px-4 py-3 bg-gray-50 rounded-lg border-2 border-gray-200">
-                                                        <p className="text-gray-900">{formatearFecha(evaluacion.fechaRevision)}</p>
+                                                        <p className="text-gray-900">{formatearFecha(evaluacion.fechaRevision || null)}</p>
                                                     </div>
                                                 )}
                                             </div>
