@@ -273,7 +273,7 @@ export default function HojasAnterioresPage() {
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                 {/* Año Académico */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -413,9 +413,7 @@ export default function HojasAnterioresPage() {
 
                     {/* Períodos en Columnas */}
                     <div className="p-6">
-                      <div className="grid gap-4" style={{
-                        gridTemplateColumns: `repeat(${Math.min(anio.periodos.length, 3)}, minmax(0, 1fr))`
-                      }}>
+                      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                         {anio.periodos.map((periodo) => (
                           <div key={periodo.id} className="flex flex-col">
                             {/* Header del Período */}
